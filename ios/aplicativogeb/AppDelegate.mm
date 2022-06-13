@@ -5,7 +5,6 @@
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTConvert.h>
-   [FIRApp configure];
 #import <React/RCTAppSetupUtils.h>
 
 #import <React/RCTAppSetupUtils.h>
@@ -33,6 +32,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+   [FIRApp configure];
   RCTAppSetupPrepareApp(application);
 
   RCTBridge *bridge = [self.reactDelegate createBridgeWithDelegate:self launchOptions:launchOptions];
