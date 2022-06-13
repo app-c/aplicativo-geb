@@ -5,6 +5,8 @@
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
 #import <React/RCTConvert.h>
+   [FIRApp configure];
+#import <React/RCTAppSetupUtils.h>
 
 #import <React/RCTAppSetupUtils.h>
 
