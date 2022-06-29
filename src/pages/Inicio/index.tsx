@@ -5,7 +5,7 @@
 /* eslint-disable camelcase */
 import { AntDesign, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, TouchableOpacity, View } from 'react-native';
 import {
    DrawerActions,
    useFocusEffect,
@@ -17,7 +17,16 @@ import { format } from 'date-fns';
 import Fire from '@react-native-firebase/firestore';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
-import { Box, Center, HStack, Modal, Button as ButomBase } from 'native-base';
+import {
+   Box,
+   Center,
+   HStack,
+   Modal,
+   Button as ButomBase,
+   VStack,
+   ScrollView,
+   Text,
+} from 'native-base';
 import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
 import {
@@ -37,6 +46,7 @@ import { ModalB2b } from '../../components/ModalB2b';
 import { MessageComponent } from '../../components/MessageComponent';
 import { colecao } from '../../collection';
 import { Classificacao } from '../Classificacao';
+import { CartaMessagem } from '../../components/CartaMessagem';
 
 interface IOrder_Indication {
    id: string;
@@ -85,14 +95,12 @@ export function Inicio() {
    const { user, expoToken } = useAuth();
    const navigate = useNavigation();
 
-   console.log(expoToken);
-
-   const modalRef = useRef<Modalize>(null);
-   const modalSucess = useRef<Modalize>(null);
-   const modalB2b = useRef<Modalize>(null);
-   const modalTransaction = useRef<Modalize>(null);
-
+   const [showModalSucess, setShowModalSucess] = React.useState(false);
+   const [showModalIndication, setModalIndication] = React.useState(false);
+   const [shwModalB2b, setModalB2b] = React.useState(false);
+   const [showModalTransaction, setModalTransaction] = React.useState(false);
    const [showModalUpdates, setModalUpdates] = React.useState(false);
+
    const [totalCompras, setTotalCompras] = useState(0);
    const [ptB2b, setPtB2b] = useState(0);
    const [ptInd, setPtInd] = useState(0);
@@ -209,15 +217,6 @@ export function Inicio() {
       return () => load();
    }, [user.id]);
 
-   const ClosedModal = useCallback(() => {
-      modalRef.current.close();
-      modalTransaction.current.close();
-   }, []);
-
-   const ClosedModalSucess = useCallback(() => {
-      modalSucess.current.close();
-   }, []);
-
    const HandShak = useCallback(
       (quemIndicou: string, id: string) => {
          navigate.navigate('indication', { quemIndicou, id });
@@ -256,13 +255,15 @@ export function Inicio() {
                   'dados do usuário nao recuperado',
                ),
             );
+
+         setModalIndication(false);
       },
       [user.nome],
    );
 
    const handleFailB2b = useCallback((id: string) => {
       Fire().collection(colecao.orderB2b).doc(id).delete();
-      modalB2b.current.close();
+      setModalB2b(false);
    }, []);
 
    const handleSucessB2b = useCallback(
@@ -279,7 +280,6 @@ export function Inicio() {
             .then(() => {
                Fire().collection(colecao.orderB2b).doc(id).delete();
                Alert.alert('B2B realizado com sucesso!');
-               modalB2b.current.close();
             });
       },
       [],
@@ -495,27 +495,20 @@ export function Inicio() {
       }, [load]),
    );
 
-   useEffect(() => {
-      const myString = '23,43.22.34';
-      const splits = myString.split(/(\d)/);
-
-      console.log(splits.filter(h => h === '.'));
-   }, []);
-
    useFocusEffect(
       useCallback(() => {
          if (orderIndication.length > 0) {
-            modalRef.current.open();
+            setModalIndication(true);
          }
          if (sucess.length > 0) {
-            modalSucess.current.open();
+            setShowModalSucess(true);
          }
          if (orderB2b.length > 0) {
-            modalB2b.current.open();
+            setModalB2b(true);
          }
 
          if (orderTransaction.length > 0) {
-            modalTransaction.current.open();
+            setModalTransaction(true);
          }
       }, [
          orderB2b.length,
@@ -531,80 +524,35 @@ export function Inicio() {
             isOpen={showModalUpdates}
             onClose={() => setModalUpdates(false)}
          >
-            <Center h="20%" p="10" bg={theme.colors.primary}>
+            <Center p="5" bg={theme.colors.primary}>
                <Box>
-                  <Text>UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL</Text>
-                  <Text>
-                     - Transações de INDICAÇÕES e NEGOCIAR será envidado uma
-                     notificação para o membro do GEB
+                  <Text fontFamily={theme.fonts.blac} fontSize="16">
+                     UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
                   </Text>
-                  <Text>vesion: 2.1.9</Text>
+                  <Text>- Correções de bugs</Text>- Pequenas alterações no
+                  designer
+                  <Text>
+                     - Usuários não podem validar presença depois das 23:59
+                     horas
+                  </Text>
+                  <Text>vesion: 2.2.0</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR
                </ButomBase>
             </Center>
          </Modal>
-         <View
-            style={{
-               flexDirection: 'row',
-               alignItems: 'center',
-               justifyContent: 'space-between',
-            }}
+
+         <Modal
+            isOpen={showModalSucess}
+            onClose={() => setShowModalSucess(false)}
          >
-            <TouchableOpacity
-               style={{ marginLeft: 10 }}
-               onPress={() => navigate.dispatch(DrawerActions.openDrawer())}
-            >
-               <MaterialCommunityIcons
-                  name="menu"
-                  size={40}
-                  color={theme.colors.focus}
-               />
-            </TouchableOpacity>
-         </View>
-
-         {user.avatarUrl ? (
-            <Avatar source={{ uri: user.avatarUrl }} />
-         ) : (
-            <BoxIco>
-               <Feather name="user" size={100} />
-            </BoxIco>
-         )}
-
-         <TitleName> {user.nome} </TitleName>
-
-         <View style={{ alignItems: 'center' }}>
-            <ComprasText>Vendas</ComprasText>
-
-            <BoxPrice>
-               <TitlePrice>{price.price}</TitlePrice>
-               <TitleP>
-                  {ptB2b + ptCom + ptInd + ptPad + ptVen + ptPrs} pts
-               </TitleP>
-            </BoxPrice>
-         </View>
-
-         <View style={{ alignSelf: 'center' }}>
-            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {montante}</Text>
-         </View>
-
-         <Modalize
-            ref={modalSucess}
-            snapPoint={300}
-            modalHeight={450}
-            modalStyle={{
-               width: '90%',
-               alignSelf: 'center',
-            }}
-         >
-            <View>
+            <Center>
                <TouchableOpacity
-                  onPress={ClosedModalSucess}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
-                     Vending: 10,
+                     padding: 10,
                   }}
                >
                   <AntDesign
@@ -641,21 +589,18 @@ export function Inicio() {
                      <Line />
                   </View>
                ))}
-            </View>
-         </Modalize>
+            </Center>
+         </Modal>
 
-         <Modalize
-            handlePosition="inside"
-            ref={modalRef}
-            snapPoint={400}
-            modalStyle={{
-               width: '90%',
-               alignSelf: 'center',
-            }}
+         <Modal
+            isOpen={showModalIndication}
+            onClose={() => setModalIndication(false)}
+            bg="dark.600"
+            borderRadius={5}
          >
-            <View>
+            <Center>
                <TouchableOpacity
-                  onPress={ClosedModal}
+                  onPress={() => setModalIndication(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -668,38 +613,37 @@ export function Inicio() {
                      color={theme.colors.focus}
                   />
                </TouchableOpacity>
-               {orderIndication.map(h => (
-                  <View key={h.id}>
-                     <ModalOrderIndication
-                        description={h.descricao}
-                        clientName={h.nomeCliente}
-                        telefone={h.telefoneCliente}
-                        handShak={() => {
-                           HandShak(h.quemIndicou, h.id);
-                        }}
-                        failTransaction={() =>
-                           HandFailIndication(h.id, h.quemIndicou)
-                        }
-                        quemIndicouName={h.quemIndicouName}
-                        quemIndicouWorkName={h.quemIndicouWorkName}
-                     />
-                  </View>
-               ))}
-            </View>
-         </Modalize>
+               <ScrollView>
+                  {orderIndication.map(h => (
+                     <View key={h.id}>
+                        <ModalOrderIndication
+                           description={h.descricao}
+                           clientName={h.nomeCliente}
+                           telefone={h.telefoneCliente}
+                           handShak={() => {
+                              HandShak(h.quemIndicou, h.id);
+                           }}
+                           failTransaction={() =>
+                              HandFailIndication(h.id, h.quemIndicou)
+                           }
+                           quemIndicouName={h.quemIndicouName}
+                           quemIndicouWorkName={h.quemIndicouWorkName}
+                        />
+                     </View>
+                  ))}
+               </ScrollView>
+            </Center>
+         </Modal>
 
-         <Modalize
-            handlePosition="inside"
-            ref={modalB2b}
-            snapPoint={400}
-            modalStyle={{
-               width: '90%',
-               alignSelf: 'center',
-            }}
+         <Modal
+            bg="dark.600"
+            borderRadius={5}
+            isOpen={shwModalB2b}
+            onClose={() => setModalB2b(false)}
          >
-            <View>
+            <Center>
                <TouchableOpacity
-                  onPress={ClosedModal}
+                  onPress={() => setModalB2b(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -723,21 +667,18 @@ export function Inicio() {
                      />
                   </View>
                ))}
-            </View>
-         </Modalize>
+            </Center>
+         </Modal>
 
-         <Modalize
-            handlePosition="inside"
-            ref={modalTransaction}
-            snapPoint={300}
-            modalStyle={{
-               width: '90%',
-               alignSelf: 'center',
-            }}
+         <Modal
+            isOpen={showModalTransaction}
+            onClose={() => setModalTransaction(false)}
+            bg="dark.600"
+            borderRadius={5}
          >
-            <View>
+            <Center>
                <TouchableOpacity
-                  onPress={ClosedModal}
+                  onPress={() => setModalTransaction(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -770,8 +711,69 @@ export function Inicio() {
                      />
                   </View>
                ))}
-            </View>
-         </Modalize>
+            </Center>
+         </Modal>
+
+         <Box w="100%">
+            <HStack space="70%">
+               <TouchableOpacity
+                  style={{ marginLeft: 10 }}
+                  onPress={() => navigate.dispatch(DrawerActions.openDrawer())}
+               >
+                  <MaterialCommunityIcons
+                     name="menu"
+                     size={40}
+                     color={theme.colors.focus}
+                  />
+               </TouchableOpacity>
+
+               {orderIndication.length > 0 && (
+                  <CartaMessagem
+                     pres={() => setModalIndication(true)}
+                     quantity={orderIndication.length}
+                  />
+               )}
+
+               {orderB2b.length > 0 && (
+                  <CartaMessagem
+                     pres={() => setModalB2b(true)}
+                     quantity={orderB2b.length}
+                  />
+               )}
+
+               {orderTransaction.length > 0 && (
+                  <CartaMessagem
+                     pres={() => setModalTransaction(true)}
+                     quantity={orderTransaction.length}
+                  />
+               )}
+            </HStack>
+         </Box>
+
+         {user.avatarUrl ? (
+            <Avatar source={{ uri: user.avatarUrl }} />
+         ) : (
+            <BoxIco>
+               <Feather name="user" size={100} />
+            </BoxIco>
+         )}
+
+         <TitleName> {user.nome} </TitleName>
+
+         <View style={{ alignItems: 'center' }}>
+            <ComprasText>Vendas</ComprasText>
+
+            <BoxPrice>
+               <TitlePrice>{price.price}</TitlePrice>
+               <TitleP>
+                  {ptB2b + ptCom + ptInd + ptPad + ptVen + ptPrs} pts
+               </TitleP>
+            </BoxPrice>
+         </View>
+
+         <View style={{ alignSelf: 'center' }}>
+            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {montante}</Text>
+         </View>
 
          <Line />
 

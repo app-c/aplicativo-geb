@@ -9,7 +9,6 @@ export interface IUserDto {
    enquadramento: string;
    indicacao: number;
    whats: string;
-   token: string;
    links: {
       site: string;
       maps: string;

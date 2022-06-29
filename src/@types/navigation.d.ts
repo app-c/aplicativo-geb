@@ -26,7 +26,7 @@ export declare global {
          INÍCIO: undefined;
          POSTS: undefined;
          'VALIDE SUA PRESENSA': undefined;
-         NEGOCIAR: undefined;
+         'LANÇAR CONSUMO': undefined;
          INDICAÇÕES: undefined;
          classificaçao: undefined;
          B2B: undefined;
@@ -45,6 +45,7 @@ export declare global {
          Post: undefined;
          Membros: undefined;
          sucess: Sucess;
+         'LISTA DE PRESENÇA': undefined;
       }
    }
 }

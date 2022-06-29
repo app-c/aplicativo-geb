@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { add, format } from 'date-fns';
+import { add, format, isAfter, max } from 'date-fns';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
@@ -34,9 +34,18 @@ export function Valide() {
    const [presenca, setPresenca] = useState<Props[]>([]);
 
    const hanldeValidar = useCallback(async () => {
+      const hour = new Date(2022, 6, 17, 6, 0, 0).getHours();
+      const math = hour >= 6;
+
       if (presenca) {
          return Alert.alert(
             'Vocẽ não pode marcar presença mais de uma vez no mesmo horário',
+         );
+      }
+
+      if (math === false) {
+         return Alert.alert(
+            'Você só pode marcar presença das 6:00 às 23:59 horas',
          );
       }
 

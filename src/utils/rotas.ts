@@ -14,6 +14,7 @@ import { StacKMembros } from '../routes/StackMembros';
 import { StackB2b } from '../routes/StackB2b';
 import theme from '../global/styles/theme';
 import { Padrinho } from '../pages/Padrinho';
+import { ListaPresença } from '../pages/ADM/ListaPresensa';
 
 export const rotas = [
    {
@@ -54,7 +55,7 @@ export const rotas = [
    {
       focus: theme.colors.focus,
       color: theme.colors.focus_light_3,
-      name: 'NEGOCIAR',
+      name: 'LANÇAR CONSUMO',
       component: StacKMembros,
       icon: 'handshake-o',
    },
@@ -116,6 +117,12 @@ export const rotasAdm = [
       color: theme.colors.secundary,
       name: 'INATIVAR UM MEMBRO',
       component: Inativo,
+      icon: '',
+   },
+   {
+      color: theme.colors.secundary,
+      name: 'LISTA DE PRESENÇA',
+      component: ListaPresença,
       icon: '',
    },
 ];

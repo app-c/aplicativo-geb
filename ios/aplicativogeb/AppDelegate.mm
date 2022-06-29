@@ -8,8 +8,6 @@
 #import <React/RCTConvert.h>
 #import <React/RCTAppSetupUtils.h>
 
-#import <React/RCTAppSetupUtils.h>
-
 #if RCT_NEW_ARCH_ENABLED
 #import <React/CoreModulesPlugins.h>
 #import <React/RCTCxxBridgeDelegate.h>
