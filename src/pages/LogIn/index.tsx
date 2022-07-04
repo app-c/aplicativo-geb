@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from 'react';
 
-import { Form } from "@unform/mobile";
-import { FormHandles } from "@unform/core";
-import { Alert, TouchableOpacity, View } from "react-native";
+import { Form } from '@unform/mobile';
+import { FormHandles } from '@unform/core';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import {
    FormControl,
    WarningOutlineIcon,
@@ -14,15 +14,15 @@ import {
    Modal,
    Button as ButtonBase,
    VStack,
-} from "native-base";
-import auth from "@react-native-firebase/auth";
-import { Modalize } from "react-native-modalize";
-import { BoxInput, BoxLogo, Container, Logo, Title } from "./styles";
+} from 'native-base';
+import auth from '@react-native-firebase/auth';
+import { Modalize } from 'react-native-modalize';
+import { BoxInput, BoxLogo, Container, Logo, Title } from './styles';
 // import { Input } from "../../components/Inputs";
-import { Button } from "../../components/Button";
-import logo from "../../assets/logo.png";
-import { useAuth } from "../../hooks/AuthContext";
-import theme from "../../global/styles/theme";
+import { Button } from '../../components/Button';
+import logo from '../../assets/logo.png';
+import { useAuth } from '../../hooks/AuthContext';
+import theme from '../../global/styles/theme';
 
 export function SingIn() {
    const { signIn } = useAuth();
@@ -30,14 +30,14 @@ export function SingIn() {
    const modalRef = useRef<Modalize>(null);
    const [showModal, setShowModal] = useState(false);
 
-   const [email, setEmail] = useState("");
-   const [pass, setPass] = useState("");
+   const [email, setEmail] = useState('');
+   const [pass, setPass] = useState('');
    const [errEmail, setErrEmail] = useState(false);
    const [errPass, setErrPass] = useState(false);
 
    const handleSubmit = useCallback(async () => {
-      if (email === "" || pass === "") {
-         return Alert.alert("Login", "forneça um email e uma senha");
+      if (email === '' || pass === '') {
+         return Alert.alert('Login', 'forneça um email e uma senha');
       }
 
       setErrEmail(false);
@@ -46,31 +46,31 @@ export function SingIn() {
       await signIn({
          email,
          senha: pass,
-      }).catch((err) => {
+      }).catch(err => {
          const { code } = err;
-         if (code === "auth/user-not-found") {
+         if (code === 'auth/user-not-found') {
             setErrEmail(true);
-            return Alert.alert("Login", "usuário nao encontrado");
+            return Alert.alert('Login', 'usuário nao encontrado');
          }
 
-         if (code === "auth/invalid-email") {
+         if (code === 'auth/invalid-email') {
             setErrEmail(true);
-            return Alert.alert("Login", "email incorreto");
+            return Alert.alert('Login', 'email incorreto');
          }
 
-         if (code === "auth/wrong-password") {
+         if (code === 'auth/wrong-password') {
             setErrPass(true);
-            return Alert.alert("Login", "senha incorreto");
+            return Alert.alert('Login', 'senha incorreto');
          }
-         return Alert.alert("Login", "usuário nao encontrado");
+         return Alert.alert('Login', 'usuário nao encontrado');
       });
    }, [email, pass, signIn]);
 
    const handleForgotPassword = useCallback(() => {
       auth()
          .sendPasswordResetEmail(email)
-         .then((h) => {
-            Alert.alert("Um link foi enviado para seu email");
+         .then(h => {
+            Alert.alert('Um link foi enviado para seu email');
          });
    }, [email]);
 
@@ -88,7 +88,7 @@ export function SingIn() {
                      <FormControl>
                         <FormControl.Label>DIGITE SEU E-MAIL</FormControl.Label>
                         <Input
-                           onChangeText={(h) => setEmail(h)}
+                           onChangeText={h => setEmail(h)}
                            value={email}
                            autoCapitalize="none"
                            keyboardType="email-address"
@@ -108,7 +108,7 @@ export function SingIn() {
          </Center>
          <Text
             style={{
-               alignSelf: "flex-end",
+               alignSelf: 'flex-end',
                color: theme.colors.primary_light,
                fontSize: 12,
                marginRight: 20,
@@ -131,7 +131,7 @@ export function SingIn() {
                      type="text"
                      autoCapitalize="none"
                      keyboardType="email-address"
-                     onChangeText={(h) => setEmail(h)}
+                     onChangeText={h => setEmail(h)}
                      value={email}
                      selectionColor={theme.colors.text_secundary}
                   />
@@ -147,7 +147,7 @@ export function SingIn() {
                   <Input
                      w="100%"
                      color={theme.colors.text_secundary}
-                     onChangeText={(h) => setPass(h)}
+                     onChangeText={h => setPass(h)}
                      value={pass}
                      selectionColor={theme.colors.text_secundary}
                   />

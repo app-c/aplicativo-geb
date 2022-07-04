@@ -28,7 +28,7 @@ interface Props {
    inativoPres?: boolean;
 }
 
-export function MembrosComponents({
+export function MembrosApadrinhado({
    userName,
    user_avatar,
    oficio,

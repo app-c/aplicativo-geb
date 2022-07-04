@@ -535,7 +535,10 @@ export function Inicio() {
                      - Usuários não podem validar presença depois das 23:59
                      horas
                   </Text>
-                  <Text>vesion: 2.2.0</Text>
+                  <Text>
+                     - Adms podem listar a presença dos usuários de cada mes
+                  </Text>
+                  <Text>vesion: 2.2.5</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR

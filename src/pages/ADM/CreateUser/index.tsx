@@ -2,10 +2,10 @@
 /* eslint-disable consistent-return */
 /* eslint-disable no-multi-assign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Form } from "@unform/mobile";
-import { FormHandles } from "@unform/core";
+import { Form } from '@unform/mobile';
+import { FormHandles } from '@unform/core';
 import {
    ActivityIndicator,
    Alert,
@@ -13,29 +13,29 @@ import {
    Modal,
    ScrollView,
    View,
-} from "react-native";
+} from 'react-native';
 
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
-import * as Yup from "yup";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { AntDesign } from "@expo/vector-icons";
-import { Modalize } from "react-native-modalize";
-import fire from "@react-native-firebase/firestore";
-import auth from "@react-native-firebase/auth";
+import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import * as Yup from 'yup';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { AntDesign } from '@expo/vector-icons';
+import { Modalize } from 'react-native-modalize';
+import fire from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
-import { Box, BoxAdm, BxPadrinho, Container, Logo, Title } from "./styles";
-import { useAuth } from "../../../hooks/AuthContext";
-import { Button } from "../../../components/Button";
-import getValidationErrors from "../../../utils/getValidationsErrors";
-import theme from "../../../global/styles/theme";
-import { InputCasdastro } from "../../../components/InputsCadastro";
-import { BoxTogle, TextTogle, TitleHeader } from "../../Profile/styles";
-import { ToglleRamo } from "../../../components/ToglleRamo";
-import { MembroLista } from "../../../components/MembroLista";
-import { ToglleEnquadramento } from "../../../components/ToglleEnquadramento";
-import { IUserDto } from "../../../dtos";
-import { colecao } from "../../../collection";
-import { HeaderContaponent } from "../../../components/HeaderComponent";
+import { Box, BoxAdm, BxPadrinho, Container, Logo, Title } from './styles';
+import { useAuth } from '../../../hooks/AuthContext';
+import { Button } from '../../../components/Button';
+import getValidationErrors from '../../../utils/getValidationsErrors';
+import theme from '../../../global/styles/theme';
+import { InputCasdastro } from '../../../components/InputsCadastro';
+import { BoxTogle, TextTogle, TitleHeader } from '../../Profile/styles';
+import { ToglleRamo } from '../../../components/ToglleRamo';
+import { MembroLista } from '../../../components/MembroLista';
+import { ToglleEnquadramento } from '../../../components/ToglleEnquadramento';
+import { IUserDto } from '../../../dtos';
+import { colecao } from '../../../collection';
+import { HeaderContaponent } from '../../../components/HeaderComponent';
 
 interface FormData {
    nome: string;
@@ -57,7 +57,7 @@ export function SingUp() {
    const { user, listUser } = useAuth();
 
    const [adm, setAdm] = useState(false);
-   const [idAdm, setIsAdm] = useState("user");
+   const [idAdm, setIsAdm] = useState('user');
    const [er, setErr] = useState();
    const [response, setResponse] = useState<IUserDto[]>([]);
    const [loading, setLoading] = useState(false);
@@ -65,11 +65,11 @@ export function SingUp() {
    // TODO MODAL
    const [modal, setModal] = useState(false);
    const [modalRamo, setModalRamo] = useState(false);
-   const [enquadramento, setEnquadramento] = useState("");
-   const [ramo, setRamo] = useState("");
+   const [enquadramento, setEnquadramento] = useState('');
+   const [ramo, setRamo] = useState('');
    const [modalUser, setModalUser] = useState(false);
-   const [idUserModal, setIdUserModal] = useState("");
-   const [nomeUserModa, setNomeUserModal] = useState("");
+   const [idUserModal, setIdUserModal] = useState('');
+   const [nomeUserModa, setNomeUserModal] = useState('');
    const modalizeRefRamo = useRef<Modalize>(null);
    const modalizeRefEnquadramento = useRef<Modalize>(null);
 
@@ -89,7 +89,7 @@ export function SingUp() {
          modalizeRefRamo.current?.close();
          setModalRamo(!modalRamo);
       },
-      [modalRamo]
+      [modalRamo],
    );
 
    const SelectItemEnquadramento = useCallback(
@@ -98,7 +98,7 @@ export function SingUp() {
          modalizeRefEnquadramento.current?.close();
          setModal(!modal);
       },
-      [modal]
+      [modal],
    );
 
    const OpenModalUser = useCallback(() => {
@@ -119,15 +119,15 @@ export function SingUp() {
             formRef.current?.setErrors({});
 
             const shema = Yup.object().shape({
-               nome: Yup.string().required("Nome obrigatorio"),
+               nome: Yup.string().required('Nome obrigatorio'),
                email: Yup.string()
-                  .email("email inválido")
-                  .required("E-mail Obrigatorio"),
+                  .email('email inválido')
+                  .required('E-mail Obrigatorio'),
                // workName: Yup.string().required(
                //     "nome razão social obrigatório",
                // ),
                // whats: Yup.string().required("whatts app é obrigatório"),
-               senha: Yup.string().min(6, "Senha no minimo 6 digitos"),
+               senha: Yup.string().min(6, 'Senha no minimo 6 digitos'),
             });
 
             await shema.validate(data, {
@@ -137,7 +137,7 @@ export function SingUp() {
             setLoading(true);
             auth()
                .createUserWithEmailAndPassword(data.email, data.senha)
-               .then((h) => {
+               .then(h => {
                   fire()
                      .collection(colecao.users)
                      .doc(h.user.uid)
@@ -160,24 +160,24 @@ export function SingUp() {
                         indicacao: 0,
                         inativo: false,
                      })
-                     .catch((err) => console.log("erro1", err));
+                     .catch(err => console.log('erro1', err));
 
                   setLoading(false);
-                  Alert.alert("Usuário cadastrado");
-                  navigate("Inicio");
+                  Alert.alert('Usuário cadastrado');
+                  navigate('Inicio');
                })
-               .catch((err) => {
-                  console.log("erro2", err);
-                  if (err.code === "auth/email-already-in-use") {
-                     return Alert.alert("Cadastro", "email já cadastrado");
+               .catch(err => {
+                  console.log('erro2', err);
+                  if (err.code === 'auth/email-already-in-use') {
+                     return Alert.alert('Cadastro', 'email já cadastrado');
                   }
                });
          } catch (err: any) {
-            console.log("err 3", err);
+            console.log('err 3', err);
             if (err instanceof Yup.ValidationError) {
                const errors = getValidationErrors(err);
                formRef.current?.setErrors(errors);
-               Alert.alert("Cadastro", err.message);
+               Alert.alert('Cadastro', err.message);
             }
          }
 
@@ -186,7 +186,7 @@ export function SingUp() {
                .collection(colecao.users)
                .doc(idUserModal)
                .get()
-               .then((h) => {
+               .then(h => {
                   const { padrinhQuantity } = h.data();
                   fire()
                      .collection(colecao.users)
@@ -197,20 +197,20 @@ export function SingUp() {
                });
          }
 
-         setNomeUserModal("");
-         setIdUserModal("");
+         setNomeUserModal('');
+         setIdUserModal('');
       },
-      [adm, enquadramento, idUserModal, navigate, nomeUserModa, ramo]
+      [adm, enquadramento, idUserModal, navigate, nomeUserModa, ramo],
    );
 
    const handleAdm = useCallback(() => {
       setAdm(true);
-      setIsAdm("adm");
+      setIsAdm('adm');
    }, []);
 
    const handleUser = useCallback(() => {
       setAdm(false);
-      setIsAdm("user");
+      setIsAdm('user');
    }, []);
 
    useFocusEffect(
@@ -227,7 +227,7 @@ export function SingUp() {
                }
             });
          setResponse(us);
-      }, [])
+      }, []),
    );
 
    return (
@@ -248,7 +248,7 @@ export function SingUp() {
             <View style={{ flex: 1 }}>
                <FlatList
                   data={response}
-                  keyExtractor={(h) => h.id}
+                  keyExtractor={h => h.id}
                   renderItem={({ item: h }) => (
                      <>
                         <MembroLista
@@ -264,16 +264,16 @@ export function SingUp() {
 
          <View
             style={{
-               flexDirection: "row",
-               alignSelf: "center",
+               flexDirection: 'row',
+               alignSelf: 'center',
                marginBottom: 10,
                marginTop: 20,
             }}
          >
             <Title>adm</Title>
-            <BoxAdm isAdm={idAdm === "adm"} onPress={handleAdm} />
+            <BoxAdm isAdm={idAdm === 'adm'} onPress={handleAdm} />
             <Title style={{ marginLeft: 40 }}>usuário</Title>
-            <BoxAdm isAdm={idAdm === "user"} onPress={handleUser} />
+            <BoxAdm isAdm={idAdm === 'user'} onPress={handleUser} />
          </View>
 
          <BxPadrinho onPress={OpenModalUser}>
@@ -301,7 +301,7 @@ export function SingUp() {
                      <InputCasdastro
                         name="nome"
                         type="custom"
-                        options={{ mask: "******************" }}
+                        options={{ mask: '******************' }}
                         icon="user"
                      />
                   </View>
@@ -312,7 +312,7 @@ export function SingUp() {
                         name="email"
                         type="custom"
                         options={{
-                           mask: "**************************************************",
+                           mask: '**************************************************',
                         }}
                         icon="user"
                      />
@@ -333,7 +333,7 @@ export function SingUp() {
                         name="senha"
                         autoCapitalize="none"
                         type="custom"
-                        options={{ mask: "******************" }}
+                        options={{ mask: '******************' }}
                         icon="user"
                      />
                   </View>
@@ -356,7 +356,7 @@ export function SingUp() {
                         name="workName"
                         type="custom"
                         options={{
-                           mask: "***********************************",
+                           mask: '***********************************',
                         }}
                         icon="user"
                      />
@@ -364,7 +364,7 @@ export function SingUp() {
 
                   <View
                      style={{
-                        alignSelf: "flex-start",
+                        alignSelf: 'flex-start',
                         // marginLeft: 20,
                         marginTop: 20,
                         marginBottom: 20,
@@ -383,7 +383,7 @@ export function SingUp() {
 
                   <View
                      style={{
-                        alignSelf: "flex-start",
+                        alignSelf: 'flex-start',
                         // marginLeft: 20,
                         marginTop: 20,
                         marginBottom: 20,

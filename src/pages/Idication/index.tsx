@@ -134,6 +134,7 @@ export function Indication() {
                   multiline
                   value={valor}
                   placeholder="Valor consumido R$"
+                  ref={moneyRef}
                />
             </BoxInput>
 

@@ -29,6 +29,7 @@ export interface IUserDto {
    logoUrl: string;
    inativo: boolean;
    token: string;
+   apadrinhado: boolean;
 }
 
 export interface ITransaction {

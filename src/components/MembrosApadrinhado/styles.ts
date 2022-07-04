@@ -21,7 +21,7 @@ export const Box = styled.TouchableOpacity<Props>`
    flex-direction: row;
    padding: 20px;
    background-color: ${({ theme: h, inativo }) =>
-      inativo ? h.colors.focus_second_light : h.colors.primary};
+      inativo ? h.colors.focus_light_3 : h.colors.primary};
    margin-bottom: 10px;
 `;
 
