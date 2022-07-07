@@ -5,7 +5,13 @@
 /* eslint-disable camelcase */
 import { AntDesign, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, TouchableOpacity, View } from 'react-native';
+import {
+   Alert,
+   Dimensions,
+   Platform,
+   TouchableOpacity,
+   View,
+} from 'react-native';
 import {
    DrawerActions,
    useFocusEffect,
@@ -91,6 +97,8 @@ interface PriceProps {
    pts: number;
 }
 
+const wt = Dimensions.get('window').width;
+
 export function Inicio() {
    const { user, expoToken } = useAuth();
    const navigate = useNavigation();
@@ -148,6 +156,9 @@ export function Inicio() {
       await Updates.fetchUpdateAsync();
       await Updates.reloadAsync();
    }, []);
+   //* FINISH CICLO *  ....................................................................... */
+
+   //* INDICATION...............................................................
 
    useEffect(() => {
       const load = Fire()
@@ -166,56 +177,9 @@ export function Inicio() {
       return () => load();
    }, [user.id]);
 
-   useEffect(() => {
-      const load = Fire()
-         .collection('sucess_indication')
-         .onSnapshot(suce => {
-            const res = suce.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as Propssuce;
-            });
-            const fil = res.filter(h => h.quemIndicou === user.id);
-            setSucess(fil);
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderB2b)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as PropsB2b;
-            });
-            setOrderB2b(res.filter(h => h.prestador_id === user.id));
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderTransaction)
-         .onSnapshot(h => {
-            const res = h.docs
-               .map(p => {
-                  return {
-                     id: p.id,
-                     ...p.data(),
-                  } as ProsTransaction;
-               })
-               .filter(h => h.prestador_id === user.id);
-
-            setOrderTransaction(res);
-         });
-      return () => load();
-   }, [user.id]);
+   const handleSucess = useCallback(async (id: string) => {
+      Fire().collection('sucess_indication').doc(id).delete();
+   }, []);
 
    const HandShak = useCallback(
       (quemIndicou: string, id: string) => {
@@ -261,10 +225,42 @@ export function Inicio() {
       [user.nome],
    );
 
-   const handleFailB2b = useCallback((id: string) => {
-      Fire().collection(colecao.orderB2b).doc(id).delete();
-      setModalB2b(false);
-   }, []);
+   useEffect(() => {
+      const load = Fire()
+         .collection('sucess_indication')
+         .onSnapshot(suce => {
+            const res = suce.docs.map(p => {
+               return {
+                  id: p.id,
+                  ...p.data(),
+               } as Propssuce;
+            });
+            const fil = res.filter(h => h.quemIndicou === user.id);
+            setSucess(fil);
+         });
+
+      return () => load();
+   }, [user.id]);
+
+   //* FINISH CICLO *  ....................................................................... */
+
+   // TODO B2B *.................................................................. */
+
+   useEffect(() => {
+      const load = Fire()
+         .collection(colecao.orderB2b)
+         .onSnapshot(h => {
+            const res = h.docs.map(p => {
+               return {
+                  id: p.id,
+                  ...p.data(),
+               } as PropsB2b;
+            });
+            setOrderB2b(res.filter(h => h.prestador_id === user.id));
+         });
+
+      return () => load();
+   }, [user.id]);
 
    const handleSucessB2b = useCallback(
       (id: string, user_id: string, prestador_id: string) => {
@@ -285,9 +281,32 @@ export function Inicio() {
       [],
    );
 
-   const handleSucess = useCallback(async (id: string) => {
-      Fire().collection('sucess_indication').doc(id).delete();
+   const handleFailB2b = useCallback((id: string) => {
+      Fire().collection(colecao.orderB2b).doc(id).delete();
+      setModalB2b(false);
    }, []);
+
+   // TODO FINISH CICLO *  .................................................... */
+
+   //* * TRANSACTIN ........................................................... */
+
+   useEffect(() => {
+      const load = Fire()
+         .collection(colecao.orderTransaction)
+         .onSnapshot(h => {
+            const res = h.docs
+               .map(p => {
+                  return {
+                     id: p.id,
+                     ...p.data(),
+                  } as ProsTransaction;
+               })
+               .filter(h => h.prestador_id === user.id);
+
+            setOrderTransaction(res);
+         });
+      return () => load();
+   }, [user.id]);
 
    // todo TRANSAÇÃO.......................................................................
    const handleValidateTransaction = useCallback(
@@ -679,42 +698,44 @@ export function Inicio() {
             bg="dark.600"
             borderRadius={5}
          >
-            <Center>
-               <TouchableOpacity
-                  onPress={() => setModalTransaction(false)}
-                  style={{
-                     alignSelf: 'flex-end',
-                     marginRight: 10,
-                     padding: 10,
-                  }}
-               >
-                  <AntDesign
-                     name="closecircle"
-                     size={30}
-                     color={theme.colors.focus}
-                  />
-               </TouchableOpacity>
-               {orderTransaction.map(h => (
-                  <View key={h.id}>
-                     <MessageComponent
-                        confirmar={() => {
-                           handleValidateTransaction(
-                              h.prestador_id,
-                              h.consumidor,
-                              h.description,
-                              h.id,
-                              h.valor,
-                           );
-                        }}
-                        nome={h.nome}
-                        rejeitar={() => {
-                           DeleteOrderTransaction(h.id);
-                        }}
-                        valor={h.valor}
+            <Box w={wt * 0.8}>
+               <Center>
+                  <TouchableOpacity
+                     onPress={() => setModalTransaction(false)}
+                     style={{
+                        alignSelf: 'flex-end',
+                        marginRight: 10,
+                        padding: 10,
+                     }}
+                  >
+                     <AntDesign
+                        name="closecircle"
+                        size={30}
+                        color={theme.colors.focus}
                      />
-                  </View>
-               ))}
-            </Center>
+                  </TouchableOpacity>
+                  {orderTransaction.map(h => (
+                     <View key={h.id}>
+                        <MessageComponent
+                           confirmar={() => {
+                              handleValidateTransaction(
+                                 h.prestador_id,
+                                 h.consumidor,
+                                 h.description,
+                                 h.id,
+                                 h.valor,
+                              );
+                           }}
+                           nome={h.nome}
+                           rejeitar={() => {
+                              DeleteOrderTransaction(h.id);
+                           }}
+                           valor={h.valor}
+                        />
+                     </View>
+                  ))}
+               </Center>
+            </Box>
          </Modal>
 
          <Box w="100%">
