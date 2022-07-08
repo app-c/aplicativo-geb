@@ -1,12 +1,20 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable camelcase */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, View } from 'react-native';
+import {
+   Alert,
+   FlatList,
+   KeyboardAvoidingView,
+   Modal,
+   ScrollView,
+   TouchableOpacity,
+   View,
+} from 'react-native';
 
 import { Modalize } from 'react-native-modalize';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Form } from '@unform/mobile';
-import { TextArea } from 'native-base';
+import { Box, Text, TextArea } from 'native-base';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import {
    BoxButton,
@@ -21,7 +29,6 @@ import {
 import { IUserDto } from '../../dtos';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import theme from '../../global/styles/theme';
 
@@ -29,6 +36,7 @@ export function Indicacoes() {
    const { user, orderIndicacao, listUser } = useAuth();
    const refModal = useRef<Modalize>(null);
    const { navigate } = useNavigation();
+   const [modal, setModal] = useState(false);
 
    const [users, setUsers] = useState<IUserDto[]>([]);
    const [descricao, setDescricao] = useState('');
@@ -70,13 +78,13 @@ export function Indicacoes() {
          setUserId(user_id);
          setWork(workName);
          setExpoToken(token);
-         refModal.current.open();
+         setModal(true);
       },
       [],
    );
 
    const handleOrderIndicaçao = useCallback(() => {
-      refModal.current.close();
+      setModal(false);
 
       orderIndicacao({
          userId,
@@ -93,7 +101,7 @@ export function Indicacoes() {
             text: 'Ok',
             onPress: () => {
                sendPushNotification();
-               navigate('Inicio');
+               navigate('INÍCIO');
             },
          },
       ]);
@@ -128,7 +136,7 @@ export function Indicacoes() {
          <HeaderContaponent title="Indicar um membro" type="tipo1" />
 
          <Form>
-            <Box>
+            <Box mt="5">
                <InputCasdastro
                   name="find"
                   icon="search"
@@ -157,49 +165,68 @@ export function Indicacoes() {
             )}
          />
 
-         <Modalize ref={refModal} snapPoint={400} modalHeight={700}>
+         <Modal
+            onRequestClose={() => setModal(false)}
+            visible={modal}
+            animationType="slide"
+            // transparent
+         >
             <BoxModal>
-               <View
-                  style={{
-                     flexDirection: 'row',
-                     justifyContent: 'space-between',
-                     padding: 10,
-                  }}
-               >
-                  <Title>Descriçao</Title>
-                  <Title>{descricao.length}/100</Title>
-               </View>
-               <TextArea
-                  h="20%"
-                  borderRadius={10}
-                  maxLength={100}
-                  value={descricao}
-                  onChangeText={h => setDescricao(h)}
-                  fontFamily={theme.fonts.regular}
-                  fontSize={14}
-               />
-
-               <BoxInput>
-                  <Input
-                     placeholder="Nome do cliente"
-                     onChangeText={setNomeCliente}
-                     value={nomeCliente}
+               <ScrollView>
+                  <Box>
+                     <TouchableOpacity
+                        onPress={() => setModal(false)}
+                        style={{
+                           backgroundColor: theme.colors.focus_second,
+                           borderRadius: 10,
+                           padding: 10,
+                           width: 100,
+                        }}
+                     >
+                        <Text>FECHAR</Text>
+                     </TouchableOpacity>
+                  </Box>
+                  <View
+                     style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        padding: 10,
+                     }}
+                  >
+                     <Title>Descriçao</Title>
+                     <Title>{descricao.length}/100</Title>
+                  </View>
+                  <TextArea
+                     borderRadius={10}
+                     maxLength={100}
+                     value={descricao}
+                     onChangeText={h => setDescricao(h)}
+                     fontFamily={theme.fonts.regular}
+                     fontSize={14}
                   />
-               </BoxInput>
 
-               <BoxInput>
-                  <Input
-                     placeholder="telefone do cliente"
-                     onChangeText={setTelefoneCliente}
-                     value={telefoneCliente}
-                  />
-               </BoxInput>
+                  <BoxInput>
+                     <Input
+                        placeholder="Nome do cliente"
+                        onChangeText={setNomeCliente}
+                        value={nomeCliente}
+                     />
+                  </BoxInput>
 
-               <BoxButton onPress={handleOrderIndicaçao}>
-                  <TextButon>enviar</TextButon>
-               </BoxButton>
+                  <BoxInput>
+                     <Input
+                        placeholder="telefone do cliente"
+                        onChangeText={setTelefoneCliente}
+                        value={telefoneCliente}
+                     />
+                  </BoxInput>
+
+                  <BoxButton onPress={handleOrderIndicaçao}>
+                     <TextButon>enviar</TextButon>
+                  </BoxButton>
+               </ScrollView>
             </BoxModal>
-         </Modalize>
+         </Modal>
       </Container>
    );
 }

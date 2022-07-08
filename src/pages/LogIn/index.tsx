@@ -27,7 +27,6 @@ import theme from '../../global/styles/theme';
 export function SingIn() {
    const { signIn } = useAuth();
    const formRef = useRef<FormHandles>(null);
-   const modalRef = useRef<Modalize>(null);
    const [showModal, setShowModal] = useState(false);
 
    const [email, setEmail] = useState('');
@@ -150,6 +149,7 @@ export function SingIn() {
                      onChangeText={h => setPass(h)}
                      value={pass}
                      selectionColor={theme.colors.text_secundary}
+                     secureTextEntry
                   />
                   <FormControl.ErrorMessage
                      leftIcon={<WarningOutlineIcon size="xs" />}

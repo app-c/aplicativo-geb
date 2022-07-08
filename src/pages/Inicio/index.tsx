@@ -5,14 +5,20 @@
 /* eslint-disable camelcase */
 import { AntDesign, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, TouchableOpacity, View } from 'react-native';
+import {
+   Alert,
+   Dimensions,
+   Modal,
+   Platform,
+   TouchableOpacity,
+   View,
+} from 'react-native';
 import {
    DrawerActions,
    useFocusEffect,
    useNavigation,
 } from '@react-navigation/native';
 
-import { Modalize } from 'react-native-modalize';
 import { format } from 'date-fns';
 import Fire from '@react-native-firebase/firestore';
 import * as Notifications from 'expo-notifications';
@@ -21,7 +27,6 @@ import {
    Box,
    Center,
    HStack,
-   Modal,
    Button as ButomBase,
    VStack,
    ScrollView,
@@ -91,6 +96,8 @@ interface PriceProps {
    pts: number;
 }
 
+const wt = Dimensions.get('window').width;
+
 export function Inicio() {
    const { user, expoToken } = useAuth();
    const navigate = useNavigation();
@@ -131,23 +138,26 @@ export function Inicio() {
    );
 
    //* UPDATES ................................................................
-   const ChecUpdadeDevice = React.useCallback(async () => {
-      const { isAvailable } = await Updates.checkForUpdateAsync();
-      if (isAvailable) {
-         setModalUpdates(true);
-      }
-   }, []);
+   // const ChecUpdadeDevice = React.useCallback(async () => {
+   //    const { isAvailable } = await Updates.checkForUpdateAsync();
+   //    if (isAvailable) {
+   //       setModalUpdates(true);
+   //    }
+   // }, []);
 
-   useFocusEffect(
-      useCallback(() => {
-         ChecUpdadeDevice();
-      }, [ChecUpdadeDevice]),
-   );
+   // useFocusEffect(
+   //    useCallback(() => {
+   //       ChecUpdadeDevice();
+   //    }, [ChecUpdadeDevice]),
+   // );
 
    const ReloadDevice = React.useCallback(async () => {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
    }, []);
+   //* FINISH CICLO *  ....................................................................... */
+
+   //* INDICATION...............................................................
 
    useEffect(() => {
       const load = Fire()
@@ -166,56 +176,10 @@ export function Inicio() {
       return () => load();
    }, [user.id]);
 
-   useEffect(() => {
-      const load = Fire()
-         .collection('sucess_indication')
-         .onSnapshot(suce => {
-            const res = suce.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as Propssuce;
-            });
-            const fil = res.filter(h => h.quemIndicou === user.id);
-            setSucess(fil);
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderB2b)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as PropsB2b;
-            });
-            setOrderB2b(res.filter(h => h.prestador_id === user.id));
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderTransaction)
-         .onSnapshot(h => {
-            const res = h.docs
-               .map(p => {
-                  return {
-                     id: p.id,
-                     ...p.data(),
-                  } as ProsTransaction;
-               })
-               .filter(h => h.prestador_id === user.id);
-
-            setOrderTransaction(res);
-         });
-      return () => load();
-   }, [user.id]);
+   const handleSucess = useCallback(async (id: string) => {
+      Fire().collection('sucess_indication').doc(id).delete();
+      setShowModalSucess(false);
+   }, []);
 
    const HandShak = useCallback(
       (quemIndicou: string, id: string) => {
@@ -261,10 +225,42 @@ export function Inicio() {
       [user.nome],
    );
 
-   const handleFailB2b = useCallback((id: string) => {
-      Fire().collection(colecao.orderB2b).doc(id).delete();
-      setModalB2b(false);
-   }, []);
+   useEffect(() => {
+      const load = Fire()
+         .collection('sucess_indication')
+         .onSnapshot(suce => {
+            const res = suce.docs.map(p => {
+               return {
+                  id: p.id,
+                  ...p.data(),
+               } as Propssuce;
+            });
+            const fil = res.filter(h => h.quemIndicou === user.id);
+            setSucess(fil);
+         });
+
+      return () => load();
+   }, [user.id]);
+
+   //* FINISH CICLO *  ....................................................................... */
+
+   // TODO B2B *.................................................................. */
+
+   useEffect(() => {
+      const load = Fire()
+         .collection(colecao.orderB2b)
+         .onSnapshot(h => {
+            const res = h.docs.map(p => {
+               return {
+                  id: p.id,
+                  ...p.data(),
+               } as PropsB2b;
+            });
+            setOrderB2b(res.filter(h => h.prestador_id === user.id));
+         });
+
+      return () => load();
+   }, [user.id]);
 
    const handleSucessB2b = useCallback(
       (id: string, user_id: string, prestador_id: string) => {
@@ -285,9 +281,32 @@ export function Inicio() {
       [],
    );
 
-   const handleSucess = useCallback(async (id: string) => {
-      Fire().collection('sucess_indication').doc(id).delete();
+   const handleFailB2b = useCallback((id: string) => {
+      Fire().collection(colecao.orderB2b).doc(id).delete();
+      setModalB2b(false);
    }, []);
+
+   // TODO FINISH CICLO *  .................................................... */
+
+   //* * TRANSACTIN ........................................................... */
+
+   useEffect(() => {
+      const load = Fire()
+         .collection(colecao.orderTransaction)
+         .onSnapshot(h => {
+            const res = h.docs
+               .map(p => {
+                  return {
+                     id: p.id,
+                     ...p.data(),
+                  } as ProsTransaction;
+               })
+               .filter(h => h.prestador_id === user.id);
+
+            setOrderTransaction(res);
+         });
+      return () => load();
+   }, [user.id]);
 
    // todo TRANSAÇÃO.......................................................................
    const handleValidateTransaction = useCallback(
@@ -307,7 +326,6 @@ export function Inicio() {
                createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
                valor,
             });
-
          Fire()
             .collection(colecao.transaction)
             .add({
@@ -317,7 +335,6 @@ export function Inicio() {
                createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
                valor,
             });
-
          Fire()
             .collection('order_transaction')
             .doc(id)
@@ -335,6 +352,7 @@ export function Inicio() {
          .delete()
          .then(() => Alert.alert('Transação deletada'));
    }, []);
+
    // todo .......................................................................
 
    //* *....................................................................... */
@@ -518,12 +536,11 @@ export function Inicio() {
       ]),
    );
 
+   console.log(showModalTransaction);
+
    return (
       <Container>
-         <Modal
-            isOpen={showModalUpdates}
-            onClose={() => setModalUpdates(false)}
-         >
+         <Modal visible={showModalUpdates}>
             <Center p="5" bg={theme.colors.primary}>
                <Box>
                   <Text fontFamily={theme.fonts.blac} fontSize="16">
@@ -531,14 +548,7 @@ export function Inicio() {
                   </Text>
                   <Text>- Correções de bugs</Text>- Pequenas alterações no
                   designer
-                  <Text>
-                     - Usuários não podem validar presença depois das 23:59
-                     horas
-                  </Text>
-                  <Text>
-                     - Adms podem listar a presença dos usuários de cada mes
-                  </Text>
-                  <Text>vesion: 2.2.5</Text>
+                  <Text>vesion: 2.2.6</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR
@@ -546,12 +556,10 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            isOpen={showModalSucess}
-            onClose={() => setShowModalSucess(false)}
-         >
-            <Center>
+         <Modal transparent animationType="slide" visible={showModalSucess}>
+            <Center bg="dark.600" mt={wt}>
                <TouchableOpacity
+                  onPress={() => setShowModalSucess(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -595,13 +603,8 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            isOpen={showModalIndication}
-            onClose={() => setModalIndication(false)}
-            bg="dark.600"
-            borderRadius={5}
-         >
-            <Center>
+         <Modal transparent animationType="slide" visible={showModalIndication}>
+            <Center mt={wt} bg="dark.600">
                <TouchableOpacity
                   onPress={() => setModalIndication(false)}
                   style={{
@@ -638,13 +641,8 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            bg="dark.600"
-            borderRadius={5}
-            isOpen={shwModalB2b}
-            onClose={() => setModalB2b(false)}
-         >
-            <Center>
+         <Modal transparent visible={shwModalB2b}>
+            <Center mt={wt} bg="dark.600">
                <TouchableOpacity
                   onPress={() => setModalB2b(false)}
                   style={{
@@ -674,12 +672,12 @@ export function Inicio() {
          </Modal>
 
          <Modal
-            isOpen={showModalTransaction}
-            onClose={() => setModalTransaction(false)}
-            bg="dark.600"
-            borderRadius={5}
+            visible={showModalTransaction}
+            transparent
+            animationType="slide"
+            // onClose={() => setModalTransaction(false)}
          >
-            <Center>
+            <Box pl="5" pr="5" mt={wt} bg="dark.500">
                <TouchableOpacity
                   onPress={() => setModalTransaction(false)}
                   style={{
@@ -714,7 +712,7 @@ export function Inicio() {
                      />
                   </View>
                ))}
-            </Center>
+            </Box>
          </Modal>
 
          <Box w="100%">
