@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
    Alert,
    Dimensions,
+   Modal,
    Platform,
    TouchableOpacity,
    View,
@@ -18,7 +19,6 @@ import {
    useNavigation,
 } from '@react-navigation/native';
 
-import { Modalize } from 'react-native-modalize';
 import { format } from 'date-fns';
 import Fire from '@react-native-firebase/firestore';
 import * as Notifications from 'expo-notifications';
@@ -27,7 +27,6 @@ import {
    Box,
    Center,
    HStack,
-   Modal,
    Button as ButomBase,
    VStack,
    ScrollView,
@@ -139,22 +138,22 @@ export function Inicio() {
    );
 
    //* UPDATES ................................................................
-   const ChecUpdadeDevice = React.useCallback(async () => {
-      const { isAvailable } = await Updates.checkForUpdateAsync();
-      if (isAvailable) {
-         setModalUpdates(true);
-      }
-   }, []);
+   // const ChecUpdadeDevice = React.useCallback(async () => {
+   //    const { isAvailable } = await Updates.checkForUpdateAsync();
+   //    if (isAvailable) {
+   //       setModalUpdates(true);
+   //    }
+   // }, []);
 
-   useFocusEffect(
-      useCallback(() => {
-         ChecUpdadeDevice();
-      }, [ChecUpdadeDevice]),
-   );
+   // useFocusEffect(
+   //    useCallback(() => {
+   //       ChecUpdadeDevice();
+   //    }, [ChecUpdadeDevice]),
+   // );
 
    const ReloadDevice = React.useCallback(async () => {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
    }, []);
    //* FINISH CICLO *  ....................................................................... */
 
@@ -179,6 +178,7 @@ export function Inicio() {
 
    const handleSucess = useCallback(async (id: string) => {
       Fire().collection('sucess_indication').doc(id).delete();
+      setShowModalSucess(false);
    }, []);
 
    const HandShak = useCallback(
@@ -326,7 +326,6 @@ export function Inicio() {
                createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
                valor,
             });
-
          Fire()
             .collection(colecao.transaction)
             .add({
@@ -336,7 +335,6 @@ export function Inicio() {
                createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
                valor,
             });
-
          Fire()
             .collection('order_transaction')
             .doc(id)
@@ -354,6 +352,7 @@ export function Inicio() {
          .delete()
          .then(() => Alert.alert('Transação deletada'));
    }, []);
+
    // todo .......................................................................
 
    //* *....................................................................... */
@@ -537,12 +536,11 @@ export function Inicio() {
       ]),
    );
 
+   console.log(showModalTransaction);
+
    return (
       <Container>
-         <Modal
-            isOpen={showModalUpdates}
-            onClose={() => setModalUpdates(false)}
-         >
+         <Modal visible={showModalUpdates}>
             <Center p="5" bg={theme.colors.primary}>
                <Box>
                   <Text fontFamily={theme.fonts.blac} fontSize="16">
@@ -550,14 +548,7 @@ export function Inicio() {
                   </Text>
                   <Text>- Correções de bugs</Text>- Pequenas alterações no
                   designer
-                  <Text>
-                     - Usuários não podem validar presença depois das 23:59
-                     horas
-                  </Text>
-                  <Text>
-                     - Adms podem listar a presença dos usuários de cada mes
-                  </Text>
-                  <Text>vesion: 2.2.5</Text>
+                  <Text>vesion: 2.2.6</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR
@@ -565,12 +556,10 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            isOpen={showModalSucess}
-            onClose={() => setShowModalSucess(false)}
-         >
-            <Center>
+         <Modal transparent animationType="slide" visible={showModalSucess}>
+            <Center bg="dark.600" mt={wt}>
                <TouchableOpacity
+                  onPress={() => setShowModalSucess(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -614,13 +603,8 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            isOpen={showModalIndication}
-            onClose={() => setModalIndication(false)}
-            bg="dark.600"
-            borderRadius={5}
-         >
-            <Center>
+         <Modal transparent animationType="slide" visible={showModalIndication}>
+            <Center mt={wt} bg="dark.600">
                <TouchableOpacity
                   onPress={() => setModalIndication(false)}
                   style={{
@@ -657,13 +641,8 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal
-            bg="dark.600"
-            borderRadius={5}
-            isOpen={shwModalB2b}
-            onClose={() => setModalB2b(false)}
-         >
-            <Center>
+         <Modal transparent visible={shwModalB2b}>
+            <Center mt={wt} bg="dark.600">
                <TouchableOpacity
                   onPress={() => setModalB2b(false)}
                   style={{
@@ -693,48 +672,46 @@ export function Inicio() {
          </Modal>
 
          <Modal
-            isOpen={showModalTransaction}
-            onClose={() => setModalTransaction(false)}
-            bg="dark.600"
-            borderRadius={5}
+            visible={showModalTransaction}
+            transparent
+            animationType="slide"
+            // onClose={() => setModalTransaction(false)}
          >
-            <Box w={wt * 0.8}>
-               <Center>
-                  <TouchableOpacity
-                     onPress={() => setModalTransaction(false)}
-                     style={{
-                        alignSelf: 'flex-end',
-                        marginRight: 10,
-                        padding: 10,
-                     }}
-                  >
-                     <AntDesign
-                        name="closecircle"
-                        size={30}
-                        color={theme.colors.focus}
+            <Box pl="5" pr="5" mt={wt} bg="dark.500">
+               <TouchableOpacity
+                  onPress={() => setModalTransaction(false)}
+                  style={{
+                     alignSelf: 'flex-end',
+                     marginRight: 10,
+                     padding: 10,
+                  }}
+               >
+                  <AntDesign
+                     name="closecircle"
+                     size={30}
+                     color={theme.colors.focus}
+                  />
+               </TouchableOpacity>
+               {orderTransaction.map(h => (
+                  <View key={h.id}>
+                     <MessageComponent
+                        confirmar={() => {
+                           handleValidateTransaction(
+                              h.prestador_id,
+                              h.consumidor,
+                              h.description,
+                              h.id,
+                              h.valor,
+                           );
+                        }}
+                        nome={h.nome}
+                        rejeitar={() => {
+                           DeleteOrderTransaction(h.id);
+                        }}
+                        valor={h.valor}
                      />
-                  </TouchableOpacity>
-                  {orderTransaction.map(h => (
-                     <View key={h.id}>
-                        <MessageComponent
-                           confirmar={() => {
-                              handleValidateTransaction(
-                                 h.prestador_id,
-                                 h.consumidor,
-                                 h.description,
-                                 h.id,
-                                 h.valor,
-                              );
-                           }}
-                           nome={h.nome}
-                           rejeitar={() => {
-                              DeleteOrderTransaction(h.id);
-                           }}
-                           valor={h.valor}
-                        />
-                     </View>
-                  ))}
-               </Center>
+                  </View>
+               ))}
             </Box>
          </Modal>
 
