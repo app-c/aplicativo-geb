@@ -52,6 +52,7 @@ import { MessageComponent } from '../../components/MessageComponent';
 import { colecao } from '../../collection';
 import { Classificacao } from '../Classificacao';
 import { CartaMessagem } from '../../components/CartaMessagem';
+import { ModalIndication } from '../../components/ModalIndication';
 
 interface IOrder_Indication {
    id: string;
@@ -127,6 +128,10 @@ export function Inicio() {
    const [orderIndication, setOrderIndication] = useState<IOrder_Indication[]>(
       [],
    );
+   const [modalHandShak, setModalHandShak] = React.useState(false);
+   const [select, setSelect] = React.useState('');
+   const [idIndication, setIdIndication] = React.useState('');
+   const [quemIndicou, setQuemIndicou] = React.useState('');
 
    // * token ................................................................
    useFocusEffect(
@@ -176,55 +181,6 @@ export function Inicio() {
       return () => load();
    }, [user.id]);
 
-   const handleSucess = useCallback(async (id: string) => {
-      Fire().collection('sucess_indication').doc(id).delete();
-      setShowModalSucess(false);
-   }, []);
-
-   const HandShak = useCallback(
-      (quemIndicou: string, id: string) => {
-         navigate.navigate('indication', { quemIndicou, id });
-      },
-      [navigate],
-   );
-
-   const HandFailIndication = useCallback(
-      async (id: string, quemIndicou: string) => {
-         Fire().collection(colecao.orderIndication).doc(id).delete();
-
-         Fire()
-            .collection('sucess_indication')
-            .add({
-               createdAt: format(new Date(Date.now()), 'dd/MM - HH:mm'),
-               nome: user.nome,
-               quemIndicou,
-            });
-
-         Fire()
-            .collection(colecao.users)
-            .doc(quemIndicou)
-            .get()
-            .then(h => {
-               let { indicacao } = h.data() as IUserDto;
-               Fire()
-                  .collection(colecao.users)
-                  .doc(quemIndicou)
-                  .update({
-                     indicacao: (indicacao += 1),
-                  });
-            })
-            .catch(() =>
-               Alert.alert(
-                  'Algo deu errado',
-                  'dados do usuário nao recuperado',
-               ),
-            );
-
-         setModalIndication(false);
-      },
-      [user.nome],
-   );
-
    useEffect(() => {
       const load = Fire()
          .collection('sucess_indication')
@@ -241,6 +197,67 @@ export function Inicio() {
 
       return () => load();
    }, [user.id]);
+
+   const handleSucess = useCallback(async (id: string) => {
+      Fire().collection('sucess_indication').doc(id).delete();
+      setShowModalSucess(false);
+   }, []);
+
+   const HandShak = useCallback((quemIndicou: string, id: string) => {
+      setModalHandShak(true);
+      setIdIndication(id);
+      setQuemIndicou(quemIndicou);
+      setModalIndication(false);
+   }, []);
+
+   const handleSelect = React.useCallback((type: string) => {
+      setSelect(type);
+   }, []);
+
+   const HandFailIndication = useCallback(async () => {
+      Fire().collection(colecao.orderIndication).doc(idIndication).delete();
+
+      Fire()
+         .collection('sucess_indication')
+         .add({
+            createdAt: format(new Date(Date.now()), 'dd/MM - HH:mm'),
+            nome: user.nome,
+            quemIndicou,
+         });
+
+      Fire()
+         .collection(colecao.users)
+         .doc(quemIndicou)
+         .get()
+         .then(h => {
+            let { indicacao } = h.data() as IUserDto;
+            Fire()
+               .collection(colecao.users)
+               .doc(quemIndicou)
+               .update({
+                  indicacao: (indicacao += 1),
+               });
+         })
+         .catch(() =>
+            Alert.alert('Algo deu errado', 'dados do usuário nao recuperado'),
+         );
+
+      setModalIndication(false);
+   }, [idIndication, quemIndicou, user.nome]);
+
+   const handleHandShack = React.useCallback(() => {
+      if (select === 'fail') {
+         HandFailIndication();
+      }
+
+      if (select === 'hand') {
+         navigate.navigate('indication', { quemIndicou, id: idIndication });
+      }
+
+      if (select === 'handing') {
+         setModalHandShak(false);
+      }
+   }, [HandFailIndication, idIndication, navigate, quemIndicou, select]);
 
    //* FINISH CICLO *  ....................................................................... */
 
@@ -629,15 +646,28 @@ export function Inicio() {
                            handShak={() => {
                               HandShak(h.quemIndicou, h.id);
                            }}
-                           failTransaction={() =>
-                              HandFailIndication(h.id, h.quemIndicou)
-                           }
+                           failTransaction={() => HandFailIndication()}
                            quemIndicouName={h.quemIndicouName}
                            quemIndicouWorkName={h.quemIndicouWorkName}
                         />
                      </View>
                   ))}
                </ScrollView>
+            </Center>
+         </Modal>
+
+         <Modal transparent visible={modalHandShak}>
+            <Center mt={wt}>
+               <ModalIndication
+                  pres={handleHandShack}
+                  closedModal={() => handleSelect('')}
+                  presHand={() => handleSelect('hand')}
+                  presHanding={() => handleSelect('handing')}
+                  fails={() => handleSelect('fail')}
+                  selectHand={select === 'hand'}
+                  selectHanding={select === 'handing'}
+                  selectFail={select === 'fail'}
+               />
             </Center>
          </Modal>
 

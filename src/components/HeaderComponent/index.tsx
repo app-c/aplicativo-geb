@@ -31,12 +31,12 @@ interface Res {
    nome: string;
 }
 export function HeaderContaponent({ title, type }: Props) {
-   const { navigate } = useNavigation();
+   const { navigate, goBack } = useNavigation();
 
    return (
       <Container>
          <Header type={type}>
-            <TouchableOpacity onPress={() => navigate('INÍCIO')}>
+            <TouchableOpacity onPress={() => goBack()}>
                {type === 'tipo1' && (
                   <Feather
                      name="arrow-left"
