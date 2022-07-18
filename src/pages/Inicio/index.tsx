@@ -143,22 +143,22 @@ export function Inicio() {
    );
 
    //* UPDATES ................................................................
-   // const ChecUpdadeDevice = React.useCallback(async () => {
-   //    const { isAvailable } = await Updates.checkForUpdateAsync();
-   //    if (isAvailable) {
-   //       setModalUpdates(true);
-   //    }
-   // }, []);
+   const ChecUpdadeDevice = React.useCallback(async () => {
+      const { isAvailable } = await Updates.checkForUpdateAsync();
+      if (isAvailable) {
+         setModalUpdates(true);
+      }
+   }, []);
 
-   // useFocusEffect(
-   //    useCallback(() => {
-   //       ChecUpdadeDevice();
-   //    }, [ChecUpdadeDevice]),
-   // );
+   useFocusEffect(
+      useCallback(() => {
+         ChecUpdadeDevice();
+      }, [ChecUpdadeDevice]),
+   );
 
    const ReloadDevice = React.useCallback(async () => {
-      // await Updates.fetchUpdateAsync();
-      // await Updates.reloadAsync();
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
    }, []);
    //* FINISH CICLO *  ....................................................................... */
 
@@ -563,9 +563,8 @@ export function Inicio() {
                   <Text fontFamily={theme.fonts.blac} fontSize="16">
                      UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
                   </Text>
-                  <Text>- Correções de bugs</Text>- Pequenas alterações no
-                  designer
-                  <Text>vesion: 2.2.6</Text>
+                  <Text>Correções na indicação</Text>
+                  <Text>vesion: 2.2.9</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR
@@ -660,7 +659,7 @@ export function Inicio() {
             <Center mt={wt}>
                <ModalIndication
                   pres={handleHandShack}
-                  closedModal={() => handleSelect('')}
+                  closedModal={() => setModalHandShak(false)}
                   presHand={() => handleSelect('hand')}
                   presHanding={() => handleSelect('handing')}
                   fails={() => handleSelect('fail')}
