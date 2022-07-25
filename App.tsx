@@ -4,7 +4,7 @@ import 'intl';
 import 'intl/locale-data/jsonp/pt-BR';
 import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
    useFonts,
    Roboto_400Regular,
@@ -23,16 +23,28 @@ import {
 import { ThemeProvider } from 'styled-components/native';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { LogBox, Text, View } from 'react-native';
-import { NativeBaseProvider } from 'native-base';
+import { LogBox, View, AppState, Modal } from 'react-native';
+import {
+   Text,
+   Box,
+   Center,
+   NativeBaseProvider,
+   Button as ButtonBase,
+} from 'native-base';
 import * as Updates from 'expo-updates';
 import * as Notifications from 'expo-notifications';
 import theme from './src/global/styles/theme';
 import AppProvider from './src/hooks';
 import { Route } from './src/routes';
 import { Loading } from './src/components/Loading';
+import { update, version } from './src/utils/updates';
 
 export default function App() {
+   const appState = useRef(AppState.currentState);
+
+   const [appVisible, setAppVisible] = React.useState(appState.current);
+   const [showModalUpdate, setModalUpdates] = React.useState(false);
+
    Notifications.setNotificationHandler({
       handleNotification: async () => ({
          shouldShowAlert: true,
@@ -40,6 +52,34 @@ export default function App() {
          shouldSetBadge: false,
       }),
    });
+
+   //* * UPDATE APLICATION ....................................................
+
+   const ChecUpdadeDevice = React.useCallback(async () => {
+      const { isAvailable } = await Updates.checkForUpdateAsync();
+      if (isAvailable) {
+         setModalUpdates(true);
+      }
+   }, []);
+
+   const ReloadDevice = React.useCallback(async () => {
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
+   }, []);
+
+   React.useEffect(() => {
+      const event = AppState.addEventListener('change', h => {
+         if (h === 'active') {
+            ChecUpdadeDevice();
+         }
+      });
+
+      return () => {
+         event.remove();
+      };
+   }, [ChecUpdadeDevice]);
+
+   //* * .......................................................................
 
    const [loaded] = useFonts({
       Roboto_400Regular,
@@ -64,6 +104,22 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
+                     <Modal visible={showModalUpdate}>
+                        <Center p="5" bg={theme.colors.primary}>
+                           <Box>
+                              <Text fontFamily={theme.fonts.blac} fontSize="16">
+                                 UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
+                              </Text>
+                              {update.map(h => (
+                                 <Text>{h.title}</Text>
+                              ))}
+                              <Text>{version}</Text>
+                           </Box>
+                           <ButtonBase onPress={ReloadDevice} mt="10">
+                              ATUALIZAR
+                           </ButtonBase>
+                        </Center>
+                     </Modal>
                      <Route />
                   </View>
                </NativeBaseProvider>

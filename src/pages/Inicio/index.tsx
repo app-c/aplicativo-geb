@@ -55,7 +55,7 @@ import { colecao } from '../../collection';
 import { Classificacao } from '../Classificacao';
 import { CartaMessagem } from '../../components/CartaMessagem';
 import { ModalIndication } from '../../components/ModalIndication';
-import { update } from '../../utils/updates';
+import { update, version } from '../../utils/updates';
 
 interface IOrder_Indication {
    id: string;
@@ -144,26 +144,6 @@ export function Inicio() {
          });
       }, [expoToken, user.id]),
    );
-
-   //* UPDATES ................................................................
-   const ChecUpdadeDevice = React.useCallback(async () => {
-      const { isAvailable } = await Updates.checkForUpdateAsync();
-      if (isAvailable) {
-         setModalUpdates(true);
-      }
-   }, []);
-
-   useFocusEffect(
-      useCallback(() => {
-         ChecUpdadeDevice();
-      }, [ChecUpdadeDevice]),
-   );
-
-   const ReloadDevice = React.useCallback(async () => {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
-   }, []);
-   //* FINISH CICLO *  ....................................................................... */
 
    //* INDICATION...............................................................
 
@@ -266,8 +246,6 @@ export function Inicio() {
    //* FINISH CICLO *  ....................................................................... */
 
    // TODO B2B *.................................................................. */
-
-   console.log(colecao.orderB2b);
 
    useEffect(() => {
       const load = Fire()
@@ -561,23 +539,6 @@ export function Inicio() {
 
    return (
       <Container>
-         <Modal visible={showModalUpdates}>
-            <Center p="5" bg={theme.colors.primary}>
-               <Box>
-                  <Text fontFamily={theme.fonts.blac} fontSize="16">
-                     UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
-                  </Text>
-                  {update.map(h => (
-                     <Text>{h.title}</Text>
-                  ))}
-                  <Text>vesion: 2.3.0</Text>
-               </Box>
-               <ButomBase onPress={ReloadDevice} mt="10">
-                  ATUALIZAR
-               </ButomBase>
-            </Center>
-         </Modal>
-
          <Modal transparent animationType="slide" visible={showModalSucess}>
             <Center bg="dark.600" mt={wt}>
                <TouchableOpacity
