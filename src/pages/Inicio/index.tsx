@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable array-callback-return */
 /* eslint-disable consistent-return */
@@ -32,6 +33,7 @@ import {
    ScrollView,
    Text,
 } from 'native-base';
+import { convertAbsoluteToRem } from 'native-base/lib/typescript/theme/v33x-theme/tools';
 import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
 import {
@@ -53,6 +55,7 @@ import { colecao } from '../../collection';
 import { Classificacao } from '../Classificacao';
 import { CartaMessagem } from '../../components/CartaMessagem';
 import { ModalIndication } from '../../components/ModalIndication';
+import { update } from '../../utils/updates';
 
 interface IOrder_Indication {
    id: string;
@@ -100,7 +103,7 @@ interface PriceProps {
 const wt = Dimensions.get('window').width;
 
 export function Inicio() {
-   const { user, expoToken } = useAuth();
+   const { user, expoToken, order, orders } = useAuth();
    const navigate = useNavigation();
 
    const [showModalSucess, setShowModalSucess] = React.useState(false);
@@ -216,6 +219,7 @@ export function Inicio() {
 
    const HandFailIndication = useCallback(async () => {
       Fire().collection(colecao.orderIndication).doc(idIndication).delete();
+      setModalHandShak(false);
 
       Fire()
          .collection('sucess_indication')
@@ -262,6 +266,8 @@ export function Inicio() {
    //* FINISH CICLO *  ....................................................................... */
 
    // TODO B2B *.................................................................. */
+
+   console.log(colecao.orderB2b);
 
    useEffect(() => {
       const load = Fire()
@@ -532,19 +538,19 @@ export function Inicio() {
 
    useFocusEffect(
       useCallback(() => {
-         if (orderIndication.length > 0) {
-            setModalIndication(true);
-         }
-         if (sucess.length > 0) {
-            setShowModalSucess(true);
-         }
-         if (orderB2b.length > 0) {
-            setModalB2b(true);
-         }
+         orderIndication.length > 0
+            ? setModalIndication(true)
+            : setModalIndication(false);
 
-         if (orderTransaction.length > 0) {
-            setModalTransaction(true);
-         }
+         sucess.length > 0
+            ? setShowModalSucess(true)
+            : setShowModalSucess(false);
+
+         orderB2b.length > 0 ? setModalB2b(true) : setModalB2b(false);
+
+         orderTransaction.length > 0
+            ? setModalTransaction(true)
+            : setModalTransaction(false);
       }, [
          orderB2b.length,
          orderIndication.length,
@@ -563,8 +569,10 @@ export function Inicio() {
                   <Text fontFamily={theme.fonts.blac} fontSize="16">
                      UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
                   </Text>
-                  <Text>Correções na indicação</Text>
-                  <Text>vesion: 2.2.9</Text>
+                  {update.map(h => (
+                     <Text>{h.title}</Text>
+                  ))}
+                  <Text>vesion: 2.3.0</Text>
                </Box>
                <ButomBase onPress={ReloadDevice} mt="10">
                   ATUALIZAR
@@ -645,7 +653,7 @@ export function Inicio() {
                            handShak={() => {
                               HandShak(h.quemIndicou, h.id);
                            }}
-                           failTransaction={() => HandFailIndication()}
+                           failTransaction={() => setModalIndication(false)}
                            quemIndicouName={h.quemIndicouName}
                            quemIndicouWorkName={h.quemIndicouWorkName}
                         />

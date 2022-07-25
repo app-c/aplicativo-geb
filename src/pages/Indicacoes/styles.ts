@@ -23,9 +23,9 @@ export const TextButon = styled.Text`
 `;
 
 export const BoxModal = styled.View`
-   /* height: 600px; */
+   height: ${RFValue(600)}px;
    padding: 20px;
-   margin-top: ${RFValue(200)}px;
+   margin-top: ${RFValue(10)}px;
 `;
 
 export const BoxTextInput = styled.View`

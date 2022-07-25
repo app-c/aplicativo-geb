@@ -43,6 +43,8 @@ interface AuthContexData {
    loading: boolean;
    signIn(credential: SignInCred): Promise<void>;
    transactionAdd: (valor: ITransaction) => void;
+   order: (colect: string) => void;
+   orders: [];
 
    orderB2b: (valor: IOrderB2b) => void;
    orderIndicacao: (valor: IOrderIndication) => void;
@@ -59,6 +61,7 @@ export const AuthContext = createContext<AuthContexData>({} as AuthContexData);
 export const AuthProvider: React.FC = ({ children }) => {
    const [loading, setLoading] = useState(true);
    const [user, setUser] = useState<IUserDto | null>(null);
+   const [orders, setOrder] = React.useState<[]>([]);
 
    const [listUser, setListUser] = useState<IUserDto[]>([]);
    const [expoToken, setExpotoken] = React.useState('');
@@ -106,6 +109,7 @@ export const AuthProvider: React.FC = ({ children }) => {
                      presenca,
                      inativo,
                      token,
+                     apadrinhado,
                   } = profile.data() as IUserDto;
 
                   if (profile.exists) {
@@ -128,6 +132,7 @@ export const AuthProvider: React.FC = ({ children }) => {
                         presenca,
                         inativo,
                         token,
+                        apadrinhado,
                      };
                      await AsyncStorage.setItem(
                         User_Collection,
@@ -207,6 +212,20 @@ export const AuthProvider: React.FC = ({ children }) => {
             });
       },
       [],
+   );
+
+   const order = React.useCallback(
+      (colect: string) => {
+         Firestore()
+            .collection(colect)
+            .get()
+            .then(h => {
+               const or = h.docs.map(h => h.data());
+               setOrder(or);
+            });
+         return orders;
+      },
+      [orders],
    );
 
    //* .......................................................................
@@ -307,6 +326,8 @@ export const AuthProvider: React.FC = ({ children }) => {
             orderIndicacao,
             orderTransaction,
             expoToken,
+            order,
+            orders,
          }}
       >
          {children}

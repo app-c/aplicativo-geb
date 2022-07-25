@@ -41,7 +41,7 @@ export function ModalOrderIndication({
          <Description>nome: {clientName},</Description>
          <Description>telefone: {telefone}</Description>
          <Title style={{ marginTop: 10 }}>
-            Vocẽ fechou negócio com {clientName}?
+            Vocẽ fechou entrou em contato com {clientName}?
          </Title>
 
          <BoxButon>

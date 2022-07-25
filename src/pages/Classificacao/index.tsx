@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import fire from "@react-native-firebase/firestore";
-import { View } from "react-native";
-import { HeaderContaponent } from "../../components/HeaderComponent";
-import { IUserDto } from "../../dtos";
-import { useAuth } from "../../hooks/AuthContext";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import fire from '@react-native-firebase/firestore';
+import { View } from 'react-native';
+import { HeaderContaponent } from '../../components/HeaderComponent';
+import { IUserDto } from '../../dtos';
+import { useAuth } from '../../hooks/AuthContext';
 import {
    BoxAvatar,
    BoxContainer,
@@ -13,10 +13,10 @@ import {
    BoxPosition,
    Container,
    Title,
-} from "./styles";
-import { colecao } from "../../collection";
-import { Loading } from "../../components/Loading";
-import { B2B } from "../B2B";
+} from './styles';
+import { colecao } from '../../collection';
+import { Loading } from '../../components/Loading';
+import { B2B } from '../B2B';
 
 interface PropsEntrada {
    createdAt: string;
@@ -60,8 +60,8 @@ export function Classificacao() {
    useEffect(() => {
       fire()
          .collection(colecao.users)
-         .onSnapshot((h) => {
-            const res = h.docs.map((p) => {
+         .onSnapshot(h => {
+            const res = h.docs.map(p => {
                return p.data() as IUserDto;
             });
             setFindAllUsers(res);
@@ -69,11 +69,11 @@ export function Classificacao() {
 
       fire()
          .collection(colecao.transaction)
-         .onSnapshot((h) => {
+         .onSnapshot(h => {
             const trans = h.docs
-               .map((p) => p.data() as PropsEntrada)
-               .filter((h) => h.type === "saida")
-               .map((h) => {
+               .map(p => p.data() as PropsEntrada)
+               .filter(h => h.type === 'saida')
+               .map(h => {
                   return {
                      ...h,
                      pontosSaida: 10,
@@ -85,23 +85,23 @@ export function Classificacao() {
 
       fire()
          .collection(colecao.presenca)
-         .onSnapshot((res) => {
-            const re = res.docs.map((h) => h.data());
+         .onSnapshot(res => {
+            const re = res.docs.map(h => h.data());
             setPresenca(re);
          });
 
       fire()
-         .collection("b2b")
-         .onSnapshot((res) => {
-            const r = res.docs.map((h) => h.data());
+         .collection('b2b')
+         .onSnapshot(res => {
+            const r = res.docs.map(h => h.data());
             setB2b(r);
          });
    }, [user.id]);
 
    const PresencaRanking = useMemo(() => {
-      const data = FindAllUser.map((users) => {
+      const data = FindAllUser.map(users => {
          const filtroPresença = presenca.filter(
-            (h) => h.user_id === users.id && h.presenca === true
+            h => h.user_id === users.id && h.presenca === true,
          );
          const qntPresenca = filtroPresença.length;
          const pontos = filtroPresença.length * 10;
@@ -120,7 +120,7 @@ export function Classificacao() {
                position: `${i + 1}º`,
             };
          })
-         .find((h) => h.user_id === user.id);
+         .find(h => h.user_id === user.id);
 
       return data;
    }, [FindAllUser, presenca, user.id]);
@@ -144,7 +144,7 @@ export function Classificacao() {
                position: `${i + 1}º`,
             };
          })
-         .find((h) => h.user_id === user.id);
+         .find(h => h.user_id === user.id);
 
       return data;
    }, [FindAllUser, user.id]);
@@ -168,7 +168,7 @@ export function Classificacao() {
                position: `${i + 1}º`,
             };
          })
-         .find((h) => h.user_id === user.id);
+         .find(h => h.user_id === user.id);
 
       return data;
    }, [FindAllUser, user.id]);
@@ -177,14 +177,14 @@ export function Classificacao() {
       fire()
          .collection(colecao.transaction)
          .get()
-         .then((h) => {
-            const trans = h.docs.map((p) => {
+         .then(h => {
+            const trans = h.docs.map(p => {
                return p.data();
             });
 
             const fil = trans
-               .filter((h) => h.type === "entrada")
-               .map((h) => {
+               .filter(h => h.type === 'entrada')
+               .map(h => {
                   return {
                      ...h,
                      pontosEntrada: 10,
@@ -196,7 +196,7 @@ export function Classificacao() {
 
    const Entrada = useMemo(() => {
       const data = FindAllUser.map((user, i) => {
-         const filtroConsumo = findEntrada.filter((h) => {
+         const filtroConsumo = findEntrada.filter(h => {
             if (h.prestador_id === user.id) {
                return h;
             }
@@ -210,9 +210,9 @@ export function Classificacao() {
             return acc + Number(item.pontosEntrada);
          }, 0);
 
-         const total = Number(valor).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+         const total = Number(valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
          });
 
          return {
@@ -239,7 +239,7 @@ export function Classificacao() {
                posicao: `${po}º`,
             };
          })
-         .find((h) => h.id === user.id);
+         .find(h => h.id === user.id);
 
       // setLoad(false);
 
@@ -248,7 +248,7 @@ export function Classificacao() {
 
    const Saida = useMemo(() => {
       const data = FindAllUser.map((users, i) => {
-         const filtroConsumo = findSaida.filter((h) => {
+         const filtroConsumo = findSaida.filter(h => {
             if (h.consumidor === users.id) {
                return h;
             }
@@ -262,9 +262,9 @@ export function Classificacao() {
             return acc + Number(item.pontosSaida);
          }, 0);
 
-         const total = Number(valor).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+         const total = Number(valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
          });
 
          return {
@@ -291,14 +291,14 @@ export function Classificacao() {
                posicao: `${po}º`,
             };
          })
-         .find((h) => h.id === user.id);
+         .find(h => h.id === user.id);
 
       return po;
    }, [FindAllUser, findSaida, user.id]);
 
    const B2b = useMemo(() => {
-      const data = FindAllUser.map((users) => {
-         const b2bFiltro = b2b.filter((h) => h.user_id === users.id);
+      const data = FindAllUser.map(users => {
+         const b2bFiltro = b2b.filter(h => h.user_id === users.id);
          const qntB2b = b2bFiltro.length;
          const pontos = b2bFiltro.length * 20;
          return {
@@ -316,7 +316,7 @@ export function Classificacao() {
                position: `${i + 1}º`,
             };
          })
-         .find((h) => h.user_id === user.id);
+         .find(h => h.user_id === user.id);
 
       return data;
    }, [FindAllUser, b2b, user.id]);
@@ -345,8 +345,8 @@ export function Classificacao() {
                <BoxEventos>
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >
@@ -362,8 +362,8 @@ export function Classificacao() {
 
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >
@@ -379,8 +379,8 @@ export function Classificacao() {
 
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >
@@ -396,8 +396,8 @@ export function Classificacao() {
 
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >
@@ -413,8 +413,8 @@ export function Classificacao() {
 
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >
@@ -430,8 +430,8 @@ export function Classificacao() {
 
                   <View
                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                         marginBottom: 8,
                      }}
                   >

@@ -7,7 +7,6 @@ import { TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CardsPresença } from '../../../components/CardsPresença';
 import { HeaderContaponent } from '../../../components/HeaderComponent';
-import { IUserDto } from '../../../dtos';
 import { useAuth } from '../../../hooks/AuthContext';
 
 interface IProps {
@@ -35,15 +34,14 @@ export function ListaPresença() {
    );
 
    React.useEffect(() => {
-      const ld = fire();
-      fire()
+      const ld = fire()
          .collection('presença')
          .onSnapshot(p => {
             const pres = p.docs.map(p => p.data() as IProps);
 
             const filDate = pres.filter(h => {
                const mes = new Date(h.createdAt).getMonth() + 1;
-               const mesSelect = selectdate.getMonth();
+               const mesSelect = selectdate.getMonth() + 1;
                if (mes === mesSelect) {
                   return h;
                }
@@ -59,9 +57,9 @@ export function ListaPresença() {
             });
             setData(res);
          });
-   }, [listUser, selectdate]);
 
-   console.log(data);
+      return () => ld();
+   }, [listUser, selectdate]);
 
    const Month = React.useMemo(() => {
       const month = format(selectdate, 'MM/yy');
