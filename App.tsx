@@ -14,6 +14,7 @@ import {
    Comfortaa_400Regular,
    Comfortaa_500Medium,
 } from '@expo-google-fonts/comfortaa';
+import { OpenSansCondensed_700Bold } from '@expo-google-fonts/open-sans-condensed';
 import {
    BarlowCondensed_400Regular,
    BarlowCondensed_600SemiBold,
@@ -43,6 +44,7 @@ export default function App() {
    const [loaded] = useFonts({
       Roboto_400Regular,
       Roboto_900Black,
+      OpenSansCondensed_700Bold,
       Comfortaa_400Regular,
       Comfortaa_500Medium,
       BarlowCondensed_400Regular,

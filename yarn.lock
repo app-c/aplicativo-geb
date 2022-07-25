@@ -1262,6 +1262,11 @@
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/comfortaa/-/comfortaa-0.2.2.tgz#c144b83e4f596446cb7a35bffbc50390796fbf23"
   integrity sha512-onCKZ3igXI1DRwUBW4gaT5dsFysMGd7eXlUzJQWPgaF8l2LuUib9zNRxEiZHYgx9CQ17bP400ORRlfYo033whQ==
 
+"@expo-google-fonts/open-sans-condensed@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@expo-google-fonts/open-sans-condensed/-/open-sans-condensed-0.2.2.tgz#24426ee2eac84c47a21453aad10ecfd1d6636161"
+  integrity sha512-oaC879jKreBXb3twH0S8eOxNBs2DowAx2pA9Sz4VaOEWNUStPQJjcNfRxhr/THwSCENkNTj91fvJYOdgWp1aNA==
+
 "@expo-google-fonts/roboto@^0.2.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/roboto/-/roboto-0.2.2.tgz#0a9f4685e8d02bdb0d2d2919c102f531bdb353d4"

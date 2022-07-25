@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "App Center Icon.png",
+      "filename" : "icon2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "App Store 1024pt.png",
+      "filename" : "icon2-2.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "App Store 1024pt-1.png",
+      "filename" : "icon2-3.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
