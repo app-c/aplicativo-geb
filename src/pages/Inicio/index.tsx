@@ -559,8 +559,6 @@ export function Inicio() {
       ]),
    );
 
-   console.log(showModalTransaction);
-
    return (
       <Container>
          <Modal visible={showModalUpdates}>
