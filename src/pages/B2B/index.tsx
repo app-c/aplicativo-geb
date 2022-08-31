@@ -1,27 +1,28 @@
 /* eslint-disable camelcase */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, ScrollView, Text, View } from "react-native";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import fire from "@react-native-firebase/firestore";
-import { Form } from "@unform/mobile";
-import { HeaderContaponent } from "../../components/HeaderComponent";
-import { Container } from "./styles";
-import { MembrosComponents } from "../../components/MembrosCompornents";
-import { useAuth } from "../../hooks/AuthContext";
-import { IUserDto } from "../../dtos";
-import { Box } from "../FindMembro/styles";
-import { InputCasdastro } from "../../components/InputsCadastro";
-import { colecao } from "../../collection";
-import { Loading } from "../../components/Loading";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, ScrollView, Text, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import fire from '@react-native-firebase/firestore';
+import { Form } from '@unform/mobile';
+import { HeaderContaponent } from '../../components/HeaderComponent';
+import { Container } from './styles';
+import { MembrosComponents } from '../../components/MembrosCompornents';
+import { useAuth } from '../../hooks/AuthContext';
+import { IUserDto } from '../../dtos';
+import { Box } from '../FindMembro/styles';
+import { InputCasdastro } from '../../components/InputsCadastro';
+import { colecao } from '../../collection';
+import { Loading } from '../../components/Loading';
 
 export function B2B() {
    const { navigate } = useNavigation();
-   const { listUser } = useAuth();
+   const { listUser, user } = useAuth();
 
-   const [membros, setMembros] = useState<IUserDto[]>([]);
-   const [value, setValue] = useState("");
-   const [lista, setLista] = useState<IUserDto[]>([]);
-   const [load, setLoad] = useState(true);
+   const [value, setValue] = useState('');
+   const [lista, setLista] = useState<IUserDto[]>(
+      listUser.filter(h => h.id !== user.id),
+   );
+   const [load, setLoad] = useState(false);
 
    const hanldeTransaction = useCallback(
       (
@@ -29,9 +30,9 @@ export function B2B() {
          avatar_url: string,
          logoUrl: string,
          nome: string,
-         workName: string
+         workName: string,
       ) => {
-         navigate("orderB2b", {
+         navigate('orderB2b', {
             prestador_id,
             avatar_url,
             logoUrl,
@@ -39,25 +40,17 @@ export function B2B() {
             workName,
          });
       },
-      [navigate]
-   );
-
-   useFocusEffect(
-      useCallback(() => {
-         if (listUser[0]) {
-            setLoad(false);
-         }
-      }, [])
+      [navigate],
    );
 
    useEffect(() => {
-      if (value === "") {
-         setLista(listUser);
+      if (value === '') {
+         setLista(lista);
       } else {
          setLista(
-            listUser.filter((h) => {
+            lista.filter(h => {
                return h.nome.indexOf(value) > -1;
-            })
+            }),
          );
       }
    }, [listUser, value]);
@@ -76,8 +69,8 @@ export function B2B() {
                         name="find"
                         icon="search"
                         type="custom"
-                        options={{ mask: "****************************" }}
-                        onChangeText={(text) => setValue(text)}
+                        options={{ mask: '****************************' }}
+                        onChangeText={text => setValue(text)}
                         value={value}
                      />
                   </Box>
@@ -86,7 +79,7 @@ export function B2B() {
                <View style={{ paddingBottom: 350 }}>
                   <FlatList
                      data={lista}
-                     keyExtractor={(h) => h.id}
+                     keyExtractor={h => h.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
@@ -97,7 +90,7 @@ export function B2B() {
                                     h.avatarUrl,
                                     h.logoUrl,
                                     h.nome,
-                                    h.workName
+                                    h.workName,
                                  )
                               }
                               userName={h.nome}

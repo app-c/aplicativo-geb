@@ -1,5 +1,6 @@
 export const update = [
-   { title: 'Melhorias nas mensagens de pop up de transações' },
+   { title: 'Correçoes dos nomes na hora de fazer um consumo' },
+   { title: 'Não é mais possivel fazer negocios com vocẽ mesmo' },
    { title: 'Melhorias no B2B' },
 ];
-export const version = '2.3.2';
+export const version = '2.3.3';

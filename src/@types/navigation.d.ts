@@ -3,7 +3,8 @@ export type TransactionNavigtionsProps = {
    prestador_id?: string;
    avatar_url?: string;
    logoUrl?: string;
-   nome?: string;
+   consumidor_name?: string;
+   prestador_name?: string;
    workName?: string;
    token?: string;
 };
@@ -15,9 +16,10 @@ export type OrderNavigationIndication = {
 
 type Sucess = {
    workName: string;
-   nome: string;
    description: string;
    token: string;
+   consumidor_name: string;
+   prestador_name: string;
 };
 
 export declare global {

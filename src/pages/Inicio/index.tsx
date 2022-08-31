@@ -88,7 +88,8 @@ interface PropsB2b {
 interface ProsTransaction {
    id: string;
    data: {};
-   nome: string;
+   consumidor_name: string;
+   prestador_name: string;
    prestador_id: string;
    valor: string;
    description: string;
@@ -700,7 +701,7 @@ export function Inicio() {
                               h.valor,
                            );
                         }}
-                        nome={h.nome}
+                        nome={h.consumidor_name}
                         rejeitar={() => {
                            DeleteOrderTransaction(h.id);
                         }}

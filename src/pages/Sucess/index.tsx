@@ -14,7 +14,8 @@ interface RouteParams {
 
 export function Sucess() {
    const route = useRoute();
-   const { token, workName, nome, description } = route.params as RouteParams;
+   const { token, workName, prestador_name, consumidor_name, description } =
+      route.params as RouteParams;
 
    const { reset } = useNavigation();
 
@@ -23,7 +24,7 @@ export function Sucess() {
          to: token,
          sound: 'default',
          title: 'Alguem esta consumindo seu produto',
-         body: `cliente ${nome} está adiquirindo: ${description}`,
+         body: `cliente ${consumidor_name} está adiquirindo: ${description}`,
       };
 
       await fetch('https://exp.host/--/api/v2/push/send', {

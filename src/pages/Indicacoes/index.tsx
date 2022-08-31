@@ -34,18 +34,19 @@ import theme from '../../global/styles/theme';
 
 export function Indicacoes() {
    const { user, orderIndicacao, listUser } = useAuth();
-   const refModal = useRef<Modalize>(null);
    const { navigate } = useNavigation();
    const [modal, setModal] = useState(false);
 
-   const [users, setUsers] = useState<IUserDto[]>([]);
+   // const [users, setUsers] = useState<IUserDto[]>([]);
    const [descricao, setDescricao] = useState('');
    const [userId, setUserId] = useState('');
    const [work, setWork] = useState('');
    const [nomeCliente, setNomeCliente] = useState('');
    const [telefoneCliente, setTelefoneCliente] = useState('');
    const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDto[]>([]);
+   const [lista, setLista] = useState<IUserDto[]>(
+      listUser.filter(h => h.id !== user.id),
+   );
    const [expoToken, setExpoToken] = React.useState('');
 
    const sendPushNotification = useCallback(async () => {
@@ -66,12 +67,6 @@ export function Indicacoes() {
          body: JSON.stringify(message),
       });
    }, [expoToken, user.nome]);
-
-   useFocusEffect(
-      useCallback(() => {
-         setUsers(listUser);
-      }, [listUser]),
-   );
 
    const OpenModal = useCallback(
       (user_id: string, workName: string, token: string) => {
@@ -120,16 +115,17 @@ export function Indicacoes() {
    ]);
 
    useEffect(() => {
+      const users = listUser.filter(h => h.id !== user.id);
       if (value === '') {
-         setLista(listUser);
+         setLista(users);
       } else {
          setLista(
-            listUser.filter(h => {
+            users.filter(h => {
                return h.nome.indexOf(value) > -1;
             }),
          );
       }
-   }, [listUser, users, value]);
+   }, [listUser, user.id, value]);
 
    return (
       <Container>

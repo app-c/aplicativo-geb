@@ -50,10 +50,11 @@ export interface IOrderB2b {
 
 export interface IOrderTransaction {
    prestador_id?: string;
+   prestador_name?: string;
    consumidor?: string;
+   consumidor_name?: string;
    valor: string;
    description: string;
-   nome: string;
    data: string;
 }
 

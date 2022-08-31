@@ -39,12 +39,16 @@ export function Padrinho() {
       [navigate, user.id],
    );
 
+   const users = React.useMemo(() => {
+      return listUser.filter(h => h.id !== user.id);
+   }, [listUser, user.id]);
+
    return (
       <NativeBaseProvider>
          <HeaderContaponent type="tipo1" title="APDRINHAMENTO" />
 
          <FlatList
-            data={listUser}
+            data={users}
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <MembrosApadrinhado

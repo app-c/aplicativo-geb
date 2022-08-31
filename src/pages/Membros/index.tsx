@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable array-callback-return */
 /* eslint-disable camelcase */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, View } from 'react-native';
@@ -27,9 +29,11 @@ export function Membros() {
    const hanldeTransaction = useCallback(
       (
          prestador_id: string,
+
          avatar_url: string,
          logoUrl: string,
-         nome: string,
+         prestador_name: string,
+         consumidor_name: string,
          workName: string,
          token: string,
       ) => {
@@ -37,7 +41,8 @@ export function Membros() {
             prestador_id,
             avatar_url,
             logoUrl,
-            nome,
+            prestador_name,
+            consumidor_name,
             workName,
             token,
          });
@@ -47,14 +52,15 @@ export function Membros() {
 
    useFocusEffect(
       useCallback(() => {
-         const us = listUser.sort((a, b) => {
+         const users = listUser.filter(h => h.id !== user.id);
+         const us = users.sort((a, b) => {
             if (a.nome < b.nome) {
                return -1;
             }
          });
          setMembros(us);
          setLoad(false);
-      }, []),
+      }, [listUser, user.id]),
    );
 
    useEffect(() => {
@@ -105,6 +111,7 @@ export function Membros() {
                                     h.avatarUrl,
                                     h.logoUrl,
                                     h.nome,
+                                    user.nome,
                                     h.workName,
                                     h.token,
                                  )

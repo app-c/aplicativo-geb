@@ -175,13 +175,22 @@ export const AuthProvider: React.FC = ({ children }) => {
    );
 
    const orderTransaction = useCallback(
-      async ({ prestador_id, consumidor, valor, description, nome, data }) => {
+      async ({
+         prestador_id,
+         consumidor,
+         valor,
+         description,
+         data,
+         prestador_name,
+         consumidor_name,
+      }) => {
          Firestore().collection(colecao.orderTransaction).add({
             prestador_id,
+            prestador_name,
             consumidor /** user_id */,
+            consumidor_name,
             valor,
             description,
-            nome /** user.nome */,
             data,
          });
       },

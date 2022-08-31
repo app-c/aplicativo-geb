@@ -45,8 +45,15 @@ export function Transaction() {
    const moneyRef = useRef(null);
    const { user, orderTransaction } = useAuth();
    const route = useRoute();
-   const { prestador_id, avatar_url, nome, workName, logoUrl, token } =
-      route.params as IRoute;
+   const {
+      prestador_id,
+      avatar_url,
+      consumidor_name,
+      prestador_name,
+      workName,
+      logoUrl,
+      token,
+   } = route.params as IRoute;
 
    const [value, setValue] = useState('');
    const [prestador, setPrestador] = useState<IUserDto>();
@@ -69,26 +76,34 @@ export function Transaction() {
          consumidor: user.id,
          valor: String(mon),
          description,
-         nome,
+         prestador_name,
+         consumidor_name,
          data: format(new Date(Date.now()), 'dd/MM/yy - HH:mm'),
       });
 
-      navigate('sucess', { workName, description, nome, token });
+      navigate('sucess', {
+         workName,
+         description,
+         consumidor_name,
+         prestador_name,
+         token,
+      });
    }, [
-      description,
       mon,
-      navigate,
-      nome,
+      description,
       orderTransaction,
       prestador_id,
       user.id,
+      navigate,
       workName,
+      consumidor_name,
+      prestador_name,
+      token,
    ]);
 
    useEffect(() => {
       const mo = moneyRef.current?.getRawValue();
       setMon(mo);
-      console.log(mo);
    }, [value]);
 
    return (
@@ -96,7 +111,7 @@ export function Transaction() {
          <HeaderContaponent type="tipo1" title="" />
          <Box>
             <Title style={{ marginBottom: 30, textAlign: 'center' }}>
-               Vocẽ está consumindo de: {nome}, da empresa {workName}
+               Vocẽ está consumindo de: {prestador_name}, da empresa {workName}
                {prestador?.workName}
             </Title>
             <BoxElement>
