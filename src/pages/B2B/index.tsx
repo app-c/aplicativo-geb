@@ -8,20 +8,25 @@ import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { IUserDto } from '../../dtos';
+import { IProfileDto, IUserDtos } from '../../dtos';
 import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
 import { Loading } from '../../components/Loading';
+import { api } from '../../services/api';
+
+type UserProps = {
+   user: IUserDtos;
+   profile: IProfileDto;
+};
 
 export function B2B() {
    const { navigate } = useNavigation();
-   const { listUser, user } = useAuth();
+   const { user } = useAuth();
 
    const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDto[]>(
-      listUser.filter(h => h.id !== user.id),
-   );
+   const [lista, setLista] = useState<UserProps[]>([]);
+   const [allUser, setAllUser] = useState<UserProps[]>([]);
    const [load, setLoad] = useState(false);
 
    const hanldeTransaction = useCallback(
@@ -43,17 +48,35 @@ export function B2B() {
       [navigate],
    );
 
+   const Users = React.useCallback(async () => {
+      await api
+         .get('/user/list-all-user')
+         .then(h => {
+            setAllUser(h.data);
+         })
+         .finally(() => setLoad(true))
+         .catch(err => {
+            console.log(err.response.data);
+         });
+   }, []);
+
+   useFocusEffect(
+      useCallback(() => {
+         Users();
+      }, [Users]),
+   );
+
    useEffect(() => {
       if (value === '') {
-         setLista(lista);
+         setLista(allUser);
       } else {
          setLista(
             lista.filter(h => {
-               return h.nome.indexOf(value) > -1;
+               return h.user.nome.indexOf(value) > -1;
             }),
          );
       }
-   }, [listUser, value]);
+   }, [allUser, lista, value]);
 
    return (
       <>
@@ -86,19 +109,19 @@ export function B2B() {
                               icon="b2b"
                               pres={() =>
                                  hanldeTransaction(
-                                    h.id,
-                                    h.avatarUrl,
-                                    h.logoUrl,
-                                    h.nome,
-                                    h.workName,
+                                    h.user.id,
+                                    h.profile.avatar,
+                                    h.profile.logo,
+                                    h.user.nome,
+                                    h.profile.workName,
                                  )
                               }
-                              userName={h.nome}
-                              user_avatar={h.avatarUrl}
-                              oficio={h.workName}
-                              imageOfice={h.logoUrl}
-                              inativoPres={h.inativo}
-                              inativo={h.inativo}
+                              userName={h.user.nome}
+                              user_avatar={h.profile.avatar}
+                              oficio={h.profile.workName}
+                              imageOfice={h.profile.logo}
+                              inativoPres={h.profile.inativo}
+                              inativo={h.profile.inativo}
                            />
                         </>
                      )}

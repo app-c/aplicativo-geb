@@ -1,70 +1,88 @@
 /* eslint-disable camelcase */
-export interface IUserDto {
-   id: string;
+export interface IUserDtos {
+   id?: string;
    nome: string;
-   workName: string;
+   membro: string;
+   senha: string;
    adm: boolean;
-   ramo: string;
-   email: string;
-   enquadramento: string;
-   indicacao: number;
-   whats: string;
-   links: {
-      site: string;
-      maps: string;
-      insta: string;
-      face: string;
-   };
-   presenca: {
-      avatar: string;
-      createdAt: string;
-      nome: string;
-      presenca: boolean;
-      user_id: string;
-   }[];
-   CPF: string;
-   CNPJ: string;
-   padrinhQuantity: number;
-   avatarUrl: string;
-   logoUrl: string;
-   inativo: boolean;
-   token: string;
-   apadrinhado: boolean;
+   token?: string;
 }
 
-export interface ITransaction {
-   prestador_id?: string;
-   consumidor?: string;
-   descricao: string;
-   type: 'entrada' | 'saida';
-   valor;
-   createdAt: string;
-}
-
-export interface IOrderB2b {
-   prestador_id: string;
+export interface IProfileDto {
    user_id: string;
-   data: string;
-   description: string;
+   whats: string;
+   workName: string;
+   CNPJ: string;
+   CPF: string;
+   ramo: string;
+   enquadramento: string;
+   email: string;
+   insta?: string;
+   web?: string;
+   face?: string;
+   whatsApp?: string;
+   logo?: string;
+   avatar?: string;
+}
+
+export interface IPresencaDto {
+   id?: string;
+   nome: string;
+   user_id: string;
+   presenca?: boolean;
+   createdAt?: Date;
 }
 
 export interface IOrderTransaction {
-   prestador_id?: string;
-   prestador_name?: string;
-   consumidor?: string;
-   consumidor_name?: string;
-   valor: string;
-   description: string;
-   data: string;
+   id?: string;
+   consumidor_name: string;
+   prestador_name: string;
+   consumidor_id: string;
+
+   prestador_id: string;
+   valor: number;
+   descricao: string;
+   createdAt?: Date;
 }
 
-export interface IOrderIndication {
-   userId: string;
-   quemIndicou: string;
-   quemIndicouName: string;
-   quemIndicouWorkName: string;
-   nomeCliente: string;
-   telefoneCliente: string;
+export interface ITransaction {
+   id?: string;
+   consumidor_name?: string;
+   prestador_name?: string;
+   consumidor_id?: string;
+
+   prestador_id?: string;
+   valor: number;
    descricao: string;
-   createdAt?: string;
+   createdAt?: Date;
+}
+
+export interface IB2b {
+   send_id: string;
+   send_name: string;
+   recevid_name: string;
+   recevid_id: string;
+   appointment: string;
+   assunto: string;
+   createdAt?: Date;
+   validate?: boolean;
+}
+
+export interface IIndicationDto {
+   id?: string;
+   indicado_id: string;
+   indicado_name: string;
+   quemIndicou_id: string;
+   quemIndicou_name: string;
+   client_name: string;
+   phone_number_client: number;
+   description: string;
+   validate?: boolean;
+}
+
+export interface ILinkDto {
+   id?: string;
+   user_id: string;
+   nome: string;
+   link: string;
 }

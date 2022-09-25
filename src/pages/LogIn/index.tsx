@@ -29,13 +29,14 @@ export function SingIn() {
    const formRef = useRef<FormHandles>(null);
    const [showModal, setShowModal] = useState(false);
 
+   const [membro, setMembro] = useState('');
    const [email, setEmail] = useState('');
    const [pass, setPass] = useState('');
    const [errEmail, setErrEmail] = useState(false);
    const [errPass, setErrPass] = useState(false);
 
    const handleSubmit = useCallback(async () => {
-      if (email === '' || pass === '') {
+      if (membro === '' || pass === '') {
          return Alert.alert('Login', 'forneça um email e uma senha');
       }
 
@@ -43,27 +44,29 @@ export function SingIn() {
       setErrPass(false);
 
       await signIn({
-         email,
+         membro,
          senha: pass,
-      }).catch(err => {
-         const { code } = err;
-         if (code === 'auth/user-not-found') {
-            setErrEmail(true);
-            return Alert.alert('Login', 'usuário nao encontrado');
-         }
-
-         if (code === 'auth/invalid-email') {
-            setErrEmail(true);
-            return Alert.alert('Login', 'email incorreto');
-         }
-
-         if (code === 'auth/wrong-password') {
-            setErrPass(true);
-            return Alert.alert('Login', 'senha incorreto');
-         }
-         return Alert.alert('Login', 'usuário nao encontrado');
       });
-   }, [email, pass, signIn]);
+
+      // .catch(err => {
+      //    const { code } = err;
+      //    if (code === 'auth/user-not-found') {
+      //       setErrEmail(true);
+      //       return Alert.alert('Login', 'usuário nao encontrado');
+      //    }
+
+      //    if (code === 'auth/invalid-email') {
+      //       setErrEmail(true);
+      //       return Alert.alert('Login', 'email incorreto');
+      //    }
+
+      //    if (code === 'auth/wrong-password') {
+      //       setErrPass(true);
+      //       return Alert.alert('Login', 'senha incorreto');
+      //    }
+      //    return Alert.alert('Login', 'usuário nao encontrado');
+      // });
+   }, [membro, pass, signIn]);
 
    const handleForgotPassword = useCallback(() => {
       auth()
@@ -87,7 +90,7 @@ export function SingIn() {
                      <FormControl>
                         <FormControl.Label>DIGITE SEU E-MAIL</FormControl.Label>
                         <Input
-                           onChangeText={h => setEmail(h)}
+                           onChangeText={setEmail}
                            value={email}
                            autoCapitalize="none"
                            keyboardType="email-address"
@@ -123,15 +126,14 @@ export function SingIn() {
          <BoxInput>
             <Form ref={formRef} onSubmit={handleSubmit}>
                <FormControl isInvalid={errEmail} w="75%" maxW="300px">
-                  <FormControl.Label>E-MAIL</FormControl.Label>
+                  <FormControl.Label>MEMBRO</FormControl.Label>
                   <Input
                      w="100%"
                      color={theme.colors.text_secundary}
                      type="text"
                      autoCapitalize="none"
                      keyboardType="email-address"
-                     onChangeText={h => setEmail(h)}
-                     value={email}
+                     onChangeText={h => setMembro(h)}
                      selectionColor={theme.colors.text_secundary}
                   />
                   <FormControl.ErrorMessage

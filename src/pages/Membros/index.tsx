@@ -16,10 +16,11 @@ import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
 import { Loading } from '../../components/Loading';
+import { api } from '../../services/api';
 
 export function Membros() {
    const { navigate } = useNavigation();
-   const { user, listUser } = useAuth();
+   const { user } = useAuth();
 
    const [membros, setMembros] = useState<IUserDto[]>([]);
    const [value, setValue] = useState('');
@@ -49,6 +50,10 @@ export function Membros() {
       },
       [navigate],
    );
+
+   const Users = React.useCallback(async () => {
+      // api.defaults.headers.common['Authorization'] =
+   }, []);
 
    useFocusEffect(
       useCallback(() => {

@@ -38,12 +38,16 @@ import AppProvider from './src/hooks';
 import { Route } from './src/routes';
 import { Loading } from './src/components/Loading';
 import { update, version } from './src/utils/updates';
+import { api } from './src/services/api';
+import { New } from './src/components/new';
 
 export default function App() {
    const appState = useRef(AppState.currentState);
 
    const [appVisible, setAppVisible] = React.useState(appState.current);
    const [showModalUpdate, setModalUpdates] = React.useState(false);
+
+   const [modalNew, setModaNew] = React.useState(false);
 
    Notifications.setNotificationHandler({
       handleNotification: async () => ({
@@ -63,8 +67,9 @@ export default function App() {
    }, []);
 
    const ReloadDevice = React.useCallback(async () => {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      setModaNew(true);
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
@@ -119,6 +124,10 @@ export default function App() {
                               ATUALIZAR
                            </ButtonBase>
                         </Center>
+                     </Modal>
+
+                     <Modal visible={modalNew} animationType="fade">
+                        <New />
                      </Modal>
                      <Route />
                   </View>
