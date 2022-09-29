@@ -18,8 +18,9 @@ import {
 import { useAuth } from '../../hooks/AuthContext';
 import { InputText } from '../Transaction/styles';
 import { OrderNavigationIndication } from '../../@types/navigation';
-import { IUserDto } from '../../dtos';
+import { IUserDtos } from '../../dtos';
 import { colecao } from '../../collection';
+import { api } from '../../services/api';
 
 export function Indication() {
    const { user } = useAuth();
@@ -31,7 +32,7 @@ export function Indication() {
    const moneyRef = useRef(null);
    const [mon, setMon] = useState(0);
 
-   const handleFecharNegocio = useCallback(() => {
+   const handleFecharNegocio = useCallback(async () => {
       if (!description) {
          return Alert.alert('Transação', 'Falta a descrição');
       }
@@ -40,60 +41,50 @@ export function Indication() {
          return Alert.alert('Transação', 'Falta o valor');
       }
 
-      fire()
-         .collection(colecao.transaction)
-         .add({
-            prestador_id: user.id,
-            descricao: description,
-            type: 'entrada',
-            valor: String(mon),
-            createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
-         })
-         .then(() => {
-            fire().collection(colecao.orderIndication).doc(id).delete();
+      const inddados = {
+         indicado_id: quemIndicou,
+         indication_id: id,
+      };
 
-            fire()
-               .collection(colecao.users)
-               .doc(quemIndicou)
-               .get()
+      await api
+         .put('/indication/validate-indication', inddados)
+         .then(async h => {
+            const dados = {
+               prestador_id: user.user.id,
+               prestador_name: user.user.nome,
+               descricao: description,
+               valor: mon,
+            };
+
+            await api
+               .post('/transaction/create-transaction', dados)
                .then(h => {
-                  let { indicacao } = h.data() as IUserDto;
-
-                  fire()
-                     .collection(colecao.users)
-                     .doc(quemIndicou)
-                     .update({
-                        indicacao: (indicacao += 1),
-                     });
+                  console.log(h);
                })
-               .catch(err =>
+               .catch(h => {
+                  console.log(
+                     'erro ao fazer a transaçao na tela de inidcation',
+                     h,
+                  );
                   Alert.alert(
-                     'Algo deu errado',
-                     'dados do usuário nao recuperado',
-                  ),
-               );
-            Alert.alert('Transação', 'Transação realizada com sucesso!');
+                     'Erro ao realizar sua transação',
+                     h.response.data.message,
+                  );
+               });
          })
-         .catch(err =>
-            Alert.alert('Algo deu errado!', 'transação nao concluida'),
-         );
-
-      fire()
-         .collection('sucess_indication')
-         .add({
-            createdAt: format(new Date(Date.now()), 'dd/MM - HH:mm'),
-            nome: user.nome,
-            quemIndicou,
+         .catch(h => {
+            console.log('erro ao validar a indicacao na tela de indication', h);
+            Alert.alert('Erro', h.response.data.message);
          });
 
       reset({
          routes: [{ name: 'INÍCIO' }],
       });
-   }, [description, id, mon, quemIndicou, reset, user.id, user.nome, valor]);
+   }, [description, id, mon, quemIndicou, reset, user, valor]);
 
    useEffect(() => {
       const mo = moneyRef.current?.getRawValue();
-      setMon(mo);
+      setMon(mo * 100);
    }, [valor]);
 
    return (
@@ -126,8 +117,6 @@ export function Indication() {
                   options={{
                      precision: 2,
                      separator: '.',
-                     delimiter: ',',
-                     unit: '',
                   }}
                   keyboardType="numeric"
                   onChangeText={setValor}

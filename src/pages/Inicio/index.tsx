@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable array-callback-return */
@@ -9,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
    Alert,
    Dimensions,
+   FlatList,
    Modal,
    Platform,
    TouchableOpacity,
@@ -48,7 +50,7 @@ import {
    TitlePrice,
 } from './styles';
 import { ModalOrderIndication } from '../../components/ModalOrderIndication';
-import { IUserDto } from '../../dtos';
+import { IB2b, IIndicationDto, IOrderTransaction, IUserDto } from '../../dtos';
 import { ModalB2b } from '../../components/ModalB2b';
 import { MessageComponent } from '../../components/MessageComponent';
 import { colecao } from '../../collection';
@@ -56,6 +58,7 @@ import { Classificacao } from '../Classificacao';
 import { CartaMessagem } from '../../components/CartaMessagem';
 import { ModalIndication } from '../../components/ModalIndication';
 import { update, version } from '../../utils/updates';
+import { api } from '../../services/api';
 
 interface IOrder_Indication {
    id: string;
@@ -104,446 +107,269 @@ interface PriceProps {
 const wt = Dimensions.get('window').width;
 
 export function Inicio() {
-   const { user, expoToken, order, orders } = useAuth();
+   const { user, expoToken } = useAuth();
    const navigate = useNavigation();
 
-   const [showModalSucess, setShowModalSucess] = React.useState(false);
-   const [showModalIndication, setModalIndication] = React.useState(false);
-   const [shwModalB2b, setModalB2b] = React.useState(false);
-   const [showModalTransaction, setModalTransaction] = React.useState(false);
-   const [showModalUpdates, setModalUpdates] = React.useState(false);
-
-   const [totalCompras, setTotalCompras] = useState(0);
-   const [ptB2b, setPtB2b] = useState(0);
-   const [ptInd, setPtInd] = useState(0);
-   const [ptPrs, setPtPrs] = useState(0);
-   const [ptPad, setPtPad] = useState(0);
-   const [ptVen, setPtVen] = useState(0);
-   const [ptCom, setPtCom] = useState(0);
-
-   const [sucess, setSucess] = useState<Propssuce[]>([]);
-   const [price, setPrice] = useState<PriceProps>({});
-   const [montante, setMontante] = useState('');
-   const [montanteP, setMontanteP] = useState('');
-   const [orderB2b, setOrderB2b] = useState<PropsB2b[]>([]);
-   const [orderTransaction, setOrderTransaction] = useState<ProsTransaction[]>(
-      [],
-   );
-   const [orderIndication, setOrderIndication] = useState<IOrder_Indication[]>(
-      [],
-   );
-   const [modalHandShak, setModalHandShak] = React.useState(false);
-   const [select, setSelect] = React.useState('');
+   const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
-   const [quemIndicou, setQuemIndicou] = React.useState('');
+
+   const [orderTransaction, setOrderTransaction] = React.useState<
+      IOrderTransaction[]
+   >([]);
 
    // * token ................................................................
-   useFocusEffect(
-      useCallback(() => {
-         Fire().collection(colecao.users).doc(user.id).update({
-            token: expoToken,
-         });
-      }, [expoToken, user.id]),
-   );
 
-   //* INDICATION...............................................................
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderIndication)
-         .onSnapshot(h => {
-            const order = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as IOrder_Indication;
-            });
-
-            setOrderIndication(order.filter(h => h.userId === user.id));
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection('sucess_indication')
-         .onSnapshot(suce => {
-            const res = suce.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as Propssuce;
-            });
-            const fil = res.filter(h => h.quemIndicou === user.id);
-            setSucess(fil);
-         });
-
-      return () => load();
-   }, [user.id]);
-
-   const handleSucess = useCallback(async (id: string) => {
-      Fire().collection('sucess_indication').doc(id).delete();
-      setShowModalSucess(false);
-   }, []);
-
-   const HandShak = useCallback((quemIndicou: string, id: string) => {
-      setModalHandShak(true);
-      setIdIndication(id);
-      setQuemIndicou(quemIndicou);
-      setModalIndication(false);
-   }, []);
-
-   const handleSelect = React.useCallback((type: string) => {
-      setSelect(type);
-   }, []);
-
-   const HandFailIndication = useCallback(async () => {
-      Fire().collection(colecao.orderIndication).doc(idIndication).delete();
-      setModalHandShak(false);
-
-      Fire()
-         .collection('sucess_indication')
-         .add({
-            createdAt: format(new Date(Date.now()), 'dd/MM - HH:mm'),
-            nome: user.nome,
-            quemIndicou,
-         });
-
-      Fire()
-         .collection(colecao.users)
-         .doc(quemIndicou)
-         .get()
+   const loadOrders = React.useCallback(async () => {
+      await api
+         .get('/b2b/list-by-recevid')
          .then(h => {
-            let { indicacao } = h.data() as IUserDto;
-            Fire()
-               .collection(colecao.users)
-               .doc(quemIndicou)
-               .update({
-                  indicacao: (indicacao += 1),
-               });
+            const rs = h.data as IB2b[];
+
+            const re = rs.filter(p => p.validate === false);
+            setOrderB2b(re);
          })
-         .catch(() =>
-            Alert.alert('Algo deu errado', 'dados do usuário nao recuperado'),
-         );
+         .catch(h => {
+            console.log('orderTransaction da tela inicio', h);
+            Alert.alert('Erro', h.response.data.message);
+         });
 
+      await api
+         .get('/consumo/find-order-prestador')
+         .then(h => {
+            const rs = h.data as IOrderTransaction[];
+            setOrderTransaction(rs);
+         })
+         .catch(h => {
+            Alert.alert('Erro', h.response.data.message);
+         });
+
+      await api
+         .get('/indication/list-by-indication')
+         .then(h => {
+            const rs = h.data as IIndicationDto[];
+            const fil = rs.filter(h => h.validate === false);
+            setOrderIndication(fil);
+         })
+         .catch(h => {
+            Alert.alert('Erro', h.response.data.message);
+         });
+   }, []);
+
+   // !! INDICATION
+
+   const [orderIndication, setOrderIndication] = React.useState<
+      IIndicationDto[]
+   >([]);
+   const [modalIndication, setModalIndication] = React.useState(false);
+   const [modaIndicationSelect, setModalIndicationSelect] =
+      React.useState(false);
+
+   const [select, setSelect] = React.useState('');
+
+   const HandShakIndication = useCallback((quemIndicou: string, id: string) => {
+      setWhoIndication(quemIndicou);
+      setIdIndication(id);
       setModalIndication(false);
-   }, [idIndication, quemIndicou, user.nome]);
+      setModalIndicationSelect(true);
+   }, []);
 
-   const handleHandShack = React.useCallback(() => {
+   const submitHandShackIndication = React.useCallback(async () => {
       if (select === 'fail') {
-         HandFailIndication();
+         await api
+            .delete(`/indication/del-indication/${idIndication}`)
+            .then(h => {
+               Alert.alert(
+                  'NÃO DESANIME!!',
+                  'Hoje sua indicação não deu certo, mas quem sabe na próxima',
+               );
+               setModalIndicationSelect(false);
+               loadOrders();
+            })
+            .catch(h => {
+               console.log(
+                  'erro para deletar order indication na tela inicial',
+                  h,
+               );
+               Alert.alert('Ocorreu um erro', h.response.data.message);
+            });
       }
 
       if (select === 'hand') {
-         navigate.navigate('indication', { quemIndicou, id: idIndication });
+         navigate.navigate('indication', {
+            quemIndicou: whoIndication,
+            id: idIndication,
+         });
       }
 
       if (select === 'handing') {
-         setModalHandShak(false);
+         setModalIndicationSelect(false);
       }
-   }, [HandFailIndication, idIndication, navigate, quemIndicou, select]);
+   }, [idIndication, navigate, select, whoIndication]);
 
-   //* FINISH CICLO *  ....................................................................... */
+   // !! B2B *.................................................................. */
+   const [orderB2b, setOrderB2b] = React.useState<IB2b[]>([]);
+   const [modalB2b, setModalB2b] = React.useState(false);
 
-   // TODO B2B *.................................................................. */
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderB2b)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as PropsB2b;
-            });
-            setOrderB2b(res.filter(h => h.prestador_id === user.id));
+   const handleSucessB2b = useCallback(async (id: string) => {
+      const dados = {
+         id,
+      };
+      await api
+         .put('/b2b/validate-b2b', dados)
+         .then(h => {
+            Alert.alert('Sucesso!', 'Validação realizada.');
+            loadOrders();
+            if (orderB2b.length === 0) {
+               setModalB2b(false);
+            }
+         })
+         .catch(h => {
+            console.log('erro ao validar order b2b na tela inicial', h);
+            Alert.alert('Erro', h.response.data.message);
          });
-
-      return () => load();
-   }, [user.id]);
-
-   const handleSucessB2b = useCallback(
-      (id: string, user_id: string, prestador_id: string) => {
-         const data = format(new Date(Date.now()), 'dd-MM-yy-HH-mm');
-         Fire()
-            .collection('b2b')
-            .add({
-               id,
-               user_id,
-               prestador_id,
-               data,
-            })
-            .then(() => {
-               Fire().collection(colecao.orderB2b).doc(id).delete();
-               Alert.alert('B2B realizado com sucesso!');
-            });
-      },
-      [],
-   );
-
-   const handleFailB2b = useCallback((id: string) => {
-      Fire().collection(colecao.orderB2b).doc(id).delete();
-      setModalB2b(false);
    }, []);
 
-   // TODO FINISH CICLO *  .................................................... */
-
-   //* * TRANSACTIN ........................................................... */
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderTransaction)
-         .onSnapshot(h => {
-            const res = h.docs
-               .map(p => {
-                  return {
-                     id: p.id,
-                     ...p.data(),
-                  } as ProsTransaction;
-               })
-               .filter(h => h.prestador_id === user.id);
-
-            setOrderTransaction(res);
+   const deleteB2b = useCallback(async (id: string) => {
+      await api
+         .delete(`/b2b/del-b2b/${id}`)
+         .then(h => {
+            Alert.alert(
+               'Uma pena que não houve B2B',
+               'Já reserva sua agenda para um próximo encontro',
+            );
+            loadOrders();
+         })
+         .catch(h => {
+            console.log('erro ao deletar orderb2b na tela inicial', h);
+            Alert.alert('Erro', h.response.data.message);
          });
-      return () => load();
-   }, [user.id]);
-
-   // todo TRANSAÇÃO.......................................................................
-   const handleValidateTransaction = useCallback(
-      async (
-         prestador_id: string,
-         consumidor: string,
-         descricao: string,
-         id: string,
-         valor: string,
-      ) => {
-         Fire()
-            .collection(colecao.transaction)
-            .add({
-               prestador_id,
-               descricao,
-               type: 'entrada',
-               createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
-               valor,
-            });
-         Fire()
-            .collection(colecao.transaction)
-            .add({
-               consumidor,
-               descricao,
-               type: 'saida',
-               createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
-               valor,
-            });
-         Fire()
-            .collection('order_transaction')
-            .doc(id)
-            .delete()
-            .then(() => Alert.alert('Transação confirmada'))
-            .catch(err => console.log(err));
-      },
-      [],
-   );
-
-   const DeleteOrderTransaction = useCallback(async (id: string) => {
-      Fire()
-         .collection(colecao.orderTransaction)
-         .doc(id)
-         .delete()
-         .then(() => Alert.alert('Transação deletada'));
    }, []);
+
+   //! ! TRANSACTIN ........................................................... */
+   const [modalTransaction, setModalTransaction] = React.useState(false);
+
+   const validateTransaction = useCallback(async (data: IOrderTransaction) => {
+      const dados = {
+         consumidor_id: data.consumidor_id,
+         consumidor_name: data.consumidor_name,
+         prestador_name: data.prestador_name,
+         prestador_id: data.prestador_id,
+         valor: data.valor,
+         descricao: data.descricao,
+         order_id: data.id,
+      };
+      await api
+         .post('/transaction/create-transaction', dados)
+         .then(h => {
+            Alert.alert(
+               'Sucesso!',
+               'Obrigado por insentivar um membro do grupo G.E.B training por consumir seu produto',
+            );
+            loadOrders();
+         })
+         .catch(h => {
+            console.log(h.response.data.message);
+         });
+   }, []);
+
+   const DeleteOrderTransaction = useCallback(async (id: string) => {}, []);
 
    // todo .......................................................................
 
    //* *....................................................................... */
-   const load = useCallback(() => {
-      Fire()
-         .collection('transaction')
-         .onSnapshot(h => {
-            const rs = h.docs
-               .map(p => p.data())
-               .filter(l => l.prestador_id === user.id);
 
-            const somoa = rs.reduce((ac, it) => {
-               return ac + it.valor;
-            }, 0);
-            setTotalCompras(somoa);
-         });
+   // useEffect(() => {
+   //    const load = Fire()
+   //       .collection(colecao.transaction)
+   //       .onSnapshot(h => {
+   //          const res = h.docs.map(p => p.data());
+   //          const data = res.filter(h => {
+   //             if (h.prestador_id === user.id && h.type === 'entrada') {
+   //                return h;
+   //             }
+   //          });
 
-      Fire()
-         .collection('b2b')
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.user_id === user.id);
-            setPtB2b(res.length * 20);
-         });
+   //          const MontatePass = res
+   //             .filter(h => {
+   //                const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
+   //                const [dia, mes, ano, hora, min] = data
+   //                   .split('-')
+   //                   .map(Number);
+   //                const DateN = new Date(Date.now()).getFullYear() - 1;
+   //                if (h.type === 'entrada' && ano === DateN) {
+   //                   return h;
+   //                }
+   //             })
+   //             .reduce((acc, item) => {
+   //                return acc + Number(item.valor);
+   //             }, 0);
 
-      Fire()
-         .collection(colecao.presenca)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.user_id === user.id && h.presenca === true);
-            setPtPrs(res.length * 10);
-         });
+   //          const MontateAtual = res
+   //             .filter(h => {
+   //                const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
 
-      Fire()
-         .collection(colecao.users)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.id === user.id)
-               .reduce((ac, it) => {
-                  return ac + it.indicacao;
-               }, 0);
-            setPtInd(res * 15);
-         });
+   //                const [dia, mes, ano, hora, min] = data
+   //                   .split('-')
+   //                   .map(Number);
+   //                const DateN = new Date(Date.now()).getFullYear();
+   //                if (h.type === 'entrada' && ano === DateN) {
+   //                   return h;
+   //                }
+   //             })
+   //             .reduce((acc, item) => {
+   //                return acc + Number(item.valor);
+   //             }, 0);
 
-      Fire()
-         .collection(colecao.users)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.id === user.id)
-               .reduce((ac, it) => {
-                  return ac + it.padrinhQuantity;
-               }, 0);
-            setPtPad(res * 35);
-         });
+   //          const mp = 3242222780 / 1000 + MontateAtual;
 
-      Fire()
-         .collection(colecao.transaction)
-         .onSnapshot(b2b => {
-            const res = b2b.docs.map(h => h.data());
+   //          setMontanteP(
+   //             MontatePass.toLocaleString('pt-BR', {
+   //                style: 'currency',
+   //                currency: 'BRL',
+   //             }),
+   //          );
 
-            const filCompras = res.filter(h => h.prestador_id === user.id);
-            const filVendas = res.filter(h => h.consumidor === user.id);
+   //          setMontante(
+   //             mp.toLocaleString('pt-BR', {
+   //                style: 'currency',
+   //                currency: 'BRL',
+   //             }),
+   //          );
 
-            setPtCom(filCompras.length * 10);
-            setPtVen(filVendas.length * 10);
-         });
-   }, [user.id]);
-   //* *....................................................................... */
+   //          const total = data.reduce((acc, item) => {
+   //             return acc + Number(item.valor);
+   //          }, 0);
 
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.transaction)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => p.data());
-            const data = res.filter(h => {
-               if (h.prestador_id === user.id && h.type === 'entrada') {
-                  return h;
-               }
-            });
+   //          const price = total.toLocaleString('pt-BR', {
+   //             style: 'currency',
+   //             currency: 'BRL',
+   //          });
 
-            const MontatePass = res
-               .filter(h => {
-                  const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
-                  const [dia, mes, ano, hora, min] = data
-                     .split('-')
-                     .map(Number);
-                  const DateN = new Date(Date.now()).getFullYear() - 1;
-                  if (h.type === 'entrada' && ano === DateN) {
-                     return h;
-                  }
-               })
-               .reduce((acc, item) => {
-                  return acc + Number(item.valor);
-               }, 0);
+   //          const pts = data.length * 10;
 
-            const MontateAtual = res
-               .filter(h => {
-                  const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
+   //          const pricePts = {
+   //             price,
+   //             pts,
+   //          };
 
-                  const [dia, mes, ano, hora, min] = data
-                     .split('-')
-                     .map(Number);
-                  const DateN = new Date(Date.now()).getFullYear();
-                  if (h.type === 'entrada' && ano === DateN) {
-                     return h;
-                  }
-               })
-               .reduce((acc, item) => {
-                  return acc + Number(item.valor);
-               }, 0);
+   //          setPrice(pricePts);
+   //       });
 
-            const mp = 3242222780 / 1000 + MontateAtual;
-
-            setMontanteP(
-               MontatePass.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-               }),
-            );
-
-            setMontante(
-               mp.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-               }),
-            );
-
-            const total = data.reduce((acc, item) => {
-               return acc + Number(item.valor);
-            }, 0);
-
-            const price = total.toLocaleString('pt-BR', {
-               style: 'currency',
-               currency: 'BRL',
-            });
-
-            const pts = data.length * 10;
-
-            const pricePts = {
-               price,
-               pts,
-            };
-
-            setPrice(pricePts);
-         });
-
-      return () => load();
-   }, [user.id]);
+   //    return () => load();
+   // }, [user.id]);
 
    useFocusEffect(
       useCallback(() => {
-         load();
-         // token();
-      }, [load]),
-   );
-
-   useFocusEffect(
-      useCallback(() => {
-         orderIndication.length > 0
-            ? setModalIndication(true)
-            : setModalIndication(false);
-
-         sucess.length > 0
-            ? setShowModalSucess(true)
-            : setShowModalSucess(false);
-
-         orderB2b.length > 0 ? setModalB2b(true) : setModalB2b(false);
-
-         orderTransaction.length > 0
-            ? setModalTransaction(true)
-            : setModalTransaction(false);
-      }, [
-         orderB2b.length,
-         orderIndication.length,
-         orderTransaction.length,
-         sucess.length,
-      ]),
+         loadOrders();
+      }, []),
    );
 
    return (
       <Container>
-         <Modal transparent animationType="slide" visible={showModalSucess}>
+         {/* <Modal transparent animationType="slide" visible={false}>
             <Center bg="dark.600" mt={wt}>
                <TouchableOpacity
-                  onPress={() => setShowModalSucess(false)}
+                  onPress={() => {}}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -585,12 +411,13 @@ export function Inicio() {
                   </View>
                ))}
             </Center>
-         </Modal>
+         </Modal> */}
 
-         <Modal transparent animationType="slide" visible={showModalIndication}>
+         {/* MODAL order INDICATION */}
+         <Modal transparent animationType="slide" visible={modalIndication}>
             <Center mt={wt} bg="dark.600">
                <TouchableOpacity
-                  onPress={() => setModalIndication(false)}
+                  onPress={() => {}}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -607,30 +434,28 @@ export function Inicio() {
                   {orderIndication.map(h => (
                      <View key={h.id}>
                         <ModalOrderIndication
-                           description={h.descricao}
-                           clientName={h.nomeCliente}
-                           telefone={h.telefoneCliente}
+                           description={h.description}
+                           clientName={h.client_name}
+                           telefone={h.phone_number_client}
                            handShak={() => {
-                              HandShak(h.quemIndicou, h.id);
+                              HandShakIndication(h.quemIndicou_name, h.id);
                            }}
                            failTransaction={() => setModalIndication(false)}
-                           quemIndicouName={h.quemIndicouName}
-                           quemIndicouWorkName={h.quemIndicouWorkName}
+                           quemIndicouName={h.quemIndicou_name}
                         />
                      </View>
                   ))}
                </ScrollView>
             </Center>
          </Modal>
-
-         <Modal transparent visible={modalHandShak}>
+         <Modal transparent visible={modaIndicationSelect}>
             <Center mt={wt}>
                <ModalIndication
-                  pres={handleHandShack}
-                  closedModal={() => setModalHandShak(false)}
-                  presHand={() => handleSelect('hand')}
-                  presHanding={() => handleSelect('handing')}
-                  fails={() => handleSelect('fail')}
+                  pres={() => submitHandShackIndication()}
+                  closedModal={() => setModalIndicationSelect(false)}
+                  presHand={() => setSelect('hand')}
+                  presHanding={() => setSelect('handing')}
+                  fails={() => setSelect('fail')}
                   selectHand={select === 'hand'}
                   selectHanding={select === 'handing'}
                   selectFail={select === 'fail'}
@@ -638,10 +463,13 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal transparent visible={shwModalB2b}>
+         {/* MODAL ORDER B2B2 */}
+         <Modal transparent visible={modalB2b}>
             <Center mt={wt} bg="dark.600">
                <TouchableOpacity
-                  onPress={() => setModalB2b(false)}
+                  onPress={() => {
+                     setModalB2b(false);
+                  }}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -654,25 +482,31 @@ export function Inicio() {
                      color={theme.colors.focus}
                   />
                </TouchableOpacity>
-               {orderB2b.map(h => (
-                  <View key={h.data.nanoseconds}>
-                     <ModalB2b
-                        clientName={h.nome}
-                        handShak={() => {
-                           handleSucessB2b(h.id, h.user_id, h.prestador_id);
-                        }}
-                        failTransaction={() => handleFailB2b(h.id)}
-                     />
-                  </View>
-               ))}
+               <FlatList
+                  contentContainerStyle={{ paddingBottom: 200 }}
+                  data={orderB2b}
+                  keyExtractor={h => h.id}
+                  renderItem={({ item: h }) => (
+                     <Box>
+                        <ModalB2b
+                           clientName={h.send_name}
+                           handShak={() => {
+                              handleSucessB2b(h.id);
+                           }}
+                           failTransaction={() => deleteB2b(h.id)}
+                        />
+                     </Box>
+                  )}
+               />
             </Center>
          </Modal>
 
+         {/* MODAL ORDER TRANSACTION */}
          <Modal
-            visible={showModalTransaction}
+            visible={modalTransaction}
             transparent
             animationType="slide"
-            // onClose={() => setModalTransaction(false)}
+            onClose={() => setModalTransaction(false)}
          >
             <Box pl="5" pr="5" mt={wt} bg="dark.500">
                <TouchableOpacity
@@ -693,13 +527,7 @@ export function Inicio() {
                   <View key={h.id}>
                      <MessageComponent
                         confirmar={() => {
-                           handleValidateTransaction(
-                              h.prestador_id,
-                              h.consumidor,
-                              h.description,
-                              h.id,
-                              h.valor,
-                           );
+                           validateTransaction(h);
                         }}
                         nome={h.consumidor_name}
                         rejeitar={() => {
@@ -711,7 +539,6 @@ export function Inicio() {
                ))}
             </Box>
          </Modal>
-
          <Box w="100%">
             <HStack space="70%">
                <TouchableOpacity
@@ -747,34 +574,26 @@ export function Inicio() {
                )}
             </HStack>
          </Box>
-
-         {user.avatarUrl ? (
-            <Avatar source={{ uri: user.avatarUrl }} />
+         {user.profile === null ? (
+            <Avatar source={{ uri: user.avatar }} />
          ) : (
             <BoxIco>
                <Feather name="user" size={100} />
             </BoxIco>
          )}
-
          <TitleName> {user.nome} </TitleName>
-
          <View style={{ alignItems: 'center' }}>
-            <ComprasText>Vendas</ComprasText>
+            <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               <TitlePrice>{price.price}</TitlePrice>
-               <TitleP>
-                  {ptB2b + ptCom + ptInd + ptPad + ptVen + ptPrs} pts
-               </TitleP>
+               <TitlePrice>price</TitlePrice>
+               <TitleP>pts</TitleP>
             </BoxPrice>
          </View>
-
          <View style={{ alignSelf: 'center' }}>
-            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {montante}</Text>
+            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B </Text>
          </View>
-
          <Line />
-
          <Classificacao />
       </Container>
    );

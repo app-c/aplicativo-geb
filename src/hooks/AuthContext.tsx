@@ -16,26 +16,17 @@ import Firestore from '@react-native-firebase/firestore';
 import { format } from 'date-fns';
 import { boolean } from 'yup';
 import * as Notifications from 'expo-notifications';
-import {
-   IOrderB2b,
-   IOrderIndication,
-   IOrderTransaction,
-   ITransaction,
-   IUserDtos,
-} from '../dtos';
-import { colecao } from '../collection';
+import { IProfileDto, IUserDtos } from '../dtos';
 import { api } from '../services/api';
 
 export interface User {
-   id: string;
-   nome: string;
-   adm: boolean;
-   padrinhQuantity: number;
+   user: IUserDtos;
+   profile: IProfileDto;
 }
 
 type AuthState = {
    token: string;
-   user: IUserDtos;
+   user: User;
 };
 
 interface SignInCred {
@@ -44,24 +35,23 @@ interface SignInCred {
 }
 
 interface AuthContexData {
-   user: IUserDtos | null;
+   user: User | null;
    expoToken: string;
    loading: boolean;
    signIn(credential: SignInCred): Promise<void>;
    signOut(): void;
-   updateUser(user: IUserDto): Promise<void>;
+   updateUser(user: IUserDtos): Promise<void>;
 }
 
 const keyUser = '@appGeb:user';
 const keyToken = '@appGeb:token';
+const User_Collection = '@Geb:user';
 
 export const AuthContext = createContext<AuthContexData>({} as AuthContexData);
 
 export const AuthProvider: React.FC = ({ children }) => {
    const [loading, setLoading] = useState(true);
-   const [user, setUser] = useState<AuthState | null>(() => {});
-
-   const [token, setToekn] = React.useState(null);
+   const [data, setData] = useState<AuthState>({} as AuthState);
 
    const [expoToken, setExpotoken] = React.useState('');
 
@@ -71,9 +61,9 @@ export const AuthProvider: React.FC = ({ children }) => {
       const [token, user] = await AsyncStorage.multiGet([keyToken, keyUser]);
 
       if (token && user) {
-         setUser({ token: token[1], user: JSON.parse(user[1]) });
-         setLoading(false);
+         setData({ token: token[1], user: JSON.parse(user[1]) });
       }
+      setLoading(false);
    }, []);
 
    useEffect(() => {
@@ -94,8 +84,19 @@ export const AuthProvider: React.FC = ({ children }) => {
                [keyUser, JSON.stringify(user)],
             ]);
 
-            setUser({ token, user });
-            console.log(user);
+            api.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+            await api.get('/user/list-all-user').then(p => {
+               const rs = p.data;
+               const res = rs.find(t => t.user.id === user.id);
+
+               const us = {
+                  user,
+                  profile: res.profile,
+               };
+
+               setData({ token, user: us });
+            });
          })
          .catch(h => console.log('erro', h.response.data.message));
    }, []);
@@ -105,16 +106,16 @@ export const AuthProvider: React.FC = ({ children }) => {
    }, []);
 
    const signOut = useCallback(async () => {
-      await AsyncStorage.multiRemove([keyUser, keyToken]);
-      await AsyncStorage.removeItem('@Geb:user');
+      await AsyncStorage.multiRemove([keyToken, keyUser]);
+      await AsyncStorage.removeItem(User_Collection);
 
-      setUser(null);
+      setData({} as AuthState);
    }, []);
 
    const updateUser = useCallback(async (user: IUserDtos) => {
       await AsyncStorage.setItem(keyUser, JSON.stringify(user));
 
-      setUser(user);
+      // setData(user);
    }, []);
 
    const Token = React.useCallback(async () => {
@@ -156,7 +157,7 @@ export const AuthProvider: React.FC = ({ children }) => {
    return (
       <AuthContext.Provider
          value={{
-            user,
+            user: data.user,
             loading,
             signIn,
             signOut,

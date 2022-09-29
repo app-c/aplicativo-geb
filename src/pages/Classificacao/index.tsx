@@ -1,47 +1,96 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import fire from '@react-native-firebase/firestore';
-import { View } from 'react-native';
-import { HeaderContaponent } from '../../components/HeaderComponent';
-import { IUserDto } from '../../dtos';
+import { ActivityIndicator, Alert, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../hooks/AuthContext';
 import {
-   BoxAvatar,
    BoxContainer,
    BoxEventos,
    BoxPosition,
    Container,
    Title,
 } from './styles';
-import { colecao } from '../../collection';
-import { Loading } from '../../components/Loading';
-import { B2B } from '../B2B';
+import { api } from '../../services/api';
 
-type PropsTransaction = {
-   compras: {
-      nome: string;
-      pontos: number;
-      rank: number;
-   }[];
-   vendas: {
-      nome: string;
-      pontos: number;
-      rank: number;
-   }[];
-};
+interface Props {
+   compras: Tips;
+   vendas: Tips;
+   presenca: Tips;
+   indication: Tips;
+   b2b: Tips;
+}
+
+interface PropResponse {
+   compras: Tips[];
+   vendas: Tips[];
+   presenca: Tips[];
+   indication: Tips[];
+   b2b: Tips[];
+}
+
+interface Tips {
+   id: string;
+   nome: string;
+   pontos: number;
+   rank: number;
+}
 
 export function Classificacao() {
-   const { user } = useAuth();
+   const { user, signOut } = useAuth();
 
-   const [transaction, setTransaction] = useState<PropsTransaction[]>([]);
+   const [ponts, setPonts] = React.useState<Props>();
 
    const [load, setLoad] = useState(true);
+
+   const dados = React.useCallback(async () => {
+      // !! TRANSACTION
+      await api
+         .get('user/global-rank')
+         .then(h => {
+            const rs = h.data as PropResponse;
+            const compras = rs.compras.find(h => h.id === user.user.id);
+            const vendas = rs.compras.find(h => h.id === user.user.id);
+            const presenca = rs.compras.find(h => h.id === user.user.id);
+            const indication = rs.compras.find(h => h.id === user.user.id);
+            const b2b = rs.b2b.find(h => h.id === user.user.id);
+
+            const dados = {
+               compras,
+               vendas,
+               presenca,
+               indication,
+               b2b,
+            };
+
+            setPonts(dados);
+         })
+         .catch(h => {
+            const { message } = h.response.data;
+            if (message === 'falta o token' || message === 'token expirou') {
+               Alert.alert('Erro', 'Seu tokem expirou');
+               signOut();
+            }
+         });
+   }, [signOut, user]);
+
+   React.useEffect(() => {
+      if (ponts) {
+         setLoad(false);
+      }
+   }, [ponts]);
+
+   useFocusEffect(
+      useCallback(() => {
+         dados();
+      }, [dados]),
+   );
 
    return (
       <Container>
          {load ? (
-            <Loading />
+            <ActivityIndicator size="large" />
          ) : (
             <>
                <BoxEventos>
@@ -54,11 +103,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>COMPRAS</Title>
-                        <Title>{Saida.totalPontos}pts</Title>
+                        <Title>{ponts.compras.pontos} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{Saida.posicao}</Title>
+                        <Title>{ponts.compras.rank}</Title>
                      </BoxPosition>
                   </View>
 
@@ -71,11 +120,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>VENDAS</Title>
-                        <Title>{Entrada.totalPontos}pts</Title>
+                        <Title>{ponts.vendas.pontos} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{Entrada.posicao}</Title>
+                        <Title>{ponts.vendas.rank}</Title>
                      </BoxPosition>
                   </View>
 
@@ -88,11 +137,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Indicações</Title>
-                        <Title>{Indicacao.pontos}pts</Title>
+                        <Title>{}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{Indicacao.position}</Title>
+                        <Title>{}</Title>
                      </BoxPosition>
                   </View>
 
@@ -105,11 +154,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Presença</Title>
-                        <Title>{PresencaRanking.pontos}pts</Title>
+                        <Title>{ponts.presenca.pontos} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{PresencaRanking.position}</Title>
+                        <Title>{ponts.presenca.rank}</Title>
                      </BoxPosition>
                   </View>
 
@@ -122,11 +171,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Padrinho</Title>
-                        <Title>{Padrinho.pontos}pts</Title>
+                        <Title>{}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{Padrinho.position}</Title>
+                        <Title>{}</Title>
                      </BoxPosition>
                   </View>
 
@@ -139,11 +188,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>B2B</Title>
-                        <Title>{B2b.pontos}pts</Title>
+                        <Title>{ponts.b2b.pontos}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{B2b.position}</Title>
+                        <Title>{ponts.b2b.rank}</Title>
                      </BoxPosition>
                   </View>
                </BoxEventos>

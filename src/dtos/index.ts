@@ -31,6 +31,7 @@ export interface IPresencaDto {
    user_id: string;
    presenca?: boolean;
    createdAt?: Date;
+   data?: string;
 }
 
 export interface IOrderTransaction {
@@ -58,6 +59,7 @@ export interface ITransaction {
 }
 
 export interface IB2b {
+   id: string;
    send_id: string;
    send_name: string;
    recevid_name: string;

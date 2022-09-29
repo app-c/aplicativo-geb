@@ -25,9 +25,8 @@ export function B2B() {
    const { user } = useAuth();
 
    const [value, setValue] = useState('');
-   const [lista, setLista] = useState<UserProps[]>([]);
-   const [allUser, setAllUser] = useState<UserProps[]>([]);
-   const [load, setLoad] = useState(false);
+   const [membros, setMembros] = useState<UserProps[]>([]);
+   const [load, setLoad] = useState(true);
 
    const hanldeTransaction = useCallback(
       (
@@ -49,34 +48,30 @@ export function B2B() {
    );
 
    const Users = React.useCallback(async () => {
-      await api
-         .get('/user/list-all-user')
+      api.get('/user/list-all-user')
          .then(h => {
-            setAllUser(h.data);
+            const us = h.data as UserProps[];
+            const res = us.filter(p => p.user.id !== user.user.id);
+            setMembros(res);
          })
-         .finally(() => setLoad(true))
-         .catch(err => {
-            console.log(err.response.data);
-         });
-   }, []);
+         .catch(h => console.log('b2b', h.response.data.message))
+         .finally(() => setLoad(false));
+   }, [user]);
 
    useFocusEffect(
       useCallback(() => {
          Users();
+         setLoad(false);
       }, [Users]),
    );
 
-   useEffect(() => {
-      if (value === '') {
-         setLista(allUser);
-      } else {
-         setLista(
-            lista.filter(h => {
-               return h.user.nome.indexOf(value) > -1;
-            }),
-         );
-      }
-   }, [allUser, lista, value]);
+   const users =
+      value.length > 0
+         ? membros.filter(h => {
+              const up = h.user.nome.toLocaleUpperCase();
+              return up.includes(value);
+           })
+         : membros;
 
    return (
       <>
@@ -101,8 +96,8 @@ export function B2B() {
 
                <View style={{ paddingBottom: 350 }}>
                   <FlatList
-                     data={lista}
-                     keyExtractor={h => h.id}
+                     data={users}
+                     keyExtractor={h => h.user.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
@@ -120,8 +115,8 @@ export function B2B() {
                               user_avatar={h.profile.avatar}
                               oficio={h.profile.workName}
                               imageOfice={h.profile.logo}
-                              inativoPres={h.profile.inativo}
-                              inativo={h.profile.inativo}
+                              // inativoPres={h.profile.inativo}
+                              // inativo={h.profile.inativo}
                            />
                         </>
                      )}

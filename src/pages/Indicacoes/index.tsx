@@ -26,28 +26,62 @@ import {
    Title,
 } from './styles';
 
-import { IUserDto } from '../../dtos';
+import { IProfileDto, IUserDto, IUserDtos } from '../../dtos';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import theme from '../../global/styles/theme';
+import { Loading } from '../../components/Loading';
+import { api } from '../../services/api';
+
+interface PropsUser {
+   user: IUserDtos;
+   profile: IProfileDto;
+}
 
 export function Indicacoes() {
-   const { user, orderIndicacao, listUser } = useAuth();
+   const { user } = useAuth();
+   const { nome, id } = user.user;
+
    const { navigate } = useNavigation();
    const [modal, setModal] = useState(false);
+   const [load, setLoad] = React.useState(true);
 
    // const [users, setUsers] = useState<IUserDto[]>([]);
    const [descricao, setDescricao] = useState('');
    const [userId, setUserId] = useState('');
-   const [work, setWork] = useState('');
+   const [indicadoName, setIndicadoName] = useState('');
    const [nomeCliente, setNomeCliente] = useState('');
    const [telefoneCliente, setTelefoneCliente] = useState('');
    const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDto[]>(
-      listUser.filter(h => h.id !== user.id),
-   );
+   const [membros, setMembros] = useState<PropsUser[]>();
    const [expoToken, setExpoToken] = React.useState('');
+
+   const Users = React.useCallback(async () => {
+      api.get('/user/list-all-user')
+         .then(h => {
+            const us = h.data as PropsUser[];
+            const rs = us.filter(h => h.user.id !== id);
+            setMembros(rs);
+         })
+         .catch(h => console.log('list membros', h.response.data))
+         .finally(() => setLoad(false));
+   }, [user]);
+
+   useFocusEffect(
+      useCallback(() => {
+         Users();
+         setLoad(false);
+      }, [Users]),
+   );
+
+   const users =
+      value.length > 0
+         ? membros.filter(h => {
+              const up = h.user.nome.toLocaleUpperCase();
+              return up.includes(value);
+           })
+         : membros;
 
    const sendPushNotification = useCallback(async () => {
       const message = {
@@ -69,63 +103,59 @@ export function Indicacoes() {
    }, [expoToken, user.nome]);
 
    const OpenModal = useCallback(
-      (user_id: string, workName: string, token: string) => {
+      (user_id: string, nome: string, token: string) => {
          setUserId(user_id);
-         setWork(workName);
+         setIndicadoName(nome);
          setExpoToken(token);
          setModal(true);
       },
       [],
    );
 
-   const handleOrderIndicaçao = useCallback(() => {
+   const handleOrderIndicaçao = useCallback(async () => {
       setModal(false);
 
-      orderIndicacao({
-         userId,
-         quemIndicou: user.id,
-         quemIndicouName: user.nome,
-         quemIndicouWorkName: user.workName,
-         nomeCliente,
-         telefoneCliente,
-         descricao,
-      });
+      api.post('/');
 
-      Alert.alert('Indicação', `Aguarde a validação da ${work}`, [
-         {
-            text: 'Ok',
-            onPress: () => {
-               sendPushNotification();
-               navigate('INÍCIO');
-            },
-         },
-      ]);
+      const dados = {
+         indicado_id: userId,
+         indicado_name: indicadoName,
+         quemIndicou_id: id,
+         quemIndicou_name: nome,
+         client_name: nomeCliente,
+         description: descricao,
+         phone_number_client: Number(telefoneCliente),
+      };
+
+      await api
+         .post('/indication/create-indication', dados)
+         .then(h => {
+            Alert.alert('Indicação', `Aguarde a validação da ${indicadoName}`, [
+               {
+                  text: 'Ok',
+                  onPress: () => {
+                     sendPushNotification();
+                     navigate('INÍCIO');
+                  },
+               },
+            ]);
+         })
+         .catch(h => console.log('indication', h.response.data));
    }, [
-      descricao,
-      navigate,
-      nomeCliente,
-      orderIndicacao,
-      sendPushNotification,
-      telefoneCliente,
-      user.id,
-      user.nome,
-      user.workName,
       userId,
-      work,
+      indicadoName,
+      id,
+      nome,
+      nomeCliente,
+      descricao,
+      telefoneCliente,
+      sendPushNotification,
+      navigate,
    ]);
 
-   useEffect(() => {
-      const users = listUser.filter(h => h.id !== user.id);
-      if (value === '') {
-         setLista(users);
-      } else {
-         setLista(
-            users.filter(h => {
-               return h.nome.indexOf(value) > -1;
-            }),
-         );
-      }
-   }, [listUser, user.id, value]);
+   if (!users) {
+      return <Loading />;
+   }
 
    return (
       <Container>
@@ -145,18 +175,18 @@ export function Indicacoes() {
          </Form>
 
          <FlatList
-            data={lista}
-            keyExtractor={h => h.id}
+            data={users}
+            keyExtractor={h => h.user.id}
             renderItem={({ item: h }) => (
                <MembrosComponents
-                  imageOfice={h.logoUrl}
-                  oficio={h.workName}
-                  user_avatar={h.avatarUrl}
+                  imageOfice={h.profile.logo}
+                  oficio={h.profile.workName}
+                  user_avatar={h.profile.avatar}
                   icon="indicar"
-                  userName={h.nome}
-                  pres={() => OpenModal(h.id, h.workName, h.token)}
-                  inativoPres={h.inativo}
-                  inativo={h.inativo}
+                  userName={h.user.nome}
+                  pres={() => OpenModal(h.user.id, h.user.nome, h.user.token)}
+                  // inativoPres={h.inativo}
+                  // inativo={h.inativo}
                />
             )}
          />

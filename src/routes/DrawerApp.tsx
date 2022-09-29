@@ -11,6 +11,7 @@ const { Navigator, Screen } = createDrawerNavigator();
 
 export function DrawerApp() {
    const { user } = useAuth();
+   // const { adm } = user.user;
    return (
       <Navigator
          drawerContent={DrawerContent}
@@ -52,7 +53,7 @@ export function DrawerApp() {
             />
          ))}
 
-         {user.adm &&
+         {user &&
             rotasAdm.map(h => (
                <Screen
                   key={h.name}

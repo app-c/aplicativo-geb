@@ -29,6 +29,7 @@ import { useAuth } from '../../hooks/AuthContext';
 import { IUserDto } from '../../dtos';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { colecao } from '../../collection';
+import { api } from '../../services/api';
 
 interface IRoute {
    prestador_id: string;
@@ -58,21 +59,23 @@ export function OrderB2b() {
          return;
       }
 
-      const { nome, workName } = user;
+      const dados = {
+         send_id: user.user.id,
+         send_name: user.user.nome,
+         recevid_id: prestador_id,
+         recevid_name: nome,
+         appointment: new Date(),
+         validate: false,
+         assunto: description,
+      };
 
-      fire()
-         .collection(colecao.orderB2b)
-         .add({
-            prestador_id,
-            user_id: user.id,
-            description,
-            nome: user.nome,
-            data: new Date(Date.now()),
+      await api
+         .post('/b2b/create-b2b', dados)
+         .then(h => {
+            navigate('sucess', { workName, description, nome });
          })
-         .catch(err => console.log(err));
-
-      navigate('sucess', { workName, description, nome });
-   }, [description, navigate, prestador_id, user]);
+         .catch(h => console.log('b2b', h.response.data));
+   }, [description, navigate, nome, prestador_id, user, workName]);
 
    useEffect(() => {
       const mo = moneyRef.current?.getRawValue();
@@ -89,8 +92,8 @@ export function OrderB2b() {
             </Title>
             <BoxElement>
                <BoxAvatar>
-                  {user.avatarUrl ? (
-                     <Avatar source={{ uri: user.avatarUrl }} />
+                  {user.profile.avatar ? (
+                     <Avatar source={{ uri: user.profile.avatar }} />
                   ) : (
                      <Feather
                         name="user"
@@ -99,8 +102,8 @@ export function OrderB2b() {
                      />
                   )}
 
-                  {user.logoUrl ? (
-                     <ImageOfice source={{ uri: user.logoUrl }} />
+                  {user.profile.logo ? (
+                     <ImageOfice source={{ uri: user.profile.logo }} />
                   ) : (
                      <View
                         style={{

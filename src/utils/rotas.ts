@@ -6,7 +6,6 @@ import { FindUser } from '../pages/FindMembro';
 import { Inativo } from '../pages/ADM/Inativo';
 import { Ranking } from '../pages/ADM/Classificacao';
 import { SingUp } from '../pages/ADM/CreateUser';
-import { ListPresenca } from '../pages/ADM/ListaPresenca';
 import { UpdateSenhaUser } from '../pages/ADM/UpdateSenhaUser';
 import { DeletUser } from '../pages/ADM/DeleteUser';
 import { TabBarApp } from '../routes/TabBarApp';
@@ -15,6 +14,7 @@ import { StackB2b } from '../routes/StackB2b';
 import theme from '../global/styles/theme';
 import { Padrinho } from '../pages/Padrinho';
 import { ListaPresença } from '../pages/ADM/ListaPresensa';
+import { ListPresenca } from '../pages/ADM/ValidatePresenca';
 
 export const rotas = [
    {

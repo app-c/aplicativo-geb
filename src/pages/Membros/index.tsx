@@ -11,26 +11,29 @@ import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { IUserDto } from '../../dtos';
+import { IProfileDto, IUserDto, IUserDtos } from '../../dtos';
 import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
 import { Loading } from '../../components/Loading';
 import { api } from '../../services/api';
 
+interface PropsUser {
+   user: IUserDtos;
+   profile: IProfileDto;
+}
+
 export function Membros() {
    const { navigate } = useNavigation();
    const { user } = useAuth();
 
-   const [membros, setMembros] = useState<IUserDto[]>([]);
-   const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDto[]>([]);
+   const [membros, setMembros] = useState<PropsUser[]>([]);
    const [load, setLoad] = useState(true);
+   const [search, setSearch] = React.useState('');
 
    const hanldeTransaction = useCallback(
       (
          prestador_id: string,
-
          avatar_url: string,
          logoUrl: string,
          prestador_name: string,
@@ -52,33 +55,30 @@ export function Membros() {
    );
 
    const Users = React.useCallback(async () => {
-      // api.defaults.headers.common['Authorization'] =
-   }, []);
+      api.get('/user/list-all-user')
+         .then(h => {
+            const us = h.data as PropsUser[];
+            const fil = us.filter(h => h.user.id !== user.user.id);
+            setMembros(fil);
+         })
+         .catch(h => console.log('list membros', h.response.data.message))
+         .finally(() => setLoad(false));
+   }, [user]);
 
    useFocusEffect(
       useCallback(() => {
-         const users = listUser.filter(h => h.id !== user.id);
-         const us = users.sort((a, b) => {
-            if (a.nome < b.nome) {
-               return -1;
-            }
-         });
-         setMembros(us);
+         Users();
          setLoad(false);
-      }, [listUser, user.id]),
+      }, [Users]),
    );
 
-   useEffect(() => {
-      if (value === '') {
-         setLista(membros);
-      } else {
-         setLista(
-            membros.filter(h => {
-               return h.nome.indexOf(value) > -1;
-            }),
-         );
-      }
-   }, [membros, value]);
+   const users =
+      search.length > 0
+         ? membros.filter(h => {
+              const up = h.user.nome.toLocaleUpperCase();
+              return up.includes(search);
+           })
+         : membros;
 
    return (
       <>
@@ -95,8 +95,7 @@ export function Membros() {
                         icon="search"
                         type="custom"
                         options={{ mask: '****************************' }}
-                        onChangeText={text => setValue(text)}
-                        value={value}
+                        onChangeText={setSearch}
                      />
                   </Box>
                </Form>
@@ -104,29 +103,29 @@ export function Membros() {
                <View>
                   <FlatList
                      contentContainerStyle={{ paddingBottom: 570 }}
-                     data={lista}
-                     keyExtractor={h => h.id}
+                     data={users}
+                     keyExtractor={h => h.user.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
                               icon="necociar"
                               pres={() =>
                                  hanldeTransaction(
-                                    h.id,
-                                    h.avatarUrl,
-                                    h.logoUrl,
-                                    h.nome,
+                                    h.user.id,
+                                    h.profile.avatar,
+                                    h.profile.logo,
+                                    h.user.nome,
                                     user.nome,
-                                    h.workName,
-                                    h.token,
+                                    h.profile.workName,
+                                    h.user.token,
                                  )
                               }
-                              userName={h.nome}
-                              user_avatar={h.avatarUrl}
-                              oficio={h.workName}
-                              imageOfice={h.logoUrl}
-                              inativoPres={h.inativo}
-                              inativo={h.inativo}
+                              userName={h.user.nome}
+                              user_avatar={h.profile.avatar}
+                              oficio={h.profile.workName}
+                              imageOfice={h.profile.logo}
+                              // inativoPres={h..inativo}
+                              // inativo={h.inativo}
                            />
                         </>
                      )}
