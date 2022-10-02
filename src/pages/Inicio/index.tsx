@@ -8,6 +8,7 @@
 import { AntDesign, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+   ActivityIndicator,
    Alert,
    Dimensions,
    FlatList,
@@ -60,48 +61,24 @@ import { ModalIndication } from '../../components/ModalIndication';
 import { update, version } from '../../utils/updates';
 import { api } from '../../services/api';
 
-interface IOrder_Indication {
-   id: string;
-   createdAt: string;
-   descricao: string;
-   quemIndicou: string;
-   userId: string;
-   quemIndicouName: string;
-   quemIndicouWorkName: string;
-   nomeCliente: string;
-   telefoneCliente: string;
-}
-
-interface Propssuce {
-   id: string;
-   data: string;
-   nome: string;
-   quemIndicou: string;
-}
-
-interface PropsB2b {
-   id: string;
-   data: { nanoseconds: number; seconds: number };
-   description: string;
-   nome: string;
-   user_id: string;
-   prestador_id: string;
-}
-
-interface ProsTransaction {
-   id: string;
-   data: {};
-   consumidor_name: string;
-   prestador_name: string;
-   prestador_id: string;
-   valor: string;
-   description: string;
-   consumidor: string;
-}
-
 interface PriceProps {
    price: string;
    pts: number;
+}
+
+interface PropResponse {
+   compras: Tips[];
+   vendas: Tips[];
+   presenca: Tips[];
+   indication: Tips[];
+   b2b: Tips[];
+}
+
+interface Tips {
+   id: string;
+   nome: string;
+   pontos: number;
+   rank: number;
 }
 
 const wt = Dimensions.get('window').width;
@@ -112,6 +89,8 @@ export function Inicio() {
 
    const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
+
+   const [globalPont, setGlobalPont] = React.useState<PropResponse>();
 
    const [orderTransaction, setOrderTransaction] = React.useState<
       IOrderTransaction[]
@@ -129,7 +108,7 @@ export function Inicio() {
             setOrderB2b(re);
          })
          .catch(h => {
-            console.log('orderTransaction da tela inicio', h);
+            console.log('orderB2b da tela inicio', h);
             Alert.alert('Erro', h.response.data.message);
          });
 
@@ -140,6 +119,7 @@ export function Inicio() {
             setOrderTransaction(rs);
          })
          .catch(h => {
+            console.log('erro order transacton na tela inicial', h);
             Alert.alert('Erro', h.response.data.message);
          });
 
@@ -151,7 +131,17 @@ export function Inicio() {
             setOrderIndication(fil);
          })
          .catch(h => {
+            console.log('erro order indication', h);
             Alert.alert('Erro', h.response.data.message);
+         });
+
+      await api
+         .get('user/global-rank')
+         .then(h => {
+            setGlobalPont(h.data);
+         })
+         .catch(h => {
+            console.log('pontos');
          });
    }, []);
 
@@ -238,6 +228,9 @@ export function Inicio() {
                'Já reserva sua agenda para um próximo encontro',
             );
             loadOrders();
+            if (orderB2b.length === 0) {
+               setModalB2b(false);
+            }
          })
          .catch(h => {
             console.log('erro ao deletar orderb2b na tela inicial', h);
@@ -265,18 +258,22 @@ export function Inicio() {
                'Sucesso!',
                'Obrigado por insentivar um membro do grupo G.E.B training por consumir seu produto',
             );
+
+            if (orderTransaction.length === 0) {
+               setOrderTransaction(false);
+            }
+
             loadOrders();
          })
          .catch(h => {
+            console.log('erro create transaction na tela de inicio', h);
             console.log(h.response.data.message);
          });
    }, []);
 
-   const DeleteOrderTransaction = useCallback(async (id: string) => {}, []);
-
-   // todo .......................................................................
-
-   //* *....................................................................... */
+   const DeleteOrderTransaction = useCallback(async (id: string) => {
+      // await api.delete('/consumo/o');
+   }, []);
 
    // useEffect(() => {
    //    const load = Fire()
@@ -364,6 +361,41 @@ export function Inicio() {
       }, []),
    );
 
+   const subPonts = React.useMemo(() => {
+      const venda = globalPont
+         ? globalPont.vendas.reduce((ac, i) => {
+              return ac + Number(i.pontos);
+           }, 0)
+         : 0;
+
+      const valor = globalPont
+         ? globalPont.vendas.reduce((ac, i) => {
+              return ac + Number(i.valor);
+           }, 0)
+         : 0;
+
+      const compra = globalPont
+         ? globalPont.vendas.reduce((ac, i) => {
+              return ac + Number(i.pontos);
+           }, 0)
+         : 0;
+
+      const total = venda / 100;
+      const pontos = venda * 10 + compra * 10;
+
+      const price = total.toLocaleString('pt-BR', {
+         style: 'currency',
+         currency: 'BRL',
+      });
+      return {
+         TotalPontos: pontos,
+         TotalVendas: price,
+         valorTotal: valor / 100 || 0,
+      };
+   }, [globalPont]);
+
+   console.log(subPonts.valorTotal);
+
    return (
       <Container>
          {/* <Modal transparent animationType="slide" visible={false}>
@@ -417,7 +449,7 @@ export function Inicio() {
          <Modal transparent animationType="slide" visible={modalIndication}>
             <Center mt={wt} bg="dark.600">
                <TouchableOpacity
-                  onPress={() => {}}
+                  onPress={() => setModalIndication(false)}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -448,7 +480,11 @@ export function Inicio() {
                </ScrollView>
             </Center>
          </Modal>
-         <Modal transparent visible={modaIndicationSelect}>
+         <Modal
+            transparent
+            animationType="slide"
+            visible={modaIndicationSelect}
+         >
             <Center mt={wt}>
                <ModalIndication
                   pres={() => submitHandShackIndication()}
@@ -464,8 +500,8 @@ export function Inicio() {
          </Modal>
 
          {/* MODAL ORDER B2B2 */}
-         <Modal transparent visible={modalB2b}>
-            <Center mt={wt} bg="dark.600">
+         <Modal transparent animationType="slide" visible={modalB2b}>
+            <Center bg="dark.600">
                <TouchableOpacity
                   onPress={() => {
                      setModalB2b(false);
@@ -487,7 +523,7 @@ export function Inicio() {
                   data={orderB2b}
                   keyExtractor={h => h.id}
                   renderItem={({ item: h }) => (
-                     <Box>
+                     <Center w={wt * 0.7}>
                         <ModalB2b
                            clientName={h.send_name}
                            handShak={() => {
@@ -495,7 +531,7 @@ export function Inicio() {
                            }}
                            failTransaction={() => deleteB2b(h.id)}
                         />
-                     </Box>
+                     </Center>
                   )}
                />
             </Center>
@@ -523,22 +559,27 @@ export function Inicio() {
                      color={theme.colors.focus}
                   />
                </TouchableOpacity>
-               {orderTransaction.map(h => (
-                  <View key={h.id}>
-                     <MessageComponent
-                        confirmar={() => {
-                           validateTransaction(h);
-                        }}
-                        nome={h.consumidor_name}
-                        rejeitar={() => {
-                           DeleteOrderTransaction(h.id);
-                        }}
-                        valor={h.valor}
-                     />
-                  </View>
-               ))}
+               <FlatList
+                  data={orderTransaction}
+                  keyExtractor={h => h.id}
+                  renderItem={({ item: h }) => {
+                     <Box>
+                        <MessageComponent
+                           confirmar={() => {
+                              validateTransaction(h);
+                           }}
+                           nome={h.consumidor_name}
+                           rejeitar={() => {
+                              DeleteOrderTransaction(h.id);
+                           }}
+                           valor={h.valor / 100}
+                        />
+                     </Box>;
+                  }}
+               />
             </Box>
          </Modal>
+
          <Box w="100%">
             <HStack space="70%">
                <TouchableOpacity
@@ -574,8 +615,9 @@ export function Inicio() {
                )}
             </HStack>
          </Box>
-         {user.profile === null ? (
-            <Avatar source={{ uri: user.avatar }} />
+
+         {user.profile !== null ? (
+            <Avatar source={{ uri: user.profile.avatar }} />
          ) : (
             <BoxIco>
                <Feather name="user" size={100} />
@@ -586,8 +628,12 @@ export function Inicio() {
             <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               <TitlePrice>price</TitlePrice>
-               <TitleP>pts</TitleP>
+               {subPonts.TotalVendas === '0' ? (
+                  <ActivityIndicator />
+               ) : (
+                  <TitlePrice>{subPonts.TotalVendas}</TitlePrice>
+               )}
+               <TitleP>{subPonts.TotalPontos} pts</TitleP>
             </BoxPrice>
          </View>
          <View style={{ alignSelf: 'center' }}>

@@ -5,7 +5,7 @@ import { AntDesign } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-import { FlatList } from 'react-native';
+import { Alert, FlatList } from 'react-native';
 import fire from '@react-native-firebase/firestore';
 import { ButonPost, Container, Flat } from './styles';
 import { HeaderContaponent } from '../../components/HeaderComponent';
@@ -13,6 +13,8 @@ import { ListPost } from '../../components/ListPost';
 import theme from '../../global/styles/theme';
 import { Loading } from '../../components/Loading';
 import { colecao } from '../../collection';
+import { IProfileDto, IUserDtos } from '../../dtos';
+import { api } from '../../services/api';
 
 export interface Res {
    id: string;
@@ -23,10 +25,21 @@ export interface Res {
    avater: string;
    data: number;
 }
+interface IPosts {
+   id: string;
+   image: string;
+   like: number;
+   description: string;
+   user_id: string;
+   created_at: Date;
+   nome: string;
+   avatar: string;
+}
+
 export function Home() {
    const navigation = useNavigation();
 
-   const [post, setPost] = useState<Res[]>([]);
+   const [post, setPost] = useState<IPosts[]>([]);
    const [state, setState] = useState(false);
    const [load, setLoad] = useState(true);
 
@@ -34,43 +47,45 @@ export function Home() {
       navigation.navigate('Post');
    }, [navigation]);
 
-   useEffect(() => {
-      const asy = fire()
-         .collection(colecao.post)
-         .onSnapshot(h => {
-            const post = h.docs
-               .map(p => {
-                  return {
-                     id: p.id,
-                     ...p.data(),
-                  } as Res;
-               })
-               .sort((a, b) => {
-                  return b.data - a.data;
-               });
-
-            setPost(post);
-            setLoad(false);
-         });
-
-      return () => asy();
-   }, []);
-
-   const handleLike = useCallback(async (id: string) => {
-      fire()
-         .collection(colecao.post)
-         .doc(id)
-         .get()
+   const posts = React.useCallback(async () => {
+      await api
+         .get('/post/')
          .then(h => {
-            const { like } = h.data();
-            fire()
-               .collection(colecao.post)
-               .doc(id)
-               .update({
-                  like: like + 1,
-               });
-         });
+            const rs = h.data;
+            const fil = rs.filter(p => p !== null);
+            setPost(fil);
+         })
+         .catch(h => {
+            console.log('erro ao carregar post na lela home', h);
+            Alert.alert('Erro', h.response.message);
+         })
+         .finally(() => setLoad(false));
    }, []);
+
+   useFocusEffect(
+      useCallback(() => {
+         posts();
+      }, []),
+   );
+
+   const handleLike = useCallback(async (id: string) => {}, []);
+
+   const postUsers = post
+      ? post.map(pst => pst)
+      : [
+           {
+              id: '1',
+              image: '',
+              like: 0,
+              description: '',
+              user_id: '',
+              created_at: new Date(),
+              nome: '',
+              avatar: '',
+           },
+        ];
+
+   console.log(post);
 
    return (
       <Container>
@@ -81,16 +96,16 @@ export function Home() {
          ) : (
             <>
                <FlatList
-                  data={post}
-                  keyExtractor={h => h.id}
+                  data={postUsers}
+                  keyExtractor={p => p.id}
                   renderItem={({ item: h }) => (
                      <ListPost
                         state={state}
                         presLike={() => handleLike(h.id)}
-                        avater={h.avater}
+                        avater={h.avatar}
                         user_name={h.nome}
-                        image={h.post}
-                        descriçao={h.descricao}
+                        image={h.image}
+                        descriçao={h.description}
                         like={h.like}
                      />
                   )}

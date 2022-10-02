@@ -101,12 +101,12 @@ export const rotasAdm = [
       component: ListPresenca,
       icon: '',
    },
-   {
-      color: theme.colors.secundary,
-      name: 'ALTERAR SENHA DE UM MEMBRO',
-      component: UpdateSenhaUser,
-      icon: '',
-   },
+   // {
+   //    color: theme.colors.secundary,
+   //    name: 'ALTERAR SENHA DE UM MEMBRO',
+   //    component: UpdateSenhaUser,
+   //    icon: '',
+   // },
    {
       color: theme.colors.secundary,
       name: 'EXCLUIR UM MEMBRO',

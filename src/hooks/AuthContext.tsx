@@ -10,23 +10,14 @@ import React, {
    useState,
 } from 'react';
 import { Alert, Platform } from 'react-native';
-import Auth from '@react-native-firebase/auth';
-import Firestore from '@react-native-firebase/firestore';
 
-import { format } from 'date-fns';
-import { boolean } from 'yup';
 import * as Notifications from 'expo-notifications';
-import { IProfileDto, IUserDtos } from '../dtos';
 import { api } from '../services/api';
-
-export interface User {
-   user: IUserDtos;
-   profile: IProfileDto;
-}
+import { IUserDtos } from '../dtos';
 
 type AuthState = {
    token: string;
-   user: User;
+   user: IUserDtos;
 };
 
 interface SignInCred {
@@ -35,7 +26,7 @@ interface SignInCred {
 }
 
 interface AuthContexData {
-   user: User | null;
+   user: IUserDtos | null;
    expoToken: string;
    loading: boolean;
    signIn(credential: SignInCred): Promise<void>;
@@ -77,26 +68,23 @@ export const AuthProvider: React.FC = ({ children }) => {
             senha,
          })
          .then(async h => {
-            const { user, token } = h.data;
-
-            await AsyncStorage.multiSet([
-               [keyToken, token],
-               [keyUser, JSON.stringify(user)],
-            ]);
-
+            const { token } = h.data;
             api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-            await api.get('/user/list-all-user').then(p => {
-               const rs = p.data;
-               const res = rs.find(t => t.user.id === user.id);
+            await api
+               .get('/user/find-user-by-id')
+               .then(async h => {
+                  const user = h.data;
+                  setData({ token, user });
 
-               const us = {
-                  user,
-                  profile: res.profile,
-               };
-
-               setData({ token, user: us });
-            });
+                  await AsyncStorage.multiSet([
+                     [keyToken, token],
+                     [keyUser, JSON.stringify(user)],
+                  ]);
+               })
+               .catch(h =>
+                  console.log('err ao encontrar usuario no hook de signIn', h),
+               );
          })
          .catch(h => console.log('erro', h.response.data.message));
    }, []);

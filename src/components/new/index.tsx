@@ -36,11 +36,39 @@ export interface IPost {
    data: number;
 }
 
+interface PropsUserFire {
+   CNPJ: string;
+   CPF: string;
+   adm: boolean;
+   apadrinhado: boolean;
+   avatarUrl: string;
+   email: string;
+   enquadramento: string;
+   id: string;
+   inative: boolean;
+   inativo: boolean;
+   indicacao: number;
+   links: {
+      face: string;
+      insta: string;
+      maps: string;
+      site: string;
+   };
+   logoUrl: string;
+   nome: string;
+   padrinhQuantity: number;
+   ramo: string;
+   token: string;
+   whats: string;
+   workName: string;
+}
+
 export function New() {
    const { user } = useAuth();
 
    const [membro, setMembro] = React.useState('');
    const [senha, setSenha] = React.useState('');
+   const [userProfile, setUserProfile] = React.useState<PropsUserFire>([]);
 
    const [b2b, setB2b] = React.useState<IOrderB2b[]>([]);
    const [orderB2b, setOrderB2b] = React.useState<IOrderB2b[]>([]);
@@ -50,6 +78,16 @@ export function New() {
    const [presenca, setPresenca] = React.useState<PropsPresensa[]>([]);
    const [post, setPost] = React.useState<IPost[]>([]);
    const [users, setUsers] = React.useState<IUserDto[]>([]);
+
+   React.useEffect(() => {
+      fire()
+         .collection('users')
+         .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
+         .get()
+         .then(h => {
+            setUserProfile(h.data() as PropsUserFire);
+         });
+   }, []);
 
    React.useEffect(() => {
       fire()
@@ -325,7 +363,7 @@ export function New() {
       async (token: string) => {
          const rs = presenca
             .filter(h => {
-               if (h.presenca === false) {
+               if (h.presenca === true) {
                   return h;
                }
             })
@@ -366,7 +404,7 @@ export function New() {
             if (us) {
                return {
                   image: h.post,
-                  user_id: us.id,
+                  fk_id_user: us.id,
                   description: h.descricao,
                   like: h.like,
                };
@@ -397,7 +435,7 @@ export function New() {
             whats,
             workName,
             id,
-         } = user;
+         } = userProfile;
 
          api.defaults.headers.common.Authorization = `Bearer ${tk}`;
 
@@ -434,16 +472,14 @@ export function New() {
       [user],
    );
 
-   console.log(user.links);
-
    const handleSubmit = React.useCallback(async () => {
-      const data = {
-         id: user.id,
-         nome: user.nome,
-         membro,
-         senha,
-         adm: false,
-      };
+      // const data = {
+      //    id: user.id,
+      //    nome: user.nome,
+      //    membro,
+      //    senha,
+      //    adm: false,
+      // };
       // await api
       //    .post('/user/create-user', data)
       //    .then(h => console.log('cadastro', h.data))
@@ -457,17 +493,18 @@ export function New() {
          .then(h => {
             const { token } = h.data;
 
-            // submitOrderB2b(token);
+            submitOrderB2b(token);
             // submitB2b(token);
             // submitOrderIndica(token);
-            // submitOrderTra(token);
+            submitOrderTra(token);
             // submitTra(token);
             // submitPresenca(token);
             // submitPost(token);
             submitProfile(token);
+            console.log(token);
          })
          .catch(h => console.log('login', h.response.data.message));
-   }, [membro, senha, user]);
+   }, [membro, submitPresenca, senha]);
 
    return (
       <Center p="5" flex="1">

@@ -6,10 +6,25 @@ export interface IUserDtos {
    senha: string;
    adm: boolean;
    token?: string;
+
+   //! ! FK_USERS
+   situation?: ISituationUser;
+   profile?: IProfileDto;
+   links?: ILinkDto;
+   region?: IRegion;
+}
+
+export interface ISituationUser {
+   id?: string;
+   inativo: boolean;
+   firstLogin: boolean;
+   apadrinhado: boolean;
+   fk_id_user?: string;
 }
 
 export interface IProfileDto {
-   user_id: string;
+   fk_id_user: string;
+   // fk_id_post?: string;
    whats: string;
    workName: string;
    CNPJ: string;
@@ -25,13 +40,18 @@ export interface IProfileDto {
    avatar?: string;
 }
 
+export interface IRegion {
+   id?: string;
+   city: string;
+   fk_id_user?: string;
+}
+
 export interface IPresencaDto {
    id?: string;
    nome: string;
    user_id: string;
    presenca?: boolean;
    createdAt?: Date;
-   data?: string;
 }
 
 export interface IOrderTransaction {
@@ -59,7 +79,6 @@ export interface ITransaction {
 }
 
 export interface IB2b {
-   id: string;
    send_id: string;
    send_name: string;
    recevid_name: string;
@@ -87,4 +106,19 @@ export interface ILinkDto {
    user_id: string;
    nome: string;
    link: string;
+}
+
+export interface IPostsDtos {
+   image: string;
+   fk_id_user: string;
+   description: string;
+   like?: ILikeDto;
+   profile?: IProfileDto;
+   user?: IUserDtos;
+}
+
+export interface ILikeDto {
+   id?: string;
+   like: number;
+   fk_id_post: string;
 }
