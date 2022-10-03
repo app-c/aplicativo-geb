@@ -34,14 +34,9 @@ import theme from '../../global/styles/theme';
 import { Loading } from '../../components/Loading';
 import { api } from '../../services/api';
 
-interface PropsUser {
-   user: IUserDtos;
-   profile: IProfileDto;
-}
-
 export function Indicacoes() {
    const { user } = useAuth();
-   const { nome, id } = user.user;
+   const { nome, id } = user;
 
    const { navigate } = useNavigation();
    const [modal, setModal] = useState(false);
@@ -54,19 +49,19 @@ export function Indicacoes() {
    const [nomeCliente, setNomeCliente] = useState('');
    const [telefoneCliente, setTelefoneCliente] = useState('');
    const [value, setValue] = useState('');
-   const [membros, setMembros] = useState<PropsUser[]>();
+   const [membros, setMembros] = useState<IUserDtos[]>();
    const [expoToken, setExpoToken] = React.useState('');
 
    const Users = React.useCallback(async () => {
       api.get('/user/list-all-user')
          .then(h => {
-            const us = h.data as PropsUser[];
-            const rs = us.filter(h => h.user.id !== id);
+            const us = h.data as IUserDtos[];
+            const rs = us.filter(h => h.id !== id);
             setMembros(rs);
          })
          .catch(h => console.log('list membros', h.response.data))
          .finally(() => setLoad(false));
-   }, [user]);
+   }, [id]);
 
    useFocusEffect(
       useCallback(() => {
@@ -78,7 +73,7 @@ export function Indicacoes() {
    const users =
       value.length > 0
          ? membros.filter(h => {
-              const up = h.user.nome.toLocaleUpperCase();
+              const up = h.nome.toLocaleUpperCase();
               return up.includes(value);
            })
          : membros;
@@ -176,15 +171,15 @@ export function Indicacoes() {
 
          <FlatList
             data={users}
-            keyExtractor={h => h.user.id}
+            keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <MembrosComponents
                   imageOfice={h.profile.logo}
                   oficio={h.profile.workName}
                   user_avatar={h.profile.avatar}
                   icon="indicar"
-                  userName={h.user.nome}
-                  pres={() => OpenModal(h.user.id, h.user.nome, h.user.token)}
+                  userName={h.nome}
+                  pres={() => OpenModal(h.id, h.nome, h.token)}
                   // inativoPres={h.inativo}
                   // inativo={h.inativo}
                />
@@ -241,6 +236,7 @@ export function Indicacoes() {
 
                   <BoxInput>
                      <Input
+                        keyboardType="numeric"
                         placeholder="telefone do cliente"
                         onChangeText={setTelefoneCliente}
                         value={telefoneCliente}

@@ -75,8 +75,8 @@ export function Transaction() {
       const dados = {
          prestador_id,
          prestador_name,
-         consumidor_name: user.user.nome,
-         consumidor_id: user.user.id,
+         consumidor_name: user.nome,
+         consumidor_id: user.id,
          descricao: description,
          valor: mon,
       };

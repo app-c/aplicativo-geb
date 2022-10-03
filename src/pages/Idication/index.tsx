@@ -50,8 +50,8 @@ export function Indication() {
          .put('/indication/validate-indication', inddados)
          .then(async h => {
             const dados = {
-               prestador_id: user.user.id,
-               prestador_name: user.user.nome,
+               prestador_id: user.id,
+               prestador_name: user.nome,
                descricao: description,
                valor: mon,
             };

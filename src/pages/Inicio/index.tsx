@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
    ActivityIndicator,
    Alert,
+   AppState,
    Dimensions,
    FlatList,
    Modal,
@@ -35,6 +36,7 @@ import {
    VStack,
    ScrollView,
    Text,
+   Button,
 } from 'native-base';
 import { convertAbsoluteToRem } from 'native-base/lib/typescript/theme/v33x-theme/tools';
 import theme from '../../global/styles/theme';
@@ -51,7 +53,13 @@ import {
    TitlePrice,
 } from './styles';
 import { ModalOrderIndication } from '../../components/ModalOrderIndication';
-import { IB2b, IIndicationDto, IOrderTransaction, IUserDto } from '../../dtos';
+import {
+   IB2b,
+   IIndicationDto,
+   IOrderTransaction,
+   ITransaction,
+   IUserDto,
+} from '../../dtos';
 import { ModalB2b } from '../../components/ModalB2b';
 import { MessageComponent } from '../../components/MessageComponent';
 import { colecao } from '../../collection';
@@ -60,6 +68,8 @@ import { CartaMessagem } from '../../components/CartaMessagem';
 import { ModalIndication } from '../../components/ModalIndication';
 import { update, version } from '../../utils/updates';
 import { api } from '../../services/api';
+import { Loading } from '../../components/Loading';
+import { New } from '../../components/new';
 
 interface PriceProps {
    price: string;
@@ -79,6 +89,12 @@ interface Tips {
    nome: string;
    pontos: number;
    rank: number;
+   valor?: number;
+}
+
+interface PropsValorTotal {
+   priceUser: string;
+   priceGeb: string;
 }
 
 const wt = Dimensions.get('window').width;
@@ -86,6 +102,12 @@ const wt = Dimensions.get('window').width;
 export function Inicio() {
    const { user, expoToken } = useAuth();
    const navigate = useNavigation();
+   const [showModalUpdate, setModalUpdates] = React.useState(false);
+
+   const [modalNew, setModaNew] = React.useState(true);
+
+   const appState = useRef(AppState.currentState);
+   const [appVisible, setAppVisible] = React.useState(appState.current);
 
    const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
@@ -95,6 +117,7 @@ export function Inicio() {
    const [orderTransaction, setOrderTransaction] = React.useState<
       IOrderTransaction[]
    >([]);
+   const [valorGeb, setValorGeb] = React.useState<PropsValorTotal>();
 
    // * token ................................................................
 
@@ -136,14 +159,54 @@ export function Inicio() {
          });
 
       await api
-         .get('user/global-rank')
+         .get('/user/global-rank')
          .then(h => {
             setGlobalPont(h.data);
          })
          .catch(h => {
             console.log('pontos');
          });
-   }, []);
+
+      await api.get('/transaction/list-all-transaction').then(h => {
+         const res = h.data as ITransaction[];
+         const rs = res.map(p => {
+            return p.valor;
+         });
+
+         const valor = res.reduce((ac, i) => {
+            return ac + Number(i.valor);
+         }, 0);
+
+         const userTrans = res.filter(p => {
+            return p.prestador_id === user.id;
+         });
+
+         const valorTotalUser = userTrans.reduce((ac, i) => {
+            return ac + Number(i.valor);
+         }, 0);
+
+         const priceUser = valorTotalUser.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+         });
+
+         const t = valor + 3078000;
+
+         const price = t.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+         });
+
+         const dados = {
+            priceUser,
+            priceGeb: price,
+         };
+
+         setValorGeb(dados);
+      });
+   }, [user]);
+
+   console.log(valorGeb);
 
    // !! INDICATION
 
@@ -275,85 +338,34 @@ export function Inicio() {
       // await api.delete('/consumo/o');
    }, []);
 
-   // useEffect(() => {
-   //    const load = Fire()
-   //       .collection(colecao.transaction)
-   //       .onSnapshot(h => {
-   //          const res = h.docs.map(p => p.data());
-   //          const data = res.filter(h => {
-   //             if (h.prestador_id === user.id && h.type === 'entrada') {
-   //                return h;
-   //             }
-   //          });
+   //* * UPDATE APLICATION ....................................................
 
-   //          const MontatePass = res
-   //             .filter(h => {
-   //                const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
-   //                const [dia, mes, ano, hora, min] = data
-   //                   .split('-')
-   //                   .map(Number);
-   //                const DateN = new Date(Date.now()).getFullYear() - 1;
-   //                if (h.type === 'entrada' && ano === DateN) {
-   //                   return h;
-   //                }
-   //             })
-   //             .reduce((acc, item) => {
-   //                return acc + Number(item.valor);
-   //             }, 0);
+   const ChecUpdadeDevice = React.useCallback(async () => {
+      const { isAvailable } = await Updates.checkForUpdateAsync();
+      if (isAvailable) {
+         setModalUpdates(true);
+      }
+   }, []);
 
-   //          const MontateAtual = res
-   //             .filter(h => {
-   //                const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
+   const ReloadDevice = React.useCallback(async () => {
+      setModaNew(true);
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
+   }, []);
 
-   //                const [dia, mes, ano, hora, min] = data
-   //                   .split('-')
-   //                   .map(Number);
-   //                const DateN = new Date(Date.now()).getFullYear();
-   //                if (h.type === 'entrada' && ano === DateN) {
-   //                   return h;
-   //                }
-   //             })
-   //             .reduce((acc, item) => {
-   //                return acc + Number(item.valor);
-   //             }, 0);
+   React.useEffect(() => {
+      const event = AppState.addEventListener('change', h => {
+         if (h === 'active') {
+            ChecUpdadeDevice();
+         }
+      });
 
-   //          const mp = 3242222780 / 1000 + MontateAtual;
+      return () => {
+         event.remove();
+      };
+   }, [ChecUpdadeDevice]);
 
-   //          setMontanteP(
-   //             MontatePass.toLocaleString('pt-BR', {
-   //                style: 'currency',
-   //                currency: 'BRL',
-   //             }),
-   //          );
-
-   //          setMontante(
-   //             mp.toLocaleString('pt-BR', {
-   //                style: 'currency',
-   //                currency: 'BRL',
-   //             }),
-   //          );
-
-   //          const total = data.reduce((acc, item) => {
-   //             return acc + Number(item.valor);
-   //          }, 0);
-
-   //          const price = total.toLocaleString('pt-BR', {
-   //             style: 'currency',
-   //             currency: 'BRL',
-   //          });
-
-   //          const pts = data.length * 10;
-
-   //          const pricePts = {
-   //             price,
-   //             pts,
-   //          };
-
-   //          setPrice(pricePts);
-   //       });
-
-   //    return () => load();
-   // }, [user.id]);
+   //* * .......................................................................
 
    useFocusEffect(
       useCallback(() => {
@@ -380,7 +392,7 @@ export function Inicio() {
            }, 0)
          : 0;
 
-      const total = venda / 100;
+      const total = venda;
       const pontos = venda * 10 + compra * 10;
 
       const price = total.toLocaleString('pt-BR', {
@@ -390,14 +402,36 @@ export function Inicio() {
       return {
          TotalPontos: pontos,
          TotalVendas: price,
-         valorTotal: valor / 100 || 0,
+         valorTotal: valor,
       };
    }, [globalPont]);
 
-   console.log(subPonts.valorTotal);
+   // if (!valorGeb) {
+   //    return <Loading />;
+   // }
 
    return (
       <Container>
+         <Modal visible={showModalUpdate}>
+            <Center p="5" bg={theme.colors.primary}>
+               <Box>
+                  <Text fontFamily={theme.fonts.blac} fontSize="16">
+                     UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
+                  </Text>
+                  {update.map(h => (
+                     <Text>{h.title}</Text>
+                  ))}
+                  <Text>{version}</Text>
+               </Box>
+               <Button onPress={ReloadDevice} mt="10">
+                  ATUALIZAR
+               </Button>
+            </Center>
+         </Modal>
+
+         <Modal visible={modalNew} animationType="fade">
+            <New />
+         </Modal>
          {/* <Modal transparent animationType="slide" visible={false}>
             <Center bg="dark.600" mt={wt}>
                <TouchableOpacity
@@ -631,13 +665,13 @@ export function Inicio() {
                {subPonts.TotalVendas === '0' ? (
                   <ActivityIndicator />
                ) : (
-                  <TitlePrice>{subPonts.TotalVendas}</TitlePrice>
+                  <TitlePrice>{}</TitlePrice>
                )}
                <TitleP>{subPonts.TotalPontos} pts</TitleP>
             </BoxPrice>
          </View>
          <View style={{ alignSelf: 'center' }}>
-            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B </Text>
+            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {}</Text>
          </View>
          <Line />
          <Classificacao />

@@ -79,15 +79,15 @@ export function New() {
    const [post, setPost] = React.useState<IPost[]>([]);
    const [users, setUsers] = React.useState<IUserDto[]>([]);
 
-   React.useEffect(() => {
-      fire()
-         .collection('users')
-         .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
-         .get()
-         .then(h => {
-            setUserProfile(h.data() as PropsUserFire);
-         });
-   }, []);
+   // React.useEffect(() => {
+   //    fire()
+   //       .collection('users')
+   //       .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
+   //       .get()
+   //       .then(h => {
+   //          setUserProfile(h.data() as PropsUserFire);
+   //       });
+   // }, []);
 
    React.useEffect(() => {
       fire()
@@ -164,13 +164,13 @@ export function New() {
    const submitOrderB2b = React.useCallback(
       async (token: string) => {
          const rs = orderB2b.map(h => {
-            const user = users.find(p => p.id === h.user_id);
+            const us = users.find(p => p.id === h.user_id);
             const pres = users.find(p => p.id === h.prestador_id);
 
-            if (user && pres) {
+            if (us && pres) {
                return {
-                  send_id: user.id,
-                  send_name: user.nome,
+                  send_id: us.id,
+                  send_name: us.nome,
                   recevid_id: h.prestador_id,
                   recevid_name: pres.nome,
                   assunto: h.description,
@@ -198,14 +198,14 @@ export function New() {
    const submitB2b = React.useCallback(
       async (token: string) => {
          const B2b = b2b.map(h => {
-            const user = users.find(p => p.id === h.user_id);
+            const us = users.find(p => p.id === h.user_id);
             const pres = users.find(p => p.id === h.prestador_id);
             const as = orderB2b.find(p => p.user_id === h.user_id);
 
-            if (user && pres && as) {
+            if (us && pres && as) {
                return {
-                  send_id: user.id,
-                  send_name: user.nome,
+                  send_id: us.id,
+                  send_name: us.nome,
                   recevid_id: h.prestador_id,
                   recevid_name: pres.nome,
                   appointment: h.data,
@@ -384,7 +384,7 @@ export function New() {
          for (let i = 0; i < rs.length; i += 1) {
             if (rs[i]) {
                await api
-                  .post('/presenca/create-order-presenca', rs[i])
+                  .post('/presenca/create-presenca', rs[i])
                   .then(h => console.log('ok'))
                   .catch(h => console.log('erro', h.response.data));
             }
@@ -469,21 +469,24 @@ export function New() {
             .then(h => console.log('ok'))
             .catch(h => console.log('erro'));
       },
-      [user],
+      [userProfile],
    );
 
    const handleSubmit = React.useCallback(async () => {
-      // const data = {
-      //    id: user.id,
-      //    nome: user.nome,
-      //    membro,
-      //    senha,
-      //    adm: false,
-      // };
-      // await api
-      //    .post('/user/create-user', data)
-      //    .then(h => console.log('cadastro', h.data))
-      //    .catch(h => console.log(h.response.data.message));
+      const dados = {
+         id: user.id,
+         nome: user.nome,
+         membro,
+         senha,
+         adm: user.adm,
+         firstLogin: false,
+         inativo: user.inativo,
+         apadrinhado: user.apadrinhado,
+      };
+      await api
+         .post('/user/create-user', dados)
+         .then(h => console.log('cadastro', h.data))
+         .catch(h => console.log(h.response.data.message));
 
       await api
          .post('/user/session', {
@@ -496,15 +499,17 @@ export function New() {
             submitOrderB2b(token);
             // submitB2b(token);
             // submitOrderIndica(token);
-            submitOrderTra(token);
+            // submitOrderTra(token);
             // submitTra(token);
             // submitPresenca(token);
             // submitPost(token);
-            submitProfile(token);
+            // submitProfile(token);
             console.log(token);
          })
          .catch(h => console.log('login', h.response.data.message));
-   }, [membro, submitPresenca, senha]);
+   }, [membro, senha, user]);
+
+   console.log('save');
 
    return (
       <Center p="5" flex="1">

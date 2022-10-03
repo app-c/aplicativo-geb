@@ -27,7 +27,7 @@ type Props = {
 
 export function Valide() {
    const { user } = useAuth();
-   const { nome, id } = user.user;
+   const { nome, id } = user;
    const { navigate } = useNavigation();
    const [data, setData] = useState(
       format(new Date(Date.now()), 'dd/MM/yyyy - HH:mm'),

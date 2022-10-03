@@ -27,7 +27,7 @@ export function Membros() {
    const { navigate } = useNavigation();
    const { user } = useAuth();
 
-   const [membros, setMembros] = useState<PropsUser[]>([]);
+   const [membros, setMembros] = useState<IUserDtos[]>([]);
    const [load, setLoad] = useState(true);
    const [search, setSearch] = React.useState('');
 
@@ -57,11 +57,12 @@ export function Membros() {
    const Users = React.useCallback(async () => {
       api.get('/user/list-all-user')
          .then(h => {
-            const us = h.data as PropsUser[];
-            const fil = us.filter(h => h.user.id !== user.user.id);
+            const us = h.data as IUserDtos[];
+            const fil = us.filter(p => p.id !== user.id);
+            console.log(us);
             setMembros(fil);
          })
-         .catch(h => console.log('list membros', h.response.data.message))
+         .catch(h => console.log('list membros', h))
          .finally(() => setLoad(false));
    }, [user]);
 
@@ -75,7 +76,7 @@ export function Membros() {
    const users =
       search.length > 0
          ? membros.filter(h => {
-              const up = h.user.nome.toLocaleUpperCase();
+              const up = h.nome.toLocaleUpperCase();
               return up.includes(search);
            })
          : membros;
@@ -104,23 +105,23 @@ export function Membros() {
                   <FlatList
                      contentContainerStyle={{ paddingBottom: 570 }}
                      data={users}
-                     keyExtractor={h => h.user.id}
+                     keyExtractor={h => h.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
                               icon="necociar"
                               pres={() =>
                                  hanldeTransaction(
-                                    h.user.id,
+                                    h.id,
                                     h.profile.avatar,
                                     h.profile.logo,
-                                    h.user.nome,
+                                    h.nome,
                                     user.nome,
                                     h.profile.workName,
-                                    h.user.token,
+                                    h.token,
                                  )
                               }
-                              userName={h.user.nome}
+                              userName={h.nome}
                               user_avatar={h.profile.avatar}
                               oficio={h.profile.workName}
                               imageOfice={h.profile.logo}

@@ -109,10 +109,11 @@ export interface ILinkDto {
 }
 
 export interface IPostsDtos {
+   id?: string;
    image: string;
    fk_id_user: string;
    description: string;
-   like?: ILikeDto;
+   like?: ILikeDto[];
    profile?: IProfileDto;
    user?: IUserDtos;
 }

@@ -25,7 +25,7 @@ export function B2B() {
    const { user } = useAuth();
 
    const [value, setValue] = useState('');
-   const [membros, setMembros] = useState<UserProps[]>([]);
+   const [membros, setMembros] = useState<IUserDtos[]>([]);
    const [load, setLoad] = useState(true);
 
    const hanldeTransaction = useCallback(
@@ -50,8 +50,8 @@ export function B2B() {
    const Users = React.useCallback(async () => {
       api.get('/user/list-all-user')
          .then(h => {
-            const us = h.data as UserProps[];
-            const res = us.filter(p => p.user.id !== user.user.id);
+            const us = h.data as IUserDtos[];
+            const res = us.filter(p => p.id !== user.id);
             setMembros(res);
          })
          .catch(h => console.log('b2b', h.response.data.message))
@@ -68,7 +68,7 @@ export function B2B() {
    const users =
       value.length > 0
          ? membros.filter(h => {
-              const up = h.user.nome.toLocaleUpperCase();
+              const up = h.nome.toLocaleUpperCase();
               return up.includes(value);
            })
          : membros;
@@ -97,21 +97,21 @@ export function B2B() {
                <View style={{ paddingBottom: 350 }}>
                   <FlatList
                      data={users}
-                     keyExtractor={h => h.user.id}
+                     keyExtractor={h => h.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
                               icon="b2b"
                               pres={() =>
                                  hanldeTransaction(
-                                    h.user.id,
+                                    h.id,
                                     h.profile.avatar,
                                     h.profile.logo,
-                                    h.user.nome,
+                                    h.nome,
                                     h.profile.workName,
                                  )
                               }
-                              userName={h.user.nome}
+                              userName={h.nome}
                               user_avatar={h.profile.avatar}
                               oficio={h.profile.workName}
                               imageOfice={h.profile.logo}

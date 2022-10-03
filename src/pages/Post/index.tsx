@@ -3,7 +3,7 @@
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { ActivityIndicator, Alert, Platform } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import storage from '@react-native-firebase/storage';
 
@@ -29,6 +29,7 @@ import { useAuth } from '../../hooks/AuthContext';
 import { Loading } from '../../components/Loading';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { colecao } from '../../collection';
+import { api } from '../../services/api';
 
 export function Post() {
    const { goBack } = useNavigation();
@@ -65,20 +66,27 @@ export function Post() {
       await reference.putFile(img);
       const photoUrl = await reference.getDownloadURL();
 
-      fire()
-         .collection(colecao.post)
-         .add({
-            nome: user.nome,
-            avater: user.avatarUrl,
-            descricao,
-            post: photoUrl,
-            data: new Date(Date.now()).getTime(),
-            like: 0,
+      const dados = {
+         description: descricao,
+         image: photoUrl,
+         fk_id_user: user.id,
+         like: 0,
+      };
+
+      await api
+         .post('/post', dados)
+         .then(h => {})
+         .catch(h => {
+            console.log('erro na tela para criar post', h);
+            Alert.alert('Post', 'post criado com sucesso!');
          });
       setLoad(false);
-      Alert.alert('Post', 'post criado com sucesso!');
       goBack();
-   }, [descricao, goBack, img, user.avatarUrl, user.nome]);
+   }, [descricao, goBack, img, user]);
+
+   // if (load) {
+   //    return <Loading />;
+   // }
 
    return (
       <Container>
@@ -106,7 +114,7 @@ export function Post() {
             </BoxImage>
 
             <Button enabled={!load} onPress={handleSubmit}>
-               {load ? <Loading /> : <TexBoton>Criar</TexBoton>}
+               <TexBoton>Criar</TexBoton>
             </Button>
          </Box>
       </Container>

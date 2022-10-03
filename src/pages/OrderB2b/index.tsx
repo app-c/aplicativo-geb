@@ -60,8 +60,8 @@ export function OrderB2b() {
       }
 
       const dados = {
-         send_id: user.user.id,
-         send_name: user.user.nome,
+         send_id: user.id,
+         send_name: user.nome,
          recevid_id: prestador_id,
          recevid_name: nome,
          appointment: new Date(),

@@ -31,7 +31,6 @@ import {
    NativeBaseProvider,
    Button as ButtonBase,
 } from 'native-base';
-import * as Updates from 'expo-updates';
 import * as Notifications from 'expo-notifications';
 import theme from './src/global/styles/theme';
 import AppProvider from './src/hooks';
@@ -42,13 +41,6 @@ import { api } from './src/services/api';
 import { New } from './src/components/new';
 
 export default function App() {
-   const appState = useRef(AppState.currentState);
-
-   const [appVisible, setAppVisible] = React.useState(appState.current);
-   const [showModalUpdate, setModalUpdates] = React.useState(false);
-
-   const [modalNew, setModaNew] = React.useState(false);
-
    Notifications.setNotificationHandler({
       handleNotification: async () => ({
          shouldShowAlert: true,
@@ -56,35 +48,6 @@ export default function App() {
          shouldSetBadge: false,
       }),
    });
-
-   //* * UPDATE APLICATION ....................................................
-
-   const ChecUpdadeDevice = React.useCallback(async () => {
-      const { isAvailable } = await Updates.checkForUpdateAsync();
-      if (isAvailable) {
-         setModalUpdates(true);
-      }
-   }, []);
-
-   const ReloadDevice = React.useCallback(async () => {
-      setModaNew(true);
-      // await Updates.fetchUpdateAsync();
-      // await Updates.reloadAsync();
-   }, []);
-
-   React.useEffect(() => {
-      const event = AppState.addEventListener('change', h => {
-         if (h === 'active') {
-            ChecUpdadeDevice();
-         }
-      });
-
-      return () => {
-         event.remove();
-      };
-   }, [ChecUpdadeDevice]);
-
-   //* * .......................................................................
 
    const [loaded] = useFonts({
       Roboto_400Regular,
@@ -109,26 +72,6 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
-                     <Modal visible={showModalUpdate}>
-                        <Center p="5" bg={theme.colors.primary}>
-                           <Box>
-                              <Text fontFamily={theme.fonts.blac} fontSize="16">
-                                 UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
-                              </Text>
-                              {update.map(h => (
-                                 <Text>{h.title}</Text>
-                              ))}
-                              <Text>{version}</Text>
-                           </Box>
-                           <ButtonBase onPress={ReloadDevice} mt="10">
-                              ATUALIZAR
-                           </ButtonBase>
-                        </Center>
-                     </Modal>
-
-                     <Modal visible={modalNew} animationType="fade">
-                        <New />
-                     </Modal>
                      <Route />
                   </View>
                </NativeBaseProvider>

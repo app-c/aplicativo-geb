@@ -50,10 +50,9 @@ export function Classificacao() {
          .get('user/global-rank')
          .then(h => {
             const rs = h.data as PropResponse;
-            console.log(rs);
             const compras = rs.compras.find(h => h.id === user.id);
-            const vendas = rs.compras.find(h => h.id === user.id);
-            const presenca = rs.compras.find(h => h.id === user.id);
+            const vendas = rs.vendas.find(h => h.id === user.id);
+            const presenca = rs.presenca.find(h => h.id === user.id);
             const indication = rs.compras.find(h => h.id === user.id);
             const b2b = rs.b2b.find(h => h.id === user.id);
 
@@ -72,7 +71,7 @@ export function Classificacao() {
             const { message } = h.response.data;
             if (message === 'falta o token' || message === 'token expirou') {
                Alert.alert('Erro', 'Seu tokem expirou');
-               signOut();
+               // signOut();
             }
          });
    }, [signOut, user]);

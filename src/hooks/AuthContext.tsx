@@ -50,6 +50,7 @@ export const AuthProvider: React.FC = ({ children }) => {
       setLoading(true);
 
       const [token, user] = await AsyncStorage.multiGet([keyToken, keyUser]);
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
       if (token && user) {
          setData({ token: token[1], user: JSON.parse(user[1]) });
