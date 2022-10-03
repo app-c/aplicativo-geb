@@ -18,7 +18,7 @@ interface IProps {
 }
 
 export function ListaPresença() {
-   const { listUser } = useAuth();
+   const {} = useAuth();
    const [data, setData] = React.useState<IProps[]>([]);
    const [selectdate, setSelectDate] = React.useState(new Date());
 
@@ -33,33 +33,7 @@ export function ListaPresença() {
       [selectdate],
    );
 
-   React.useEffect(() => {
-      const ld = fire()
-         .collection('presença')
-         .onSnapshot(p => {
-            const pres = p.docs.map(p => p.data() as IProps);
-
-            const filDate = pres.filter(h => {
-               const mes = new Date(h.createdAt).getMonth() + 1;
-               const mesSelect = selectdate.getMonth() + 1;
-               if (mes === mesSelect) {
-                  return h;
-               }
-            });
-
-            const res = listUser.map(us => {
-               const fil = filDate.filter(fi => fi.user_id === us.id);
-               return {
-                  nome: us.nome,
-                  qnt: fil.length,
-                  avatar: us.avatarUrl,
-               };
-            });
-            setData(res);
-         });
-
-      return () => ld();
-   }, [listUser, selectdate]);
+   React.useEffect(() => {}, []);
 
    const Month = React.useMemo(() => {
       const month = format(selectdate, 'MM/yy');
@@ -88,7 +62,7 @@ export function ListaPresença() {
          </Box>
 
          <Box>
-            <FlatList
+            {/* <FlatList
                contentContainerStyle={{
                   paddingBottom: 200,
                }}
@@ -97,7 +71,7 @@ export function ListaPresença() {
                renderItem={({ item: h }) => (
                   <CardsPresença nome={h.nome} avatar={h.avatar} qnt={h.qnt} />
                )}
-            />
+            /> */}
          </Box>
       </Box>
    );

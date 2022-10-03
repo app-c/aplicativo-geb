@@ -75,9 +75,9 @@ export function ModalIndication({
             </HStack>
          </VStack>
 
-         <Box mt="2">
+         <Center mt="2">
             <Button pres={pres} title="Ok" />
-         </Box>
+         </Center>
       </Box>
    );
 }

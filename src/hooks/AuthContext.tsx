@@ -10,72 +10,51 @@ import React, {
    useState,
 } from 'react';
 import { Alert, Platform } from 'react-native';
-import Auth from '@react-native-firebase/auth';
-import Firestore from '@react-native-firebase/firestore';
 
-import { format } from 'date-fns';
-import { boolean } from 'yup';
 import * as Notifications from 'expo-notifications';
-import {
-   IOrderB2b,
-   IOrderIndication,
-   IOrderTransaction,
-   ITransaction,
-   IUserDto,
-} from '../dtos';
-import { colecao } from '../collection';
+import { api } from '../services/api';
+import { IUserDtos } from '../dtos';
 
-export interface User {
-   id: string;
-   nome: string;
-   adm: boolean;
-   padrinhQuantity: number;
-}
+type AuthState = {
+   token: string;
+   user: IUserDtos;
+};
 
 interface SignInCred {
-   email: string;
+   membro: string;
    senha: string;
 }
 
 interface AuthContexData {
-   user: IUserDto | null;
+   user: IUserDtos | null;
    expoToken: string;
    loading: boolean;
    signIn(credential: SignInCred): Promise<void>;
-   transactionAdd: (valor: ITransaction) => void;
-   order: (colect: string) => void;
-   orders: [];
-
-   orderB2b: (valor: IOrderB2b) => void;
-   orderIndicacao: (valor: IOrderIndication) => void;
-   orderTransaction: (valor: IOrderTransaction) => void;
    signOut(): void;
-   updateUser(user: IUserDto): Promise<void>;
-   listUser: IUserDto[] | null;
+   updateUser(user: IUserDtos): Promise<void>;
 }
 
+const keyUser = '@appGeb:user';
+const keyToken = '@appGeb:token';
 const User_Collection = '@Geb:user';
 
 export const AuthContext = createContext<AuthContexData>({} as AuthContexData);
 
 export const AuthProvider: React.FC = ({ children }) => {
    const [loading, setLoading] = useState(true);
-   const [user, setUser] = useState<IUserDto | null>(null);
-   const [orders, setOrder] = React.useState<[]>([]);
+   const [data, setData] = useState<AuthState>({} as AuthState);
 
-   const [listUser, setListUser] = useState<IUserDto[]>([]);
    const [expoToken, setExpotoken] = React.useState('');
 
    const LoadingUser = useCallback(async () => {
       setLoading(true);
 
-      const storeUser = await AsyncStorage.getItem(User_Collection);
+      const [token, user] = await AsyncStorage.multiGet([keyToken, keyUser]);
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-      if (storeUser) {
-         const userData = JSON.parse(storeUser) as IUserDto;
-         setUser(userData);
+      if (token && user) {
+         setData({ token: token[1], user: JSON.parse(user[1]) });
       }
-
       setLoading(false);
    }, []);
 
@@ -83,206 +62,49 @@ export const AuthProvider: React.FC = ({ children }) => {
       LoadingUser();
    }, [LoadingUser]);
 
-   const signIn = useCallback(async ({ email, senha }) => {
-      await Auth()
-         .signInWithEmailAndPassword(email, senha)
-         .then(au => {
-            Firestore()
-               .collection(colecao.users)
-               .doc(au.user.uid)
-               .get()
-               .then(async profile => {
-                  const {
-                     nome,
-                     adm,
-                     padrinhQuantity,
-                     whats,
-                     workName,
-                     CNPJ,
-                     ramo,
-                     enquadramento,
-                     links,
-                     CPF,
-                     avatarUrl,
-                     logoUrl,
-                     indicacao,
-                     presenca,
-                     inativo,
-                     token,
-                     apadrinhado,
-                  } = profile.data() as IUserDto;
+   const signIn = useCallback(async ({ membro, senha }) => {
+      await api
+         .post('/user/session', {
+            membro,
+            senha,
+         })
+         .then(async h => {
+            const { token } = h.data;
+            api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-                  if (profile.exists) {
-                     const userData = {
-                        email: au.user.email,
-                        id: au.user.uid,
-                        nome,
-                        adm,
-                        whats,
-                        workName,
-                        CNPJ,
-                        CPF,
-                        ramo,
-                        enquadramento,
-                        links,
-                        padrinhQuantity,
-                        avatarUrl,
-                        logoUrl,
-                        indicacao,
-                        presenca,
-                        inativo,
-                        token,
-                        apadrinhado,
-                     };
-                     await AsyncStorage.setItem(
-                        User_Collection,
-                        JSON.stringify(userData),
-                     );
-                     setUser(userData);
-                  }
+            await api
+               .get('/user/find-user-by-id')
+               .then(async h => {
+                  const user = h.data;
+                  setData({ token, user });
+
+                  await AsyncStorage.multiSet([
+                     [keyToken, token],
+                     [keyUser, JSON.stringify(user)],
+                  ]);
                })
-               .catch(err => {
-                  const { code } = err;
-                  Alert.alert(
-                     'Login',
-                     'Não foi possível carregar os dados do usuário',
-                  );
-               });
-         });
+               .catch(h =>
+                  console.log('err ao encontrar usuario no hook de signIn', h),
+               );
+         })
+         .catch(h => console.log('erro', h.response.data.message));
    }, []);
-
-   //* ORDERS.................................................................
-
-   const orderB2b = useCallback(
-      async ({ prestador_id, user_id, description, nome }) => {
-         if (!description) {
-            Alert.alert('Transação', 'informe uma descrição ');
-            return;
-         }
-
-         Firestore()
-            .collection(colecao.orderB2b)
-            .add({
-               prestador_id,
-               user_id,
-               description,
-               nome,
-               data: new Date(Date.now()),
-            })
-            .catch(err => console.log(err));
-      },
-      [],
-   );
-
-   const orderTransaction = useCallback(
-      async ({
-         prestador_id,
-         consumidor,
-         valor,
-         description,
-         data,
-         prestador_name,
-         consumidor_name,
-      }) => {
-         Firestore().collection(colecao.orderTransaction).add({
-            prestador_id,
-            prestador_name,
-            consumidor /** user_id */,
-            consumidor_name,
-            valor,
-            description,
-            data,
-         });
-      },
-      [],
-   );
-
-   const orderIndicacao = useCallback(
-      ({
-         userId,
-         quemIndicou,
-         quemIndicouName,
-         quemIndicouWorkName,
-         nomeCliente,
-         telefoneCliente,
-         descricao,
-      }) => {
-         Firestore()
-            .collection(colecao.orderIndication)
-            .add({
-               userId,
-               quemIndicou /** user_id */,
-               quemIndicouName,
-               quemIndicouWorkName,
-               nomeCliente,
-               telefoneCliente,
-               descricao,
-               createdAt: format(new Date(Date.now()), 'dd-MM-yy-HH-mm'),
-            });
-      },
-      [],
-   );
-
-   const order = React.useCallback(
-      (colect: string) => {
-         Firestore()
-            .collection(colect)
-            .get()
-            .then(h => {
-               const or = h.docs.map(h => h.data());
-               setOrder(or);
-            });
-         return orders;
-      },
-      [orders],
-   );
-
-   //* .......................................................................
-
-   const transactionAdd = useCallback(
-      ({ prestador_id, descricao, type, valor, createdAt }) => {
-         Firestore()
-            .collection(colecao.transaction)
-            .add({ prestador_id, descricao, type, valor, createdAt });
-      },
-      [],
-   );
-
-   useEffect(() => {
-      if (!user) {
-         return;
-      }
-      const ld = Firestore()
-         .collection(colecao.users)
-         .onSnapshot(h => {
-            const data = h.docs.map(p => p.data() as IUserDto);
-
-            const us = data
-               .sort((a, b) => {
-                  if (a.nome < b.nome) {
-                     return -1;
-                  }
-               })
-               .filter(h => h.inativo === false);
-            setListUser(us);
-         });
-      return () => ld();
-   }, [user]);
 
    useEffect(() => {
       setLoading(true);
    }, []);
 
    const signOut = useCallback(async () => {
+      await AsyncStorage.multiRemove([keyToken, keyUser]);
       await AsyncStorage.removeItem(User_Collection);
 
-      setUser(null);
+      setData({} as AuthState);
    }, []);
 
-   const updateUser = useCallback(async (user: IUserDto) => {
-      await AsyncStorage.setItem(User_Collection, JSON.stringify(user));
+   const updateUser = useCallback(async (user: IUserDtos) => {
+      await AsyncStorage.setItem(keyUser, JSON.stringify(user));
 
-      setUser(user);
+      // setData(user);
    }, []);
 
    const Token = React.useCallback(async () => {
@@ -324,19 +146,12 @@ export const AuthProvider: React.FC = ({ children }) => {
    return (
       <AuthContext.Provider
          value={{
-            user,
+            user: data.user,
             loading,
             signIn,
             signOut,
             updateUser,
-            listUser,
-            transactionAdd,
-            orderB2b,
-            orderIndicacao,
-            orderTransaction,
             expoToken,
-            order,
-            orders,
          }}
       >
          {children}

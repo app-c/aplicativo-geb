@@ -19,7 +19,7 @@ interface Prps {
 export function ModalB2b({ clientName, failTransaction, handShak }: Prps) {
    return (
       <Container>
-         <Title>{clientName} fez um B2B com você</Title>
+         <Title>{clientName} fez um B2B com você?</Title>
 
          <BoxButon>
             <ButonCancel onPress={failTransaction}>

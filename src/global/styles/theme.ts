@@ -9,7 +9,7 @@ export default {
       focus_light_3: 'rgba(7, 21, 102, 0.4)',
       focus_second: 'rgba(231, 101, 45, 1)',
       focus_second_light: 'rgba(231, 101, 45, 0.7)',
-      focus_second_3: 'rgba(231, 101, 45, 0.5)',
+      focus_second_3: 'rgba(231, 101, 45, 0.193)',
 
       entrada: 'rgba(112,158,128, 0.08)',
       saida: 'rgba(188,113,82,0.08)',

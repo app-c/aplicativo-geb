@@ -3,8 +3,8 @@ export type TransactionNavigtionsProps = {
    prestador_id?: string;
    avatar_url?: string;
    logoUrl?: string;
-   consumidor_name?: string;
-   prestador_name?: string;
+   consumidor_name: string;
+   prestador_name: string;
    workName?: string;
    token?: string;
 };

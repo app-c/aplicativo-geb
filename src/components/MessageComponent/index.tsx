@@ -13,7 +13,7 @@ import {
 
 interface Props {
    nome: string;
-   valor?: string;
+   valor?: number;
    confirmar: () => void;
    rejeitar: () => void;
 }

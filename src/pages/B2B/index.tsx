@@ -8,21 +8,25 @@ import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { IUserDto } from '../../dtos';
+import { IProfileDto, IUserDtos } from '../../dtos';
 import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
 import { Loading } from '../../components/Loading';
+import { api } from '../../services/api';
+
+type UserProps = {
+   user: IUserDtos;
+   profile: IProfileDto;
+};
 
 export function B2B() {
    const { navigate } = useNavigation();
-   const { listUser, user } = useAuth();
+   const { user } = useAuth();
 
    const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDto[]>(
-      listUser.filter(h => h.id !== user.id),
-   );
-   const [load, setLoad] = useState(false);
+   const [membros, setMembros] = useState<IUserDtos[]>([]);
+   const [load, setLoad] = useState(true);
 
    const hanldeTransaction = useCallback(
       (
@@ -43,17 +47,31 @@ export function B2B() {
       [navigate],
    );
 
-   useEffect(() => {
-      if (value === '') {
-         setLista(lista);
-      } else {
-         setLista(
-            lista.filter(h => {
-               return h.nome.indexOf(value) > -1;
-            }),
-         );
-      }
-   }, [listUser, value]);
+   const Users = React.useCallback(async () => {
+      api.get('/user/list-all-user')
+         .then(h => {
+            const us = h.data as IUserDtos[];
+            const res = us.filter(p => p.id !== user.id);
+            setMembros(res);
+         })
+         .catch(h => console.log('b2b', h.response.data.message))
+         .finally(() => setLoad(false));
+   }, [user]);
+
+   useFocusEffect(
+      useCallback(() => {
+         Users();
+         setLoad(false);
+      }, [Users]),
+   );
+
+   const users =
+      value.length > 0
+         ? membros.filter(h => {
+              const up = h.nome.toLocaleUpperCase();
+              return up.includes(value);
+           })
+         : membros;
 
    return (
       <>
@@ -78,7 +96,7 @@ export function B2B() {
 
                <View style={{ paddingBottom: 350 }}>
                   <FlatList
-                     data={lista}
+                     data={users}
                      keyExtractor={h => h.id}
                      renderItem={({ item: h }) => (
                         <>
@@ -87,18 +105,18 @@ export function B2B() {
                               pres={() =>
                                  hanldeTransaction(
                                     h.id,
-                                    h.avatarUrl,
-                                    h.logoUrl,
+                                    h.profile.avatar,
+                                    h.profile.logo,
                                     h.nome,
-                                    h.workName,
+                                    h.profile.workName,
                                  )
                               }
                               userName={h.nome}
-                              user_avatar={h.avatarUrl}
-                              oficio={h.workName}
-                              imageOfice={h.logoUrl}
-                              inativoPres={h.inativo}
-                              inativo={h.inativo}
+                              user_avatar={h.profile.avatar}
+                              oficio={h.profile.workName}
+                              imageOfice={h.profile.logo}
+                              // inativoPres={h.profile.inativo}
+                              // inativo={h.profile.inativo}
                            />
                         </>
                      )}

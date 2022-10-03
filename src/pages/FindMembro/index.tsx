@@ -1,46 +1,72 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Alert, FlatList, Linking, View } from "react-native";
-import { Form } from "@unform/mobile";
-import * as Linkin from "expo-linking";
-import fire from "@react-native-firebase/firestore";
-import { FindMembroComponent } from "../../components/FindMembro";
-import { IUserDto } from "../../dtos";
-import { Box, Container, Flat, Title } from "./styles";
-import { HeaderContaponent } from "../../components/HeaderComponent";
-import { InputCasdastro } from "../../components/InputsCadastro";
-import { colecao } from "../../collection";
-import { Loading } from "../../components/Loading";
-import { useAuth } from "../../hooks/AuthContext";
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, FlatList, Linking, View } from 'react-native';
+import { Form } from '@unform/mobile';
+import * as Linkin from 'expo-linking';
+import fire from '@react-native-firebase/firestore';
+import { useFocusEffect } from '@react-navigation/native';
+import { FindMembroComponent } from '../../components/FindMembro';
+import { IProfileDto, IUserDtos } from '../../dtos';
+import { Box, Container, Flat, Title } from './styles';
+import { HeaderContaponent } from '../../components/HeaderComponent';
+import { InputCasdastro } from '../../components/InputsCadastro';
+import { colecao } from '../../collection';
+import { Loading } from '../../components/Loading';
+import { useAuth } from '../../hooks/AuthContext';
+import { api } from '../../services/api';
 
 export function FindUser() {
-   const { user, listUser } = useAuth();
+   const [listAlluser, setlistAllUser] = useState<IUserDtos[]>([]);
    const [membro, setMembro] = useState<IUserDto[]>([]);
-   const [value, setValue] = useState("");
-   const [lista, setLista] = useState<IUserDto[]>([]);
+   const [value, setValue] = useState('');
+   const [lista, setLista] = useState<IUserDtos[]>([]);
    const [load, setLoad] = useState(true);
+   const [search, setSearch] = React.useState('');
 
-   useEffect(() => {
-      const us = listUser.map((h) => {
-         const wa = `https://wa.me/55${h.whats.slice(1, 3)}${h.whats.slice(
-            5,
-            -5
-         )}${h.whats.slice(-4)}`;
+   const loadUser = React.useCallback(async () => {
+      await api
+         .get('user/list-all-user')
+         .then(h => {
+            const res = h.data as IUserDtos[];
 
-         let ma = "";
-         if (h.links.maps) {
-            const [c, l] = h.links.maps.split("https://").map(String);
-            ma = l;
-         }
+            // const us = res.map(h => {
+            //    const wa = h.profile.whats
+            //       ? `https://wa.me/55${h.profile.whats.slice(
+            //            1,
+            //            3,
+            //         )}${h.profile.whats.slice(5, -5)}${h.profile.whats.slice(
+            //            -4,
+            //         )}`
+            //       : 'wahts';
 
-         return {
-            ...h,
-            wa,
-            map: ma,
-         };
-      });
-      setMembro(us);
-      setLoad(false);
-   }, [listUser]);
+            //    return {
+            //       user: {
+            //          ...h.user,
+            //       },
+            //       profile: {
+            //          ...h.profile,
+            //          whats: wa,
+            //       },
+            //    };
+            //    // let ma = '';
+            //    // if (h.links.maps) {
+            //    //    const [c, l] = h.links.maps.split('https://').map(String);
+            //    //    ma = l;
+            //    // }
+            // });
+            console.log(res);
+
+            setlistAllUser(res);
+         })
+         .catch(h => {
+            console.log('erro ao carregar user na lela localize os membros', h);
+
+            const { message } = h.response.data;
+            if (message === 'falta o token' || message === 'token expirou') {
+               return Alert.alert('Erro', 'sem token');
+            }
+         })
+         .finally(() => setLoad(false));
+   }, [setlistAllUser]);
 
    const handlePress = useCallback(async (url: string) => {
       await Linkin.openURL(`https://${url}`);
@@ -50,61 +76,59 @@ export function FindUser() {
       await Linkin.openURL(url);
    }, []);
 
-   useEffect(() => {
-      if (value === "") {
-         setLista(membro);
-      } else {
-         setLista(
-            membro
-               .filter((h) => {
-                  return h.nome.indexOf(value) > -1;
-               })
-               .sort()
-         );
-      }
-   }, [membro, value]);
+   useFocusEffect(
+      useCallback(() => {
+         loadUser();
+      }, [loadUser]),
+   );
+
+   const users =
+      search.length > 0
+         ? listAlluser.filter(h => {
+              const up = h.nome.toLocaleUpperCase();
+              return up.includes(search);
+           })
+         : listAlluser;
+
+   if (!users[0]) {
+      <Loading />;
+   }
 
    return (
-      <>
-         {load ? (
-            <Loading />
-         ) : (
-            <Container>
-               <HeaderContaponent title="Localizar membros" type="tipo1" />
+      <Container>
+         <HeaderContaponent title="Localizar membros" type="tipo1" />
 
-               <Form>
-                  <Box>
-                     <InputCasdastro
-                        name="find"
-                        icon="search"
-                        type="custom"
-                        options={{ mask: "****************************" }}
-                        onChangeText={(text) => setValue(text)}
-                        value={value}
-                     />
-                  </Box>
-               </Form>
-
-               <FlatList
-                  // contentContainerStyle={{ paddingBottom: 150 }}
-                  data={lista}
-                  keyExtractor={(h) => h.id}
-                  renderItem={({ item: h }) => (
-                     <View>
-                        <FindMembroComponent
-                           avatar={h.avatarUrl}
-                           name={h.nome}
-                           workName={h.workName}
-                           whats={() => handleNavigateToWatts(h.wa)}
-                           face={() => handlePress(h.links.face)}
-                           insta={() => handlePress(h.links.insta)}
-                           maps={() => handlePress(h.map)}
-                        />
-                     </View>
-                  )}
+         <Form>
+            <Box>
+               <InputCasdastro
+                  name="find"
+                  icon="search"
+                  type="custom"
+                  options={{ mask: '****************************' }}
+                  onChangeText={setSearch}
+                  value={value}
                />
-            </Container>
-         )}
-      </>
+            </Box>
+         </Form>
+
+         <FlatList
+            // contentContainerStyle={{ paddingBottom: 150 }}
+            data={users}
+            keyExtractor={h => h.id}
+            renderItem={({ item: h }) => (
+               <View>
+                  <FindMembroComponent
+                     avatar={h.profile.avatar}
+                     name={h.nome}
+                     workName={h.profile.workName}
+                     whats={() => {}}
+                     face={() => {}}
+                     insta={() => {}}
+                     maps={() => {}}
+                  />
+               </View>
+            )}
+         />
+      </Container>
    );
 }
