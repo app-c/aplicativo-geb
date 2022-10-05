@@ -69,6 +69,7 @@ import { update, version } from '../../utils/updates';
 import { api } from '../../services/api';
 import { Loading } from '../../components/Loading';
 import { New } from '../../components/new';
+import { Transaction } from '../Transaction';
 
 interface PriceProps {
    price: string;
@@ -178,7 +179,9 @@ export function Inicio() {
             return ac + Number(i.valor);
          }, 0);
 
-         const priceUser = valorTotalUser.toLocaleString('pt-BR', {
+         const vlorUser = valorTotalUser / 100;
+
+         const priceUser = vlorUser.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
          });
@@ -328,14 +331,18 @@ export function Inicio() {
       [loadOrders, orderTransaction],
    );
 
-   const DeleteOrderTransaction = useCallback(async (id: string) => {
-      await api.delete(`/consumo/delete-order/${id}`);
-   }, []);
+   const DeleteOrderTransaction = useCallback(
+      async (id: string) => {
+         await api.delete(`/consumo/delete-order/${id}`);
+         loadOrders();
+      },
+      [loadOrders],
+   );
 
    //* * UPDATE APLICATION ....................................................
    const [showModalUpdate, setModalUpdates] = React.useState(false);
 
-   const [modalNew, setModaNew] = React.useState(true);
+   const [modalNew, setModaNew] = React.useState(false);
 
    const appState = useRef(AppState.currentState);
    const [appVisible, setAppVisible] = React.useState(appState.current);
@@ -365,10 +372,25 @@ export function Inicio() {
 
    //* * .......................................................................
 
+   const openModals = React.useCallback(() => {
+      if (orderTransaction.length > 0) {
+         setModalTransaction(true);
+      }
+
+      if (orderIndication.length > 0) {
+         setModalIndication(true);
+      }
+
+      if (orderB2b.length > 0) {
+         setModalB2b(true);
+      }
+   }, [orderB2b.length, orderIndication.length, orderTransaction.length]);
+
    useFocusEffect(
       useCallback(() => {
          loadOrders();
-      }, []),
+         openModals();
+      }, [loadOrders, openModals]),
    );
 
    const subPonts = React.useMemo(() => {
@@ -596,20 +618,18 @@ export function Inicio() {
                <FlatList
                   data={orderTransaction}
                   keyExtractor={h => h.id}
-                  renderItem={({ item: h }) => {
-                     <Box>
-                        <MessageComponent
-                           confirmar={() => {
-                              validateTransaction(h);
-                           }}
-                           nome={h.consumidor_name}
-                           rejeitar={() => {
-                              DeleteOrderTransaction(h.id);
-                           }}
-                           valor={h.valor / 100}
-                        />
-                     </Box>;
-                  }}
+                  renderItem={({ item: h }) => (
+                     <MessageComponent
+                        confirmar={() => {
+                           validateTransaction(h);
+                        }}
+                        nome={h.consumidor_name}
+                        rejeitar={() => {
+                           DeleteOrderTransaction(h.id);
+                        }}
+                        valor={h.valor / 100}
+                     />
+                  )}
                />
             </Box>
          </Modal>

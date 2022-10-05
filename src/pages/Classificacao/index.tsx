@@ -50,10 +50,12 @@ export function Classificacao() {
          .get('user/global-rank')
          .then(h => {
             const rs = h.data as PropResponse;
+
             const compras = rs.compras.find(h => h.id === user.id);
             const vendas = rs.vendas.find(h => h.id === user.id);
+            const indication = rs.indication.find(h => h.id === user.id);
             const presenca = rs.presenca.find(h => h.id === user.id);
-            const indication = rs.compras.find(h => h.id === user.id);
+            // const padrinho = rs.padrinho.find(h => h.id === user.id);
             const b2b = rs.b2b.find(h => h.id === user.id);
 
             const dados = {
@@ -67,7 +69,6 @@ export function Classificacao() {
             setPonts(dados);
          })
          .catch(h => {
-            console.log(h);
             const { message } = h.response.data;
             if (message === 'falta o token' || message === 'token expirou') {
                Alert.alert('Erro', 'Seu tokem expirou');
@@ -88,6 +89,7 @@ export function Classificacao() {
       }, [dados]),
    );
 
+   console.log(ponts.indication.pontos);
    return (
       <Container>
          {load ? (
@@ -138,11 +140,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Indicações</Title>
-                        <Title>{}pts</Title>
+                        <Title>{ponts.indication.pontos}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{}</Title>
+                        <Title>{ponts.indication.rank}</Title>
                      </BoxPosition>
                   </View>
 

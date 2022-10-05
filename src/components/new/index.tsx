@@ -508,6 +508,7 @@ export function New() {
                console.log('login da tela new', h.response.data.message),
             )
             .finally(async () => {
+               console.log('atualizado');
                await Updates.fetchUpdateAsync();
                await Updates.reloadAsync();
             });
@@ -533,11 +534,11 @@ export function New() {
          .then(h => console.log('cadastro', h.data))
          .catch(h => console.log('erro no cadastro', h.response.data.message))
          .finally(() => {
-            // login(membro, senha);
+            login(membro, senha);
          });
    }, [userProfile, membro, senha, submitOrderB2b, submitProfile]);
 
-   console.log('save', userProfile);
+   console.log('save');
 
    return (
       <Center p="5" flex="1">

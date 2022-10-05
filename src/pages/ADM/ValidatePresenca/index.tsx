@@ -40,41 +40,45 @@ export function ListPresenca() {
 
    const listOrdersPresenca = React.useCallback(async () => {
       await api.get('/user/list-all-user').then(async user => {
-         const membro = user.data as IUser[];
+         const membro = user.data as IUserDtos[];
          await api
             .get('/presenca/list-all-order-presenca')
             .then(async presenca => {
                const rs = presenca.data as IPresencaDto[];
 
                const response = rs
-                  .map(respo => {
+                  .filter(fil => {
                      const profile = membro.find(h => {
-                        if (h.user.id === respo.user_id) {
+                        console.log(h.id);
+                        if (h.id === fil.user_id) {
                            return h;
                         }
                      });
 
                      if (profile) {
-                        return {
-                           presenca: {
-                              ...respo,
-                              data: format(
-                                 new Date(respo.createdAt),
-                                 'dd/MM/yy',
-                              ),
-                           },
-                           profile: {
-                              avatar: profile.profile.avatar,
-                           },
-                        };
+                        return fil;
                      }
                   })
+                  .map(respo => {
+                     const profile = membro.find(h => {
+                        if (h.id === respo.user_id) {
+                           return h;
+                        }
+                     });
+                     return {
+                        presenca: {
+                           ...respo,
+                           data: format(new Date(respo.createdAt), 'dd/MM/yy'),
+                        },
+                        profile: {
+                           avatar: profile.profile.avatar,
+                        },
+                     };
+                  })
                   .filter(h => h !== undefined);
-               // console.log(response);
-
                setPresenca(response);
             })
-            .catch(h => console.log(h))
+            .catch(h => console.log('erro ao carregar presenca', h))
             .finally(() => setLoad(false));
       });
    }, []);
