@@ -89,8 +89,6 @@ export function Classificacao() {
       }, [dados]),
    );
 
-   console.log('pontos', ponts.indication.ranck);
-
    if (!ponts) {
       return <ActivityIndicator />;
    }

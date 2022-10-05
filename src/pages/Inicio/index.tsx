@@ -179,7 +179,7 @@ export function Inicio() {
             return ac + Number(i.valor);
          }, 0);
 
-         const vlorUser = valorTotalUser / 100;
+         const vlorUser = valorTotalUser;
 
          const priceUser = vlorUser.toLocaleString('pt-BR', {
             style: 'currency',

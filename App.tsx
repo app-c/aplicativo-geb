@@ -34,12 +34,17 @@ import {
 } from 'native-base';
 import * as Updates from 'expo-updates';
 import * as Notifications from 'expo-notifications';
+import Async from '@react-native-async-storage/async-storage';
 import theme from './src/global/styles/theme';
 import AppProvider from './src/hooks';
 import { Route } from './src/routes';
 import { Loading } from './src/components/Loading';
 import { update, version } from './src/utils/updates';
 import { New } from './src/components/new';
+
+interface IUp {
+   up: boolean;
+}
 
 export default function App() {
    Notifications.setNotificationHandler({
@@ -53,15 +58,42 @@ export default function App() {
    //* * UPDATE APLICATION ....................................................
    const [showModalUpdate, setModalUpdates] = React.useState(false);
 
-   const [modalNew, setModaNew] = React.useState(false);
+   const [modalNew, setModaNew] = React.useState(true);
 
    const appState = useRef(AppState.currentState);
    const [appVisible, setAppVisible] = React.useState(appState.current);
 
+   React.useEffect(() => {
+      async function ld() {
+         const dados = {
+            up: false,
+         };
+         const data = await Async.getItem('up');
+         const dt = data ? (JSON.parse(data) as IUp) : null;
+
+         if (dt === null || !dt.up) {
+            await Async.setItem('up', JSON.stringify(dados));
+         }
+      }
+
+      ld();
+   }, []);
+
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         setModaNew(true);
+         const data = await Async.getItem('up');
+         const dt = JSON.parse(data) as IUp;
+         console.log(dt);
+
+         const dados = {
+            up: true,
+         };
+
+         if (!dt.up) {
+            setModaNew(true);
+            await Async.setItem('up', JSON.stringify(dados));
+         }
       }
    }, []);
 

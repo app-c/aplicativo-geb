@@ -531,13 +531,16 @@ export function New() {
       };
       await api
          .post('/user/create-user', dados)
-         .then(h => console.log('cadastro', h.data))
-         .catch(h => {
-            console.log('erro no cadastro', h.response.data.message);
-            Alert.alert('OCORREU UM ERRO NO CADASTRO', h.response.data.message);
-         })
-         .finally(() => {
+         .then(h => {
             login(membro, senha);
+         })
+         .catch(async h => {
+            console.log('erro no cadastro', h.response.data.message);
+            if (h.response.data.message === 'Esse membro já está cadastrado') {
+               Alert.alert(h.response.data.message);
+               await Updates.fetchUpdateAsync();
+               await Updates.reloadAsync();
+            }
          });
    }, [userProfile, membro, senha, submitOrderB2b, submitProfile]);
 
