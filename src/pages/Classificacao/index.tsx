@@ -71,7 +71,7 @@ export function Classificacao() {
             const { message } = h.response.data;
             if (message === 'falta o token' || message === 'token expirou') {
                Alert.alert('Erro', 'Seu tokem expirou');
-               // signOut();
+               signOut();
             }
          });
    }, [signOut, user]);

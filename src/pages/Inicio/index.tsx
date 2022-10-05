@@ -58,7 +58,6 @@ import {
    IIndicationDto,
    IOrderTransaction,
    ITransaction,
-   IUserDto,
 } from '../../dtos';
 import { ModalB2b } from '../../components/ModalB2b';
 import { MessageComponent } from '../../components/MessageComponent';
@@ -102,12 +101,6 @@ const wt = Dimensions.get('window').width;
 export function Inicio() {
    const { user, expoToken } = useAuth();
    const navigate = useNavigation();
-   const [showModalUpdate, setModalUpdates] = React.useState(false);
-
-   const [modalNew, setModaNew] = React.useState(false);
-
-   const appState = useRef(AppState.currentState);
-   const [appVisible, setAppVisible] = React.useState(appState.current);
 
    const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
@@ -198,15 +191,13 @@ export function Inicio() {
          });
 
          const dados = {
-            priceUser,
-            priceGeb: price,
+            priceUser: priceUser || '0',
+            priceGeb: price || '0',
          };
 
          setValorGeb(dados);
       });
    }, [user]);
-
-   console.log(valorGeb);
 
    // !! INDICATION
 
@@ -304,41 +295,50 @@ export function Inicio() {
    //! ! TRANSACTIN ........................................................... */
    const [modalTransaction, setModalTransaction] = React.useState(false);
 
-   const validateTransaction = useCallback(async (data: IOrderTransaction) => {
-      const dados = {
-         consumidor_id: data.consumidor_id,
-         consumidor_name: data.consumidor_name,
-         prestador_name: data.prestador_name,
-         prestador_id: data.prestador_id,
-         valor: data.valor,
-         descricao: data.descricao,
-         order_id: data.id,
-      };
-      await api
-         .post('/transaction/create-transaction', dados)
-         .then(h => {
-            Alert.alert(
-               'Sucesso!',
-               'Obrigado por insentivar um membro do grupo G.E.B training por consumir seu produto',
-            );
+   const validateTransaction = useCallback(
+      async (data: IOrderTransaction) => {
+         const dados = {
+            consumidor_id: data.consumidor_id,
+            consumidor_name: data.consumidor_name,
+            prestador_name: data.prestador_name,
+            prestador_id: data.prestador_id,
+            valor: data.valor,
+            descricao: data.descricao,
+            order_id: data.id,
+         };
+         await api
+            .post('/transaction/create-transaction', dados)
+            .then(h => {
+               Alert.alert(
+                  'Sucesso!',
+                  'Obrigado por insentivar um membro do grupo G.E.B training por consumir seu produto',
+               );
 
-            if (orderTransaction.length === 0) {
-               setModalTransaction(false);
-            }
+               if (orderTransaction.length === 0) {
+                  setModalTransaction(false);
+               }
 
-            loadOrders();
-         })
-         .catch(h => {
-            console.log('erro create transaction na tela de inicio', h);
-            console.log(h.response.data.message);
-         });
-   }, []);
+               loadOrders();
+            })
+            .catch(h => {
+               console.log('erro create transaction na tela de inicio', h);
+               console.log(h.response.data.message);
+            });
+      },
+      [loadOrders, orderTransaction],
+   );
 
    const DeleteOrderTransaction = useCallback(async (id: string) => {
       await api.delete(`/consumo/delete-order/${id}`);
    }, []);
 
    //* * UPDATE APLICATION ....................................................
+   const [showModalUpdate, setModalUpdates] = React.useState(false);
+
+   const [modalNew, setModaNew] = React.useState(true);
+
+   const appState = useRef(AppState.currentState);
+   const [appVisible, setAppVisible] = React.useState(appState.current);
 
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
@@ -349,8 +349,6 @@ export function Inicio() {
 
    const ReloadDevice = React.useCallback(async () => {
       setModaNew(true);
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
@@ -406,9 +404,11 @@ export function Inicio() {
       };
    }, [globalPont]);
 
-   // if (!valorGeb) {
-   //    return <Loading />;
-   // }
+   React.useEffect(() => {
+      async function lad() {
+         await api.get('/transaction/list-all').then();
+      }
+   }, []);
 
    return (
       <Container>
@@ -662,16 +662,24 @@ export function Inicio() {
             <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               {subPonts.TotalVendas === '0' ? (
-                  <ActivityIndicator />
+               {valorGeb ? (
+                  <TitlePrice>{valorGeb.priceUser}</TitlePrice>
                ) : (
-                  <TitlePrice>{}</TitlePrice>
+                  <ActivityIndicator />
                )}
                <TitleP>{subPonts.TotalPontos} pts</TitleP>
             </BoxPrice>
          </View>
          <View style={{ alignSelf: 'center' }}>
-            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {}</Text>
+            {valorGeb ? (
+               <Text style={{ marginLeft: 16 }}>
+                  Vendas do G.E.B {valorGeb.priceGeb}
+               </Text>
+            ) : (
+               <Text style={{ marginLeft: 16 }}>
+                  Vendas do G.E.B <ActivityIndicator />
+               </Text>
+            )}
          </View>
          <Line />
          <Classificacao />

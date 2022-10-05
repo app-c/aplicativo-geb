@@ -6,8 +6,11 @@ import { TouchableOpacity } from 'react-native';
 import fire from '@react-native-firebase/firestore';
 import axios from 'axios';
 import { number } from 'yup';
+import Async from '@react-native-async-storage/async-storage';
+import * as Updates from 'expo-updates';
 import theme from '../../global/styles/theme';
 import { colecao } from '../../collection';
+
 import {
    IOrderB2b,
    IOrderIndication,
@@ -79,15 +82,25 @@ export function New() {
    const [post, setPost] = React.useState<IPost[]>([]);
    const [users, setUsers] = React.useState<IUserDto[]>([]);
 
-   // React.useEffect(() => {
-   //    fire()
-   //       .collection('users')
-   //       .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
-   //       .get()
-   //       .then(h => {
-   //          setUserProfile(h.data() as PropsUserFire);
-   //       });
-   // }, []);
+   React.useEffect(() => {
+      // fire()
+      //    .collection('users')
+      //    .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
+      //    .get()
+      //    .then(h => {
+      //       setUserProfile(h.data() as PropsUserFire);
+      //    });
+
+      async function load() {
+         const User_Collection = '@Geb:user';
+
+         const ld = await Async.getItem(User_Collection);
+         const user = ld ? JSON.parse(ld) : [];
+         setUserProfile(user);
+      }
+
+      load();
+   }, []);
 
    React.useEffect(() => {
       fire()
@@ -472,44 +485,59 @@ export function New() {
       [userProfile],
    );
 
+   const login = React.useCallback(
+      async (membro: string, senha: string) => {
+         await api
+            .post('/user/session', {
+               membro,
+               senha,
+            })
+            .then(h => {
+               const { token } = h.data;
+
+               // submitOrderB2b(token);
+               // submitB2b(token);
+               // submitOrderIndica(token);
+               // submitOrderTra(token);
+               // submitTra(token);
+               // submitPresenca(token);
+               // submitPost(token);
+               submitProfile(token);
+            })
+            .catch(h =>
+               console.log('login da tela new', h.response.data.message),
+            )
+            .finally(async () => {
+               await Updates.fetchUpdateAsync();
+               await Updates.reloadAsync();
+            });
+      },
+      [submitProfile],
+   );
+
    const handleSubmit = React.useCallback(async () => {
       const dados = {
-         id: user.id,
-         nome: user.nome,
+         id: userProfile.id,
+         nome: userProfile.nome,
          membro,
          senha,
-         adm: user.adm,
+         adm: userProfile.adm,
          firstLogin: false,
-         inativo: user.inativo,
-         apadrinhado: user.apadrinhado,
+         inativo: userProfile.inativo,
+         apadrinhado: userProfile.apadrinhado,
+         qntIndication: userProfile.indicacao,
+         qntPadrinho: userProfile.padrinhQuantity,
       };
       await api
          .post('/user/create-user', dados)
          .then(h => console.log('cadastro', h.data))
-         .catch(h => console.log(h.response.data.message));
+         .catch(h => console.log('erro no cadastro', h.response.data.message))
+         .finally(() => {
+            // login(membro, senha);
+         });
+   }, [userProfile, membro, senha, submitOrderB2b, submitProfile]);
 
-      await api
-         .post('/user/session', {
-            membro,
-            senha,
-         })
-         .then(h => {
-            const { token } = h.data;
-
-            submitOrderB2b(token);
-            // submitB2b(token);
-            // submitOrderIndica(token);
-            // submitOrderTra(token);
-            // submitTra(token);
-            // submitPresenca(token);
-            // submitPost(token);
-            // submitProfile(token);
-            console.log(token);
-         })
-         .catch(h => console.log('login', h.response.data.message));
-   }, [membro, senha, user]);
-
-   console.log('save');
+   console.log('save', userProfile);
 
    return (
       <Center p="5" flex="1">

@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React, { useCallback } from 'react';
 import { NativeBaseProvider, Text, Box, Center } from 'native-base';
 import { Alert, FlatList } from 'react-native';
@@ -5,57 +6,81 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/AuthContext';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import theme from '../../global/styles/theme';
+import { api } from '../../services/api';
+import { Loading } from '../../components/Loading';
+import { MembrosApadrinhado } from '../../components/MembrosApadrinhado';
+import { IUserDtos } from '../../dtos';
 
 export function Padrinho() {
    const { user } = useAuth();
    const { navigate } = useNavigation();
+   const [users, setUser] = React.useState<IUserDtos[]>([]);
+   const [load, setLoad] = React.useState(true);
+
+   const loadUser = React.useCallback(async () => {
+      await api
+         .get('/user/list-all-user')
+         .then(h => {
+            const rs = h.data as IUserDtos[];
+            setUser(rs);
+         })
+         .catch(h =>
+            console.log('erro ao carregar user na tela te padrinho', h),
+         )
+         .finally(() => setLoad(false));
+   }, []);
+
+   React.useEffect(() => {
+      loadUser();
+   }, []);
 
    const handleApadrinhar = useCallback(
-      (id: string) => {
-         // fire()
-         //    .collection(colecao.users)
-         //    .doc(user.id)
-         //    .get()
-         //    .then(h => {
-         //       const { padrinhQuantity } = h.data();
-         //       fire()
-         //          .collection(colecao.users)
-         //          .doc(user.id)
-         //          .update({
-         //             padrinhQuantity: padrinhQuantity + 1,
-         //          });
-         //       fire().collection(colecao.users).doc(id).update({
-         //          apadrinhado: true,
-         //       });
-         //    });
-         // Alert.alert('APADRINHAMENTO', 'membro foi apadrinhado com sucesso!');
-         // navigate('INÍCIO');
+      async ({ user_id, nome }) => {
+         console.log(user_id, nome);
+         await api
+            .post('/user/create-padrinho', {
+               user_id: user.id,
+               apadrinhado_name: nome,
+               apadrinhado_id: user_id,
+               qnt: 0,
+            })
+            .then(h => {
+               Alert.alert('Sucesso!', `membro ${nome} foi apadrinhado`);
+               loadUser();
+            })
+            .catch(h => console.log('erro no padrinho', h));
       },
-      [navigate, user.id],
+      [loadUser, user],
    );
+
+   if (load) {
+      return <Loading />;
+   }
 
    return (
       <NativeBaseProvider>
          <HeaderContaponent type="tipo1" title="APDRINHAMENTO" />
-         <Center mt="100">
-            <Text fontFamily={theme.fonts.blac}>EM MANUTENÇAO</Text>
-         </Center>
 
-         {/* <FlatList
+         <FlatList
             data={users}
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <MembrosApadrinhado
-                  imageOfice={h.logoUrl}
-                  oficio={h.workName}
+                  imageOfice={h.profile.logo}
+                  oficio={h.profile.workName}
                   userName={h.nome}
-                  user_avatar={h.avatarUrl}
-                  pres={() => handleApadrinhar(h.id)}
-                  inativoPres={h.apadrinhado}
-                  inativo={h.apadrinhado}
+                  user_avatar={h.profile.avatar}
+                  pres={() =>
+                     handleApadrinhar({
+                        user_id: h.id,
+                        nome: h.nome,
+                     })
+                  }
+                  inativoPres={h.situation.inativo}
+                  inativo={h.situation.inativo}
                />
             )}
-         /> */}
+         />
       </NativeBaseProvider>
    );
 }
