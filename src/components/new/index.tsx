@@ -2,7 +2,7 @@
 /* eslint-disable no-await-in-loop */
 import React from 'react';
 import { Box, Center, Input, Text, VStack } from 'native-base';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 import fire from '@react-native-firebase/firestore';
 import axios from 'axios';
 import { number } from 'yup';
@@ -532,7 +532,10 @@ export function New() {
       await api
          .post('/user/create-user', dados)
          .then(h => console.log('cadastro', h.data))
-         .catch(h => console.log('erro no cadastro', h.response.data.message))
+         .catch(h => {
+            console.log('erro no cadastro', h.response.data.message);
+            Alert.alert('OCORREU UM ERRO NO CADASTRO', h.response.data.message);
+         })
          .finally(() => {
             login(membro, senha);
          });
