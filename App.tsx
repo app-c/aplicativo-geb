@@ -61,14 +61,13 @@ export default function App() {
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         // setModalUpdates(true);
-         setModaNew(true);
+         setModalUpdates(true);
       }
    }, []);
 
    const ReloadDevice = React.useCallback(async () => {
-      // await Updates.fetchUpdateAsync();
-      // await Updates.reloadAsync();
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
@@ -125,9 +124,6 @@ export default function App() {
                         </Center>
                      </Modal>
 
-                     <Modal visible={modalNew} animationType="fade">
-                        <New />
-                     </Modal>
                      <Route />
                   </View>
                </NativeBaseProvider>

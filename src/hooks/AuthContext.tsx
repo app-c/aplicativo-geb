@@ -87,7 +87,10 @@ export const AuthProvider: React.FC = ({ children }) => {
                   console.log('err ao encontrar usuario no hook de signIn', h),
                );
          })
-         .catch(h => console.log('erro', h.response.data.message));
+         .catch(h => {
+            console.log('erro', h.response.data.message);
+            Alert.alert('Erro ao entrar na sua conta', h.response.message);
+         });
    }, []);
 
    useEffect(() => {
