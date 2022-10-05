@@ -61,7 +61,7 @@ export default function App() {
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         setModalUpdates(true);
+         setModaNew(true);
       }
    }, []);
 
@@ -107,7 +107,7 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
-                     <Modal visible={showModalUpdate}>
+                     {/* <Modal visible={showModalUpdate}>
                         <Center p="5" bg={theme.colors.primary}>
                            <Box>
                               <Text fontFamily={theme.fonts.blac} fontSize="16">
@@ -122,6 +122,10 @@ export default function App() {
                               ATUALIZAR
                            </Button>
                         </Center>
+                     </Modal> */}
+
+                     <Modal visible={modalNew} animationType="fade">
+                        <New />
                      </Modal>
 
                      <Route />
