@@ -350,12 +350,12 @@ export function Inicio() {
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         setModalUpdates(true);
+         // setModalUpdates(true);
+         setModaNew(true);
       }
    }, []);
 
    const ReloadDevice = React.useCallback(async () => {
-      setModaNew(true);
       // await Updates.fetchUpdateAsync();
       // await Updates.reloadAsync();
    }, []);
@@ -436,26 +436,6 @@ export function Inicio() {
 
    return (
       <Container>
-         <Modal visible={showModalUpdate}>
-            <Center p="5" bg={theme.colors.primary}>
-               <Box>
-                  <Text fontFamily={theme.fonts.blac} fontSize="16">
-                     UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
-                  </Text>
-                  {update.map(h => (
-                     <Text>{h.title}</Text>
-                  ))}
-                  <Text>{version}</Text>
-               </Box>
-               <Button onPress={ReloadDevice} mt="10">
-                  ATUALIZAR
-               </Button>
-            </Center>
-         </Modal>
-
-         <Modal visible={modalNew} animationType="fade">
-            <New />
-         </Modal>
          {/* <Modal transparent animationType="slide" visible={false}>
             <Center bg="dark.600" mt={wt}>
                <TouchableOpacity

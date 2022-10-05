@@ -30,6 +30,7 @@ import {
    Center,
    NativeBaseProvider,
    Button as ButtonBase,
+   Button,
 } from 'native-base';
 import * as Updates from 'expo-updates';
 import * as Notifications from 'expo-notifications';
@@ -38,13 +39,9 @@ import AppProvider from './src/hooks';
 import { Route } from './src/routes';
 import { Loading } from './src/components/Loading';
 import { update, version } from './src/utils/updates';
+import { New } from './src/components/new';
 
 export default function App() {
-   const appState = useRef(AppState.currentState);
-
-   const [appVisible, setAppVisible] = React.useState(appState.current);
-   const [showModalUpdate, setModalUpdates] = React.useState(false);
-
    Notifications.setNotificationHandler({
       handleNotification: async () => ({
          shouldShowAlert: true,
@@ -54,6 +51,37 @@ export default function App() {
    });
 
    //* * UPDATE APLICATION ....................................................
+   const [showModalUpdate, setModalUpdates] = React.useState(false);
+
+   const [modalNew, setModaNew] = React.useState(false);
+
+   const appState = useRef(AppState.currentState);
+   const [appVisible, setAppVisible] = React.useState(appState.current);
+
+   const ChecUpdadeDevice = React.useCallback(async () => {
+      const { isAvailable } = await Updates.checkForUpdateAsync();
+      if (isAvailable) {
+         // setModalUpdates(true);
+         setModaNew(true);
+      }
+   }, []);
+
+   const ReloadDevice = React.useCallback(async () => {
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
+   }, []);
+
+   React.useEffect(() => {
+      const event = AppState.addEventListener('change', h => {
+         if (h === 'active') {
+            ChecUpdadeDevice();
+         }
+      });
+
+      return () => {
+         event.remove();
+      };
+   }, [ChecUpdadeDevice]);
 
    //* * .......................................................................
 
@@ -80,6 +108,26 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
+                     <Modal visible={showModalUpdate}>
+                        <Center p="5" bg={theme.colors.primary}>
+                           <Box>
+                              <Text fontFamily={theme.fonts.blac} fontSize="16">
+                                 UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
+                              </Text>
+                              {update.map(h => (
+                                 <Text>{h.title}</Text>
+                              ))}
+                              <Text>{version}</Text>
+                           </Box>
+                           <Button onPress={ReloadDevice} mt="10">
+                              ATUALIZAR
+                           </Button>
+                        </Center>
+                     </Modal>
+
+                     <Modal visible={modalNew} animationType="fade">
+                        <New />
+                     </Modal>
                      <Route />
                   </View>
                </NativeBaseProvider>

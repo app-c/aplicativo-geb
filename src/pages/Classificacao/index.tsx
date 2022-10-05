@@ -89,7 +89,12 @@ export function Classificacao() {
       }, [dados]),
    );
 
-   console.log(ponts.indication.pontos);
+   console.log('pontos', ponts.indication.ranck);
+
+   if (!ponts) {
+      return <ActivityIndicator />;
+   }
+
    return (
       <Container>
          {load ? (
@@ -140,11 +145,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Indicações</Title>
-                        <Title>{ponts.indication.pontos}pts</Title>
+                        <Title>{ponts.indication.pontos} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.indication.rank}</Title>
+                        <Title>{ponts.indication.ranck}</Title>
                      </BoxPosition>
                   </View>
 
