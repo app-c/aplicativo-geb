@@ -355,7 +355,9 @@ export function Inicio() {
    }, []);
 
    const ReloadDevice = React.useCallback(async () => {
-      setModaNew(true);
+      // setModaNew(true);
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
