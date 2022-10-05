@@ -9,7 +9,7 @@ import { DrawerApp } from './DrawerApp';
 export function Route() {
    const { user, loading } = useAuth();
 
-   if (loading && !user) {
+   if (loading) {
       return (
          <NativeBaseProvider>
             <Loading />

@@ -1,6 +1,2 @@
-export const update = [
-   { title: 'Correçoes dos nomes na hora de fazer um consumo' },
-   { title: 'Não é mais possivel fazer negocios com vocẽ mesmo' },
-   { title: 'Melhorias no B2B' },
-];
-export const version = '2.3.3';
+export const update = [{ title: 'Migração para um novo servidor' }];
+export const version = '2.3.4';

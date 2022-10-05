@@ -55,30 +55,6 @@ export default function App() {
 
    //* * UPDATE APLICATION ....................................................
 
-   const ChecUpdadeDevice = React.useCallback(async () => {
-      const { isAvailable } = await Updates.checkForUpdateAsync();
-      if (isAvailable) {
-         setModalUpdates(true);
-      }
-   }, []);
-
-   const ReloadDevice = React.useCallback(async () => {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
-   }, []);
-
-   React.useEffect(() => {
-      const event = AppState.addEventListener('change', h => {
-         if (h === 'active') {
-            ChecUpdadeDevice();
-         }
-      });
-
-      return () => {
-         event.remove();
-      };
-   }, [ChecUpdadeDevice]);
-
    //* * .......................................................................
 
    const [loaded] = useFonts({
@@ -104,22 +80,6 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
-                     <Modal visible={showModalUpdate}>
-                        <Center p="5" bg={theme.colors.primary}>
-                           <Box>
-                              <Text fontFamily={theme.fonts.blac} fontSize="16">
-                                 UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
-                              </Text>
-                              {update.map(h => (
-                                 <Text>{h.title}</Text>
-                              ))}
-                              <Text>{version}</Text>
-                           </Box>
-                           <ButtonBase onPress={ReloadDevice} mt="10">
-                              ATUALIZAR
-                           </ButtonBase>
-                        </Center>
-                     </Modal>
                      <Route />
                   </View>
                </NativeBaseProvider>

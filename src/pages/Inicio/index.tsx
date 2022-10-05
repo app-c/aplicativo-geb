@@ -350,14 +350,14 @@ export function Inicio() {
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         setModalUpdates(true);
+         // setModalUpdates(true);
+         setModaNew(true);
       }
    }, []);
 
    const ReloadDevice = React.useCallback(async () => {
-      // setModaNew(true);
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
