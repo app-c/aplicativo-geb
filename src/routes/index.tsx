@@ -4,10 +4,11 @@ import { ActivityIndicator } from 'react-native';
 import { Loading } from '../components/Loading';
 import { useAuth } from '../hooks/AuthContext';
 import { SingIn } from '../pages/LogIn';
+import { OldLogin } from '../pages/OldLogin';
 import { DrawerApp } from './DrawerApp';
 
 export function Route() {
-   const { user, loading } = useAuth();
+   const { user, loading, firstLogin } = useAuth();
 
    if (loading) {
       return (
@@ -17,5 +18,9 @@ export function Route() {
       );
    }
 
-   return user ? <DrawerApp /> : <SingIn />;
+   return (
+      <>
+         {user ? <DrawerApp /> : <>{firstLogin ? <OldLogin /> : <SingIn />}</>}
+      </>
+   );
 }

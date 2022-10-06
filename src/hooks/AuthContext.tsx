@@ -12,8 +12,12 @@ import React, {
 import { Alert, Platform } from 'react-native';
 
 import * as Notifications from 'expo-notifications';
+import auth from '@react-native-firebase/auth';
+import fire from '@react-native-firebase/firestore';
 import { api } from '../services/api';
 import { IUserDtos } from '../dtos';
+import { colecao } from '../collection';
+import { OldUserProps } from '../components/new';
 
 type AuthState = {
    token: string;
@@ -25,10 +29,18 @@ interface SignInCred {
    senha: string;
 }
 
+interface SignInCredOld {
+   email: string;
+   senha: string;
+}
+
 interface AuthContexData {
    user: IUserDtos | null;
+   oldUser: OldUserProps;
+   firstLogin: boolean;
    expoToken: string;
    loading: boolean;
+   oldSignIn: (data: SignInCredOld) => Promise<void>;
    signIn(credential: SignInCred): Promise<void>;
    signOut(): void;
    updateUser(user: IUserDtos): Promise<void>;
@@ -43,18 +55,35 @@ export const AuthContext = createContext<AuthContexData>({} as AuthContexData);
 export const AuthProvider: React.FC = ({ children }) => {
    const [loading, setLoading] = useState(true);
    const [data, setData] = useState<AuthState>({} as AuthState);
+   const [oldUser, setOldUser] = React.useState<OldUserProps>();
+   const [firstLogin, setFirstLogin] = React.useState(true);
 
    const [expoToken, setExpotoken] = React.useState('');
 
    const LoadingUser = useCallback(async () => {
       setLoading(true);
+      // await AsyncStorage.removeItem('first-login');
 
-      const [token, user] = await AsyncStorage.multiGet([keyToken, keyUser]);
+      const dat = await AsyncStorage.getItem('old_user');
+      const first = await AsyncStorage.getItem('first-login');
+
+      const ft = first ? JSON.parse(first) : true;
+      setFirstLogin(ft);
+      if (dat && first) {
+         setOldUser(JSON.parse(dat));
+      }
+
+      const [token, user] = await AsyncStorage.multiGet([
+         keyToken,
+         keyUser,
+         'old_user',
+      ]);
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-      if (token && user) {
-         setData({ token: token[1], user: JSON.parse(user[1]) });
-      }
+      if (token && user)
+         if (token && user) {
+            setData({ token: token[1], user: JSON.parse(user[1]) });
+         }
       setLoading(false);
    }, []);
 
@@ -90,6 +119,83 @@ export const AuthProvider: React.FC = ({ children }) => {
          .catch(h => {
             console.log('erro', h.response.data.message);
             Alert.alert('Erro ao entrar na sua conta', h.response.message);
+         });
+   }, []);
+
+   const oldSignIn = useCallback(async ({ email, senha }) => {
+      await auth()
+         .signInWithEmailAndPassword(email, senha)
+         .then(au => {
+            fire()
+               .collection(colecao.users)
+               .doc(au.user.uid)
+               .get()
+               .then(async profile => {
+                  const {
+                     nome,
+                     adm,
+                     padrinhQuantity,
+                     whats,
+                     workName,
+                     CNPJ,
+                     ramo,
+                     enquadramento,
+                     links,
+                     CPF,
+                     avatarUrl,
+                     logoUrl,
+                     indicacao,
+                     presenca,
+                     inativo,
+                     token,
+                     apadrinhado,
+                  } = profile.data();
+
+                  if (profile.exists) {
+                     const userData = {
+                        email: au.user.email,
+                        id: au.user.uid,
+                        nome,
+                        adm,
+                        whats,
+                        workName,
+                        CNPJ,
+                        CPF,
+                        ramo,
+                        enquadramento,
+                        links,
+                        padrinhQuantity,
+                        avatarUrl,
+                        logoUrl,
+                        indicacao,
+                        presenca,
+                        inativo,
+                        token,
+                        apadrinhado,
+                     };
+
+                     await AsyncStorage.setItem(
+                        'old_user',
+                        JSON.stringify(userData),
+                     );
+
+                     const firt = true;
+
+                     await AsyncStorage.setItem(
+                        'first-login',
+                        JSON.stringify(firt),
+                     );
+                     setFirstLogin(firt);
+                     setOldUser(userData);
+                  }
+               })
+               .catch(err => {
+                  const { code } = err;
+                  Alert.alert(
+                     'Login',
+                     'Não foi possível carregar os dados do usuário',
+                  );
+               });
          });
    }, []);
 
@@ -149,6 +255,9 @@ export const AuthProvider: React.FC = ({ children }) => {
    return (
       <AuthContext.Provider
          value={{
+            oldSignIn,
+            oldUser,
+            firstLogin,
             user: data.user,
             loading,
             signIn,

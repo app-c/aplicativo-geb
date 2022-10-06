@@ -58,8 +58,6 @@ export default function App() {
    //* * UPDATE APLICATION ....................................................
    const [showModalUpdate, setModalUpdates] = React.useState(false);
 
-   const [modalNew, setModaNew] = React.useState(true);
-
    const appState = useRef(AppState.currentState);
    const [appVisible, setAppVisible] = React.useState(appState.current);
 
@@ -82,18 +80,7 @@ export default function App() {
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
-         const data = await Async.getItem('up');
-         const dt = JSON.parse(data) as IUp;
-         console.log(dt);
-
-         const dados = {
-            up: true,
-         };
-
-         if (!dt.up) {
-            setModaNew(true);
-            await Async.setItem('up', JSON.stringify(dados));
-         }
+         setModalUpdates(true);
       }
    }, []);
 
@@ -139,7 +126,7 @@ export default function App() {
             <AppProvider>
                <NativeBaseProvider>
                   <View style={{ flex: 1 }}>
-                     {/* <Modal visible={showModalUpdate}>
+                     <Modal visible={showModalUpdate}>
                         <Center p="5" bg={theme.colors.primary}>
                            <Box>
                               <Text fontFamily={theme.fonts.blac} fontSize="16">
@@ -154,10 +141,6 @@ export default function App() {
                               ATUALIZAR
                            </Button>
                         </Center>
-                     </Modal> */}
-
-                     <Modal visible={modalNew} animationType="fade">
-                        <New />
                      </Modal>
 
                      <Route />

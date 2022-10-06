@@ -8,6 +8,7 @@ import axios from 'axios';
 import { number } from 'yup';
 import Async from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
+import { useNavigation } from '@react-navigation/native';
 import theme from '../../global/styles/theme';
 import { colecao } from '../../collection';
 
@@ -20,6 +21,7 @@ import {
 } from '../../dtos';
 import { api } from '../../services/api';
 import { useAuth } from '../../hooks/AuthContext';
+import { Loading } from '../Loading';
 
 type PropsPresensa = {
    user_id: string;
@@ -39,7 +41,7 @@ export interface IPost {
    data: number;
 }
 
-interface PropsUserFire {
+export interface OldUserProps {
    CNPJ: string;
    CPF: string;
    adm: boolean;
@@ -67,11 +69,11 @@ interface PropsUserFire {
 }
 
 export function New() {
-   const { user } = useAuth();
+   const { user, oldUser } = useAuth();
 
    const [membro, setMembro] = React.useState('');
    const [senha, setSenha] = React.useState('');
-   const [userProfile, setUserProfile] = React.useState<PropsUserFire>([]);
+   const [userProfile, setUserProfile] = React.useState<OldUserProps>([]);
 
    const [b2b, setB2b] = React.useState<IOrderB2b[]>([]);
    const [orderB2b, setOrderB2b] = React.useState<IOrderB2b[]>([]);
@@ -83,96 +85,89 @@ export function New() {
    const [users, setUsers] = React.useState<IUserDto[]>([]);
 
    React.useEffect(() => {
+      console.log(oldUser);
       // fire()
       //    .collection('users')
       //    .doc('Z5GuNwY6CmVDYFDkiFHDkk6Ll722')
       //    .get()
       //    .then(h => {
-      //       setUserProfile(h.data() as PropsUserFire);
+      //       setUserProfile(h.data() as OldUserProps);
       //    });
 
-      async function load() {
-         const User_Collection = '@Geb:user';
+      setUserProfile(oldUser);
+   }, [oldUser]);
 
-         const ld = await Async.getItem(User_Collection);
-         const user = ld ? JSON.parse(ld) : [];
-         setUserProfile(user);
-      }
+   // React.useEffect(() => {
+   //    fire()
+   //       .collection(colecao.users)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IUserDto);
 
-      load();
-   }, []);
+   //          setUsers(res);
+   //       });
 
-   React.useEffect(() => {
-      fire()
-         .collection(colecao.users)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IUserDto);
+   //    fire()
+   //       .collection(colecao.orderB2b)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IOrderB2b);
 
-            setUsers(res);
-         });
+   //          setOrderB2b(res);
+   //       });
 
-      fire()
-         .collection(colecao.orderB2b)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IOrderB2b);
+   //    fire()
+   //       .collection('b2b')
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IOrderB2b);
 
-            setOrderB2b(res);
-         });
+   //          setB2b(res);
+   //       });
 
-      fire()
-         .collection('b2b')
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IOrderB2b);
+   //    fire()
+   //       .collection(colecao.orderIndication)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IOrderIndication);
 
-            setB2b(res);
-         });
+   //          setOrderIndica(res);
+   //       });
 
-      fire()
-         .collection(colecao.orderIndication)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IOrderIndication);
+   //    fire()
+   //       .collection(colecao.orderTransaction)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IOrderTransaction);
 
-            setOrderIndica(res);
-         });
+   //          setOrderTra(res);
+   //       });
 
-      fire()
-         .collection(colecao.orderTransaction)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IOrderTransaction);
+   //    fire()
+   //       .collection(colecao.transaction)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as ITransaction);
 
-            setOrderTra(res);
-         });
+   //          setTransaction(res);
+   //       });
 
-      fire()
-         .collection(colecao.transaction)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as ITransaction);
+   //    fire()
+   //       .collection(colecao.presenca)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as PropsPresensa);
+   //          setPresenca(res);
+   //       });
 
-            setTransaction(res);
-         });
-
-      fire()
-         .collection(colecao.presenca)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as PropsPresensa);
-            setPresenca(res);
-         });
-
-      fire()
-         .collection(colecao.post)
-         .get()
-         .then(h => {
-            const res = h.docs.map(h => h.data() as IPost);
-            setPost(res);
-         });
-   }, []);
+   //    fire()
+   //       .collection(colecao.post)
+   //       .get()
+   //       .then(h => {
+   //          const res = h.docs.map(h => h.data() as IPost);
+   //          setPost(res);
+   //       });
+   // }, []);
 
    const submitOrderB2b = React.useCallback(
       async (token: string) => {
@@ -463,7 +458,7 @@ export function New() {
             await api
                .post('user/link/create', data[i])
                .then(h => console.log('link'))
-               .catch(h => console.log('erro no link', h.response.data));
+               .catch(h => console.log('erro no link', h));
          }
          await api
             .post('user/create-profile', {
@@ -475,12 +470,15 @@ export function New() {
                enquadramento,
                ramo,
                user_id: id,
-
                logo: logoUrl,
                avatar: avatarUrl,
             })
-            .then(h => console.log('ok'))
-            .catch(h => console.log('erro'));
+            .then(async h => {
+               console.log('ok profile');
+               const firstLogin = false;
+               await Async.setItem('first-login', JSON.stringify(firstLogin));
+            })
+            .catch(h => console.log('erro profile', h));
       },
       [userProfile],
    );
@@ -538,13 +536,20 @@ export function New() {
             console.log('erro no cadastro', h.response.data.message);
             if (h.response.data.message === 'Esse membro já está cadastrado') {
                Alert.alert(h.response.data.message);
+               const first = false;
+
+               await Async.setItem('first-login', JSON.stringify(first));
                await Updates.fetchUpdateAsync();
                await Updates.reloadAsync();
             }
          });
-   }, [userProfile, membro, senha, submitOrderB2b, submitProfile]);
+   }, [userProfile, membro, senha, submitProfile]);
 
    console.log('save');
+
+   if (!oldUser) {
+      return <Loading />;
+   }
 
    return (
       <Center p="5" flex="1">
