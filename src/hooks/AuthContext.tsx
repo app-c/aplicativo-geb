@@ -69,7 +69,7 @@ export const AuthProvider: React.FC = ({ children }) => {
 
       const ft = first ? JSON.parse(first) : true;
       setFirstLogin(ft);
-      if (dat && first) {
+      if (dat) {
          setOldUser(JSON.parse(dat));
       }
 

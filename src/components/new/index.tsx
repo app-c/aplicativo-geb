@@ -483,37 +483,6 @@ export function New() {
       [userProfile],
    );
 
-   const login = React.useCallback(
-      async (membro: string, senha: string) => {
-         await api
-            .post('/user/session', {
-               membro,
-               senha,
-            })
-            .then(h => {
-               const { token } = h.data;
-
-               // submitOrderB2b(token);
-               // submitB2b(token);
-               // submitOrderIndica(token);
-               // submitOrderTra(token);
-               // submitTra(token);
-               // submitPresenca(token);
-               // submitPost(token);
-               submitProfile(token);
-            })
-            .catch(h =>
-               console.log('login da tela new', h.response.data.message),
-            )
-            .finally(async () => {
-               console.log('atualizado');
-               await Updates.fetchUpdateAsync();
-               await Updates.reloadAsync();
-            });
-      },
-      [submitProfile],
-   );
-
    const handleSubmit = React.useCallback(async () => {
       const dados = {
          id: userProfile.id,
@@ -529,8 +498,35 @@ export function New() {
       };
       await api
          .post('/user/create-user', dados)
-         .then(h => {
-            login(membro, senha);
+         .then(async () => {
+            await api
+               .post('/user/session', {
+                  membro,
+                  senha,
+               })
+               .then(async h => {
+                  const { token } = h.data;
+
+                  // submitOrderB2b(token);
+                  // submitB2b(token);
+                  // submitOrderIndica(token);
+                  // submitOrderTra(token);
+                  // submitTra(token);
+                  // submitPresenca(token);
+                  // submitPost(token);
+                  submitProfile(token);
+                  const first = false;
+
+                  await Async.setItem('first-login', JSON.stringify(first));
+               })
+               .catch(h =>
+                  console.log('login da tela new', h.response.data.message),
+               )
+               .finally(async () => {
+                  console.log('atualizado');
+                  await Updates.fetchUpdateAsync();
+                  await Updates.reloadAsync();
+               });
          })
          .catch(async h => {
             console.log('erro no cadastro', h.response.data.message);
