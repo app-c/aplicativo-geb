@@ -496,6 +496,7 @@ export function New() {
          qntIndication: userProfile.indicacao,
          qntPadrinho: userProfile.padrinhQuantity,
       };
+      console.log('submitted');
       await api
          .post('/user/create-user', dados)
          .then(async () => {
@@ -529,7 +530,7 @@ export function New() {
                });
          })
          .catch(async h => {
-            console.log('erro no cadastro', h.response.data.message);
+            console.log('erro no cadastro', h);
             if (h.response.data.message === 'Esse membro já está cadastrado') {
                Alert.alert(h.response.data.message);
                const first = false;

@@ -89,7 +89,9 @@ export const AuthProvider: React.FC = ({ children }) => {
 
    useEffect(() => {
       LoadingUser();
-   }, [LoadingUser]);
+   }, [LoadingUser, firstLogin]);
+
+   console.log(firstLogin);
 
    const signIn = useCallback(async ({ membro, senha }) => {
       await api
