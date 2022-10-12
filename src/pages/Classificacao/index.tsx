@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -22,14 +23,6 @@ interface Props {
    b2b: Tips;
 }
 
-interface PropResponse {
-   compras: Tips[];
-   vendas: Tips[];
-   presenca: Tips[];
-   indication: Tips[];
-   b2b: Tips[];
-}
-
 interface Tips {
    id: string;
    nome: string;
@@ -37,7 +30,35 @@ interface Tips {
    rank: number;
 }
 
-export function Classificacao() {
+interface IProps {
+   ptCon: number;
+   rkCon: number;
+   ptVen: number;
+   rkVen: number;
+   ptInd: number;
+   rkInd: number;
+   ptPres: number;
+   rkPres: number;
+   ptPad: number;
+   rkPad: number;
+   ptB2b: number;
+   rkB2b: number;
+}
+
+export function Classificacao({
+   ptCon,
+   rkCon,
+   ptVen,
+   rkVen,
+   ptInd,
+   rkInd,
+   ptPres,
+   rkPres,
+   ptPad,
+   rkPad,
+   ptB2b,
+   rkB2b,
+}: IProps) {
    const { user, signOut } = useAuth();
 
    const [ponts, setPonts] = React.useState<Props>();
@@ -47,26 +68,11 @@ export function Classificacao() {
    const dados = React.useCallback(async () => {
       // !! TRANSACTION
       await api
-         .get('user/global-rank')
+         .get('user/global-rank-ind')
          .then(h => {
-            const rs = h.data as PropResponse;
+            const rs = h.data as Props;
 
-            const compras = rs.compras.find(h => h.id === user.id);
-            const vendas = rs.vendas.find(h => h.id === user.id);
-            const indication = rs.indication.find(h => h.id === user.id);
-            const presenca = rs.presenca.find(h => h.id === user.id);
-            // const padrinho = rs.padrinho.find(h => h.id === user.id);
-            const b2b = rs.b2b.find(h => h.id === user.id);
-
-            const dados = {
-               compras,
-               vendas,
-               presenca,
-               indication,
-               b2b,
-            };
-
-            setPonts(dados);
+            setPonts(rs);
          })
          .catch(h => {
             const { message } = h.response.data;
@@ -75,7 +81,7 @@ export function Classificacao() {
                signOut();
             }
          });
-   }, [signOut, user]);
+   }, [signOut]);
 
    React.useEffect(() => {
       if (ponts) {
@@ -109,11 +115,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>COMPRAS</Title>
-                        <Title>{ponts.compras.pontos} pts</Title>
+                        <Title>{ptCon} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.compras.rank}</Title>
+                        <Title>{rkCon}</Title>
                      </BoxPosition>
                   </View>
 
@@ -126,11 +132,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>VENDAS</Title>
-                        <Title>{ponts.vendas.pontos} pts</Title>
+                        <Title>{ptVen} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.vendas.rank}</Title>
+                        <Title>{rkVen}</Title>
                      </BoxPosition>
                   </View>
 
@@ -143,11 +149,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Indicações</Title>
-                        <Title>{ponts.indication.pontos} pts</Title>
+                        <Title>{ptInd} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.indication.ranck}</Title>
+                        <Title>{rkInd}</Title>
                      </BoxPosition>
                   </View>
 
@@ -160,11 +166,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Presença</Title>
-                        <Title>{ponts.presenca.pontos} pts</Title>
+                        <Title>{ptPres} pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.presenca.rank}</Title>
+                        <Title>{rkPres}</Title>
                      </BoxPosition>
                   </View>
 
@@ -177,11 +183,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>Padrinho</Title>
-                        <Title>{}pts</Title>
+                        <Title>{ptPad}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{}</Title>
+                        <Title>{rkPad}</Title>
                      </BoxPosition>
                   </View>
 
@@ -194,11 +200,11 @@ export function Classificacao() {
                   >
                      <BoxContainer>
                         <Title>B2B</Title>
-                        <Title>{ponts.b2b.pontos}pts</Title>
+                        <Title>{ptB2b}pts</Title>
                      </BoxContainer>
 
                      <BoxPosition>
-                        <Title>{ponts.b2b.rank}</Title>
+                        <Title>{rkB2b}</Title>
                      </BoxPosition>
                   </View>
                </BoxEventos>

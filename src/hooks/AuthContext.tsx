@@ -56,18 +56,18 @@ export const AuthProvider: React.FC = ({ children }) => {
    const [loading, setLoading] = useState(true);
    const [data, setData] = useState<AuthState>({} as AuthState);
    const [oldUser, setOldUser] = React.useState<OldUserProps>();
-   const [firstLogin, setFirstLogin] = React.useState(true);
+   const [firstLogin, setFirstLogin] = React.useState(false);
 
    const [expoToken, setExpotoken] = React.useState('');
 
    const LoadingUser = useCallback(async () => {
       setLoading(true);
-      // await AsyncStorage.removeItem('first-login');
+      await AsyncStorage.removeItem('first');
 
       const dat = await AsyncStorage.getItem('old_user');
-      const first = await AsyncStorage.getItem('first-login');
+      const first = await AsyncStorage.getItem('first');
 
-      const ft = first ? JSON.parse(first) : true;
+      const ft = first ? JSON.parse(first) : false;
       setFirstLogin(ft);
       if (dat) {
          setOldUser(JSON.parse(dat));
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC = ({ children }) => {
          })
          .catch(h => {
             console.log('erro', h.response.data.message);
-            Alert.alert('Erro ao entrar na sua conta', h.response.message);
+            Alert.alert('Erro ao entrar na sua conta', h.response.data.message);
          });
    }, []);
 
@@ -183,10 +183,7 @@ export const AuthProvider: React.FC = ({ children }) => {
 
                      const firt = true;
 
-                     await AsyncStorage.setItem(
-                        'first-login',
-                        JSON.stringify(firt),
-                     );
+                     await AsyncStorage.setItem('first', JSON.stringify(firt));
                      setFirstLogin(firt);
                      setOldUser(userData);
                   }

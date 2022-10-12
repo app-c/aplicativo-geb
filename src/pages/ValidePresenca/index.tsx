@@ -51,7 +51,13 @@ export function Valide() {
                'Aguarde um adm validar sua presença',
             );
          })
-         .catch(h => console.log('presenca', h.response.data));
+         .catch(h => {
+            console.log('presenca', h.response.data);
+            Alert.alert(
+               'Erro ao validar sua presença',
+               h.response.data.message,
+            );
+         });
    }, [id, navigate, nome]);
 
    return (

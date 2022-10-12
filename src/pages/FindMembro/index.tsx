@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/AuthContext';
 import { api } from '../../services/api';
 
 export function FindUser() {
+   const { signOut } = useAuth();
    const [listAlluser, setlistAllUser] = useState<IUserDtos[]>([]);
    const [membro, setMembro] = useState<IUserDto[]>([]);
    const [value, setValue] = useState('');
@@ -62,7 +63,8 @@ export function FindUser() {
 
             const { message } = h.response.data;
             if (message === 'falta o token' || message === 'token expirou') {
-               return Alert.alert('Erro', 'sem token');
+               Alert.alert('Erro', 'Seu tokem expirou');
+               signOut();
             }
          })
          .finally(() => setLoad(false));
@@ -118,7 +120,7 @@ export function FindUser() {
             renderItem={({ item: h }) => (
                <View>
                   <FindMembroComponent
-                     avatar={h.profile.avatar}
+                     avatar={h.profile.avatar === null ? '' : h.profile.avatar}
                      name={h.nome}
                      workName={h.profile.workName}
                      whats={() => {}}

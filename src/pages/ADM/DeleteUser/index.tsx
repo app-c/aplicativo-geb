@@ -9,13 +9,8 @@ import { Container, Title } from './styles';
 import { api } from '../../../services/api';
 import { IProfileDto, IUserDtos } from '../../../dtos';
 
-interface IUser {
-   user: IUserDtos;
-   profile: IProfileDto;
-}
-
 export function DeletUser() {
-   const [respnse, setResponse] = useState<IUser[]>([]);
+   const [respnse, setResponse] = useState<IUserDtos[]>([]);
    const { goBack } = useNavigation();
 
    const listAllUser = React.useCallback(async () => {
@@ -72,14 +67,14 @@ export function DeletUser() {
             <FlatList
                contentContainerStyle={{ paddingBottom: 200 }}
                data={respnse}
-               keyExtractor={h => h.user.id}
+               keyExtractor={h => h.id}
                renderItem={({ item: h }) => (
                   <ListMembro
                      confirmar="Excluir"
                      avatar={h.profile.avatar}
-                     nome={h.user.nome}
+                     nome={h.nome}
                      pres={() => {
-                        handleDelete(h.user.id);
+                        handleDelete(h.membro);
                      }}
                      descartar={() => {
                         goBack();

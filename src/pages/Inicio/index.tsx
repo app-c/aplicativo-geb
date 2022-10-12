@@ -84,6 +84,15 @@ interface PropResponse {
    b2b: Tips[];
 }
 
+interface IPersonnalPropsRank {
+   compras: Tips;
+   vendas: Tips;
+   presenca: Tips;
+   indication: Tips;
+   b2b: Tips;
+   padrinho: Tips;
+}
+
 interface Tips {
    id: string;
    nome: string;
@@ -100,7 +109,7 @@ interface PropsValorTotal {
 const wt = Dimensions.get('window').width;
 
 export function Inicio() {
-   const { user, expoToken } = useAuth();
+   const { user, expoToken, signOut } = useAuth();
    const navigate = useNavigation();
 
    const [whoIndication, setWhoIndication] = React.useState('');
@@ -113,94 +122,91 @@ export function Inicio() {
    >([]);
    const [valorGeb, setValorGeb] = React.useState<PropsValorTotal>();
 
+   const [individualRak, setIndividualRank] =
+      React.useState<IPersonnalPropsRank>();
+
    // * token ................................................................
 
    const loadOrders = React.useCallback(async () => {
-      await api
-         .get('/b2b/list-by-recevid')
-         .then(h => {
+      try {
+         await api.get('/b2b/list-by-recevid').then(h => {
             const rs = h.data as IB2b[];
 
             const re = rs.filter(p => p.validate === false);
             setOrderB2b(re);
-         })
-         .catch(h => {
-            console.log('orderB2b da tela inicio', h);
-            Alert.alert('Erro', h.response.data.message);
          });
 
-      await api
-         .get('/consumo/find-order-prestador')
-         .then(h => {
+         await api.get('/consumo/find-order-prestador').then(h => {
             const rs = h.data as IOrderTransaction[];
             setOrderTransaction(rs);
-         })
-         .catch(h => {
-            console.log('erro order transacton na tela inicial', h);
-            Alert.alert('Erro', h.response.data.message);
          });
 
-      await api
-         .get('/indication/list-by-indication')
-         .then(h => {
+         await api.get('/indication/list-by-indication').then(h => {
             const rs = h.data as IIndicationDto[];
             const fil = rs.filter(h => h.validate === false);
             setOrderIndication(fil);
-         })
-         .catch(h => {
-            console.log('erro order indication', h);
-            Alert.alert('Erro', h.response.data.message);
          });
 
-      await api
-         .get('/user/global-rank')
-         .then(h => {
+         await api.get('/user/global-rank').then(h => {
             setGlobalPont(h.data);
-         })
-         .catch(h => {
-            console.log('pontos');
          });
 
-      await api.get('/transaction/list-all-transaction').then(h => {
-         const res = h.data as ITransaction[];
-         const rs = res.map(p => {
-            return p.valor;
+         await api.get('/user/global-rank-ind').then(h => {
+            setIndividualRank(h.data);
          });
 
-         const valor = res.reduce((ac, i) => {
-            return ac + Number(i.valor);
-         }, 0);
+         await api.get('/transaction/list-all-transaction').then(h => {
+            const res = h.data as ITransaction[];
+            const rs = res.map(p => {
+               return p.valor;
+            });
 
-         const userTrans = res.filter(p => {
-            return p.prestador_id === user.id;
+            const valor = res.reduce((ac, i) => {
+               return ac + Number(i.valor);
+            }, 0);
+
+            const userTrans = res.filter(p => {
+               return p.prestador_id === user.id;
+            });
+
+            const valorTotalUser = userTrans.reduce((ac, i) => {
+               return ac + Number(i.valor);
+            }, 0);
+
+            const vlorUser = valorTotalUser;
+
+            const priceUser = vlorUser.toLocaleString('pt-BR', {
+               style: 'currency',
+               currency: 'BRL',
+            });
+
+            const t = valor + 3078000;
+
+            const price = t.toLocaleString('pt-BR', {
+               style: 'currency',
+               currency: 'BRL',
+            });
+
+            const dados = {
+               priceUser: priceUser || '0',
+               priceGeb: price || '0',
+            };
+
+            setValorGeb(dados);
          });
-
-         const valorTotalUser = userTrans.reduce((ac, i) => {
-            return ac + Number(i.valor);
-         }, 0);
-
-         const vlorUser = valorTotalUser;
-
-         const priceUser = vlorUser.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-         });
-
-         const t = valor + 3078000;
-
-         const price = t.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-         });
-
-         const dados = {
-            priceUser: priceUser || '0',
-            priceGeb: price || '0',
-         };
-
-         setValorGeb(dados);
-      });
-   }, [user]);
+      } catch (h) {
+         const { message } = h.response.data;
+         if (
+            message === 'falta o token' ||
+            message === 'token expirou' ||
+            message === 'token invalido'
+         ) {
+            Alert.alert('Erro', 'Seu tokem expirou');
+            signOut();
+         }
+         Alert.alert('Erro ao carregar listas', message);
+      }
+   }, [signOut, user]);
 
    // !! INDICATION
 
@@ -237,7 +243,7 @@ export function Inicio() {
                   'erro para deletar order indication na tela inicial',
                   h,
                );
-               Alert.alert('Ocorreu um erro', h.response.data.message);
+               Alert.alert('Ocorreu um erro', message);
             });
       }
 
@@ -272,7 +278,7 @@ export function Inicio() {
          })
          .catch(h => {
             console.log('erro ao validar order b2b na tela inicial', h);
-            Alert.alert('Erro', h.response.data.message);
+            Alert.alert('Erro', message);
          });
    }, []);
 
@@ -291,7 +297,7 @@ export function Inicio() {
          })
          .catch(h => {
             console.log('erro ao deletar orderb2b na tela inicial', h);
-            Alert.alert('Erro', h.response.data.message);
+            Alert.alert('Erro', message);
          });
    }, []);
 
@@ -314,7 +320,7 @@ export function Inicio() {
             .then(h => {
                Alert.alert(
                   'Sucesso!',
-                  'Obrigado por insentivar um membro do grupo G.E.B training por consumir seu produto',
+                  'Obrigado por incentivar um membro do grupo G.E.B training por consumir seu produto',
                );
 
                if (orderTransaction.length === 0) {
@@ -324,8 +330,9 @@ export function Inicio() {
                loadOrders();
             })
             .catch(h => {
+               const { message } = h.response.data;
                console.log('erro create transaction na tela de inicio', h);
-               console.log(h.response.data.message);
+               Alert.alert('Erro ao validar sua transação', message);
             });
       },
       [loadOrders, orderTransaction],
@@ -428,12 +435,20 @@ export function Inicio() {
       };
    }, [globalPont]);
 
-   React.useEffect(() => {
-      async function lad() {
-         await api.get('/transaction/list-all').then();
-      }
-   }, []);
+   const top = individualRak
+      ? individualRak.compras.pontos +
+        individualRak.vendas.pontos +
+        individualRak.b2b.pontos +
+        individualRak.indication.pontos +
+        individualRak.padrinho.pontos +
+        individualRak.presenca.pontos
+      : 0;
 
+   const vt = individualRak ? individualRak.vendas.valor / 100 : 0;
+   const vtTotal = vt.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+   });
    return (
       <Container>
          {/* <Modal transparent animationType="slide" visible={false}>
@@ -664,12 +679,12 @@ export function Inicio() {
             <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               {valorGeb ? (
-                  <TitlePrice>{valorGeb.priceUser}</TitlePrice>
+               {individualRak ? (
+                  <TitlePrice>{vtTotal}</TitlePrice>
                ) : (
                   <ActivityIndicator />
                )}
-               <TitleP>{subPonts.TotalPontos} pts</TitleP>
+               <TitleP>{top} pts</TitleP>
             </BoxPrice>
          </View>
          <View style={{ alignSelf: 'center' }}>
@@ -684,7 +699,24 @@ export function Inicio() {
             )}
          </View>
          <Line />
-         <Classificacao />
+         {individualRak ? (
+            <Classificacao
+               ptCon={individualRak.compras.pontos}
+               rkCon={individualRak.compras.rank}
+               ptVen={individualRak.vendas.pontos}
+               rkVen={individualRak.vendas.rank}
+               ptInd={individualRak.indication.pontos}
+               rkInd={individualRak.indication.ranck}
+               ptPres={individualRak.presenca.pontos}
+               rkPres={individualRak.presenca.rank}
+               ptPad={individualRak.padrinho.pontos}
+               rkPad={individualRak.padrinho.rank}
+               ptB2b={individualRak.b2b.pontos}
+               rkB2b={individualRak.b2b.rank}
+            />
+         ) : (
+            <ActivityIndicator />
+         )}
       </Container>
    );
 }

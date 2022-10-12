@@ -59,12 +59,12 @@ export function Indication() {
             await api
                .post('/transaction/create-transaction', dados)
                .then(h => {
-                  console.log(h);
+                  console.log(h.data);
                })
                .catch(h => {
                   console.log(
                      'erro ao fazer a transaçao na tela de inidcation',
-                     h,
+                     h.response.data,
                   );
                   Alert.alert(
                      'Erro ao realizar sua transação',
