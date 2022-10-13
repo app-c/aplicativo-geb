@@ -53,7 +53,7 @@ export function DrawerApp() {
             />
          ))}
 
-         {user &&
+         {user.adm &&
             rotasAdm.map(h => (
                <Screen
                   key={h.name}

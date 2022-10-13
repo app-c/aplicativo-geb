@@ -6,6 +6,11 @@
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { FormHandles } from '@unform/core';
+import {
+   TextInputMaskTypeProp,
+   TextInputMaskProps,
+   TextInputMask,
+} from 'react-native-masked-text';
 
 import React, {
    useCallback,
@@ -16,12 +21,12 @@ import React, {
 } from 'react';
 import { Alert, ScrollView, TouchableOpacity, View } from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { Box as BoxBase } from 'native-base';
 
 import { Modalize } from 'react-native-modalize';
 import { Form } from '@unform/mobile';
 
 import * as ImagePiker from 'expo-image-picker';
-import Fire from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
@@ -42,24 +47,22 @@ import {
    TitleHeader,
 } from './styles';
 import { ToglleRamo } from '../../components/ToglleRamo';
-import { IUserDto } from '../../dtos';
+import { IUserDtos } from '../../dtos';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { Input } from '../../components/Inputs';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { ToglleEnquadramento } from '../../components/ToglleEnquadramento';
 import { colecao } from '../../collection';
+import { api } from '../../services/api';
+import { Line } from '../../components/MembroLista/styles';
 
-export interface Props {
-   id: string;
-   nome: string;
-   sobrenome: string;
-   whats: number;
-   workName: string;
-   CNPJ: number;
-}
 export function Profile() {
+   const cpfRef = useRef(null);
+   const whatsRef = useRef(null);
+   const cnpfRef = useRef(null);
+
    const { user, updateUser, signOut } = useAuth();
-   const { navigate } = useNavigation();
+   const { navigate, goBack } = useNavigation();
    const formRef = useRef<FormHandles>(null);
    const modalizeRefRamo = useRef<Modalize>(null);
    const modalizeRefEnquadramento = useRef<Modalize>(null);
@@ -72,21 +75,23 @@ export function Profile() {
 
    // TODO FORMULARIOS
    const [nome, setNome] = useState(user.nome);
-   const [whats, setWhats] = useState('');
-   const [email, setEmail] = useState('');
-   const [workName, setWorkName] = useState('');
-   const [CPF, setCpf] = useState(user.CPF);
-   const [cnpj, setCnpj] = useState(user.CNPJ);
+   const [whats, setWhats] = useState(user.profile.whats);
+   const [email, setEmail] = useState(user.nome);
+   const [workName, setWorkName] = useState(user.profile.workName);
+   const [CPF, setCpf] = useState(user.profile.CPF);
+   const [cnpj, setCnpj] = useState(user.profile.CNPJ);
    const [linkSite, setLinkSite] = useState(null);
    const [linkF, setLinkF] = useState(null);
    const [linkI, setLinkI] = useState(null);
    const [linkMaps, setLinkMaps] = useState(null);
-   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
-   const [logoUrl, setLogorUrl] = useState(user.logoUrl);
+   const [avatarUrl, setAvatarUrl] = useState(user.profile.avatar);
+   const [logoUrl, setLogorUrl] = useState(user.profile.logo);
 
    // TODO MODAL
-   const [ramo, setRamo] = useState(user.ramo);
-   const [enquadramento, setEnquadramento] = useState(user.enquadramento);
+   const [ramo, setRamo] = useState(user.profile.ramo);
+   const [enquadramento, setEnquadramento] = useState(
+      user.profile.enquadramento,
+   );
    const [modal, setModal] = useState(false);
 
    const handleModalOpenRamo = useCallback(() => {
@@ -113,18 +118,6 @@ export function Profile() {
       modalizeRefEnquadramento.current?.close();
    }, []);
 
-   // useEffect(() => {
-   //    setLinkF(user.links.face);
-   //    setLinkI(user.links.insta);
-   //    setLinkMaps(user.links.maps);
-   //    setLinkSite(user.links.site);
-   //    setEmail(user.email);
-   //    setWhats(user.whats);
-   //    setWorkName(user.workName);
-   //    setCnpj(String(user.CNPJ));
-   //    setCpf(String(user.CPF));
-   // }, [user.CNPJ, user.CPF, user.email, user.links, user.whats, user.workName]);
-
    const handleImagePiker = useCallback(async () => {
       setLoading(true);
 
@@ -140,7 +133,7 @@ export function Profile() {
       if (!result.cancelled) {
          setAvatar(result.uri);
          const fileName = new Date().getTime();
-         const reference = storage().ref(`/image/${fileName}.png`);
+         const reference = storage().ref(`/image/avatar/${fileName}.png`);
 
          await reference.putFile(result.uri);
          const photoUrl = await reference.getDownloadURL();
@@ -182,58 +175,50 @@ export function Profile() {
    const handleSubmit = useCallback(async () => {
       formRef.current?.setErrors({});
 
-      Alert.alert('EM MANUTENÇÃO');
+      const dados = {
+         whats,
+         workName,
+         CNPJ: cnpj,
+         CPF,
+         email,
+         enquadramento,
+         ramo,
+         fk_id_user: user.id,
+         logo: logoUrl,
+         avatar: avatarUrl,
+      };
 
-      //    const formData = {
-      //       id: user.id,
-      //       nome,
-      //       adm: user.adm,
-      //       whats: String(whats),
-      //       workName,
-      //       CNPJ: String(cnpj),
-      //       CPF: String(CPF),
-      //       email,
-      //       ramo,
-      //       enquadramento,
-      //       padrinhQuantity: user.padrinhQuantity,
-      //       links: {
-      //          site: linkSite || 'site',
-      //          maps: linkMaps || 'site',
-      //          insta: linkI || 'site',
-      //          face: linkF || 'site',
-      //       },
-      //       avatarUrl,
-      //       logoUrl,
-      //    };
+      try {
+         await api.put('user/update-profile', dados);
+         Alert.alert('Seu perfil foi atualizado com sucesso!');
+         const dt = {
+            ...user,
+            profile: dados,
+         };
+         updateUser(dt);
+         goBack();
+      } catch (err) {
+         Alert.alert('Erro ao atualizar seu perfil', err.response.data.message);
+         console.log(err.response.data);
+      }
+   }, [
+      CPF,
+      avatarUrl,
+      cnpj,
+      email,
+      enquadramento,
+      goBack,
+      logoUrl,
+      ramo,
+      updateUser,
+      user,
+      whats,
+      workName,
+   ]);
 
-      //    Fire()
-      //       .collection(colecao.users)
-      //       .doc(user.id)
-      //       .update({
-      //          id: user.id,
-      //          nome,
-      //          adm: user.adm,
-      //          whats: String(whats),
-      //          workName,
-      //          CPF: String(CPF),
-      //          CNPJ: String(cnpj),
-      //          email,
-      //          ramo,
-      //          enquadramento,
-      //          links: {
-      //             site: linkSite || 'site',
-      //             maps: linkMaps || 'site',
-      //             insta: linkI || 'site',
-      //             face: linkF || 'site',
-      //          },
-      //          avatarUrl,
-      //          logoUrl,
-      //       })
-      //       .finally(() => updateUser(formData))
-      //       .catch(err => console.log(err.code));
-
-      //    Alert.alert('Perfil alterado com sucesso!');
-      //    navigate('INÍCIO');
+   useEffect(() => {
+      const mo = whatsRef.current?.getRawValue();
+      setWhats(mo);
    }, []);
 
    return (
@@ -247,7 +232,7 @@ export function Profile() {
                selectItem={(item: string) => SelectItemEnquadramento(item)}
             />
          </Modalize>
-         <HeaderContaponent type="tipo1" title="MEU PERFIL" onMessage="of" />
+         <HeaderContaponent type="tipo1" title="MEU PERFIL" />
 
          <View
             style={{
@@ -263,7 +248,9 @@ export function Profile() {
                <Box>
                   <Avatar
                      style={{ resizeMode: 'cover' }}
-                     source={{ uri: avatar !== '' ? avatar : user.avatarUrl }}
+                     source={{
+                        uri: avatar !== '' ? avatar : user.profile.avatar,
+                     }}
                   />
                   <BoxCamera onPress={handleImagePiker}>
                      <Camera name="camera" />
@@ -309,19 +296,21 @@ export function Profile() {
                         />
                      </BoxInput>
 
-                     <BoxInput>
+                     <BoxBase alignSelf="flex-start" px="5">
                         <TitleHeader style={{ right: 10 }}>WHATS</TitleHeader>
-                        <InputCasdastro
-                           name="whats"
-                           icon=""
+                        <TextInputMask
                            type="cel-phone"
                            onChangeText={mask => {
                               setWhats(mask);
                            }}
+                           ref={whatsRef}
                            value={whats!}
                         />
-                     </BoxInput>
+                        <BoxBase h="1" bg={theme.colors.focus} />
+                     </BoxBase>
+                  </BoxFormularios>
 
+                  <BoxFormularios>
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>
                            RAZÃO SOCIAL
@@ -338,9 +327,6 @@ export function Profile() {
                            value={workName!}
                         />
                      </BoxInput>
-                  </BoxFormularios>
-
-                  <BoxFormularios>
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>CPF</TitleHeader>
                         <InputCasdastro
@@ -349,6 +335,7 @@ export function Profile() {
                            type="cpf"
                            onChangeText={h => setCpf(h)}
                            value={String(CPF)}
+                           ref={cpfRef}
                         />
                      </BoxInput>
 
@@ -360,6 +347,7 @@ export function Profile() {
                            icon=""
                            onChangeText={h => setCnpj(h)}
                            value={String(cnpj)}
+                           ref={cnpfRef}
                         />
                      </BoxInput>
 

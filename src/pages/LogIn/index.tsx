@@ -25,6 +25,7 @@ import { useAuth } from '../../hooks/AuthContext';
 import theme from '../../global/styles/theme';
 import { version } from '../../utils/updates';
 import { New } from '../../components/new';
+import { api } from '../../services/api';
 
 export function SingIn() {
    const { signIn } = useAuth();
@@ -53,13 +54,19 @@ export function SingIn() {
       });
    }, [membro, pass, signIn]);
 
-   const handleForgotPassword = useCallback(() => {
-      auth()
-         .sendPasswordResetEmail(email)
-         .then(h => {
-            Alert.alert('Um link foi enviado para seu email');
-         });
-   }, [email]);
+   const handleForgotPassword = useCallback(async () => {
+      console.log(membro, pass);
+      await api
+         .post('/user/update-pass', {
+            membro,
+            senha: pass,
+         })
+         .then(() => {
+            Alert.alert('Sucesso', 'senha atualizada');
+            setShowModal(false);
+         })
+         .catch(h => Alert.alert('Membro não encontrado'));
+   }, [membro, pass]);
 
    return (
       <Container behavior="padding">
@@ -73,10 +80,20 @@ export function SingIn() {
                >
                   <VStack>
                      <FormControl>
-                        <FormControl.Label>DIGITE SEU E-MAIL</FormControl.Label>
+                        <FormControl.Label>DIGITE O MEMBRO</FormControl.Label>
                         <Input
-                           onChangeText={setEmail}
-                           value={email}
+                           onChangeText={setMembro}
+                           value={membro}
+                           autoCapitalize="none"
+                           keyboardType="email-address"
+                        />
+
+                        <FormControl.Label>
+                           DIGITE A NOVA SENHA
+                        </FormControl.Label>
+                        <Input
+                           onChangeText={setPass}
+                           value={pass}
                            autoCapitalize="none"
                            keyboardType="email-address"
                         />
@@ -146,7 +163,7 @@ export function SingIn() {
                </FormControl>
 
                <Box mt={5}>
-                  <TouchableOpacity onPress={() => setShowModal(false)}>
+                  <TouchableOpacity onPress={() => setShowModal(true)}>
                      <Text
                         fontSize="12"
                         fontFamily={theme.fonts.blac}

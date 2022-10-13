@@ -57,6 +57,8 @@ export function Padrinho() {
       return <Loading />;
    }
 
+   console.log(users[1].situation);
+
    return (
       <NativeBaseProvider>
          <HeaderContaponent type="tipo1" title="APDRINHAMENTO" />

@@ -444,7 +444,7 @@ export function Inicio() {
         individualRak.presenca.pontos
       : 0;
 
-   const vt = individualRak ? individualRak.vendas.valor / 100 : 0;
+   const vt = individualRak ? individualRak.vendas.valor : 0;
    const vtTotal = vt.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',

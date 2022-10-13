@@ -1,2 +1,2 @@
-export const update = [{ title: 'App atualizado' }];
-export const version = '3.0.5';
+export const update = [{ title: 'Correções de bugs' }];
+export const version = '4.0.0';

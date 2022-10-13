@@ -61,22 +61,6 @@ export default function App() {
    const appState = useRef(AppState.currentState);
    const [appVisible, setAppVisible] = React.useState(appState.current);
 
-   React.useEffect(() => {
-      async function ld() {
-         const dados = {
-            up: false,
-         };
-         const data = await Async.getItem('up');
-         const dt = data ? (JSON.parse(data) as IUp) : null;
-
-         if (dt === null || !dt.up) {
-            await Async.setItem('up', JSON.stringify(dados));
-         }
-      }
-
-      ld();
-   }, []);
-
    const ChecUpdadeDevice = React.useCallback(async () => {
       const { isAvailable } = await Updates.checkForUpdateAsync();
       if (isAvailable) {
@@ -86,7 +70,6 @@ export default function App() {
 
    const ReloadDevice = React.useCallback(async () => {
       await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
    }, []);
 
    React.useEffect(() => {
