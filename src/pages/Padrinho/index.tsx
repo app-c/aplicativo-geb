@@ -22,7 +22,8 @@ export function Padrinho() {
          .get('/user/list-all-user')
          .then(h => {
             const rs = h.data as IUserDtos[];
-            setUser(rs);
+            const fil = rs.filter(p => p.situation.inativo !== true);
+            setUser(fil);
          })
          .catch(h =>
             console.log('erro ao carregar user na tela te padrinho', h),
@@ -57,8 +58,6 @@ export function Padrinho() {
       return <Loading />;
    }
 
-   console.log(users[1].situation);
-
    return (
       <NativeBaseProvider>
          <HeaderContaponent type="tipo1" title="APDRINHAMENTO" />
@@ -78,8 +77,8 @@ export function Padrinho() {
                         nome: h.nome,
                      })
                   }
-                  inativoPres={h.situation.inativo}
-                  inativo={h.situation.inativo}
+                  inativoPres={h.situation.apadrinhado}
+                  inativo={h.situation.apadrinhado}
                />
             )}
          />

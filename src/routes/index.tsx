@@ -11,11 +11,7 @@ export function Route() {
    const { user, loading, firstLogin } = useAuth();
 
    if (loading) {
-      return (
-         <NativeBaseProvider>
-            <Loading />
-         </NativeBaseProvider>
-      );
+      return <Loading />;
    }
 
    return (

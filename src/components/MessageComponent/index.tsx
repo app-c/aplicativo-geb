@@ -48,7 +48,7 @@ export function MessageComponent({ nome, valor, confirmar, rejeitar }: Props) {
                }}
             >
                <ButtonConcelar onPress={rejeitar}>
-                  <TextButton>Regeitar</TextButton>
+                  <TextButton>Rejeitar</TextButton>
                </ButtonConcelar>
 
                <ButtonConfirmar onPress={confirmar}>

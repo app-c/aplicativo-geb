@@ -26,9 +26,10 @@ import { ListConsumo } from '../../components/ListConsumo';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { useAuth } from '../../hooks/AuthContext';
 import { locale } from '../../utils/LocalStrigMoney';
-import { IUserDto } from '../../dtos';
+import { ITransaction, IUserDto } from '../../dtos';
 import theme from '../../global/styles/theme';
 import { colecao } from '../../collection';
+import { api } from '../../services/api';
 
 export interface PropTransactions {
    id: string;
@@ -60,7 +61,8 @@ type Presença = {
 };
 
 export function Consumo() {
-   const [response, setResponse] = useState<PropTransactions[]>([]);
+   const [transactionP, setTransactionP] = useState<ITransaction[]>([]);
+   const [transactionC, setTransactionC] = useState<ITransaction[]>([]);
    const [type, setType] = useState('entrada');
    const [filtro, setFiltro] = useState('mes');
    const [presenca, setPresenca] = useState<Presença[]>([]);
@@ -72,103 +74,59 @@ export function Consumo() {
 
    //* *..........................................................................
 
-   useEffect(() => {
-      const load = fire()
-         .collection(colecao.transaction)
-         .onSnapshot(p => {
-            const cons = p.docs.map(h => {
+   const listTransaction = React.useCallback(async () => {
+      try {
+         await api.get('transaction/list-by-prestador').then(h => {
+            const rs = h.data as ITransaction[];
+            const ft = rs.map(p => {
+               console.log(p.valor / 100);
+               const vl = p.valor / 100;
+
+               const valorFormated = vl.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+               });
                return {
-                  id: h.id,
-                  ...h.data(),
-               } as PropTransactions;
+                  ...p,
+                  date: format(new Date(p.created_at), 'dd-MM-yyyy'),
+                  valorFormated,
+               };
             });
-            setResponse(cons);
+            setTransactionP(ft);
          });
 
-      const b2b = fire()
-         .collection('b2b')
-         .onSnapshot(res => {
-            const r = res.docs
-               .map(h => h.data())
-               .filter(h => h.user_id === user.id);
-            setQntB2b(r);
+         await api.get('transaction/list-by-consumidor').then(h => {
+            const rs = h.data as ITransaction[];
+            const ft = rs.map(p => {
+               const vl = p.valor / 100;
+               const valorFormated = vl.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+               });
+               return {
+                  ...p,
+                  date: format(new Date(p.created_at), 'dd-MM-yyyy'),
+                  valorFormated,
+               };
+            });
+            setTransactionC(ft);
          });
-
-      return () => {
-         load();
-         b2b();
-      };
+      } catch (err) {
+         console.log(err);
+      }
    }, []);
-   //* *..........................................................................
 
-   // todo VENDA ................................................................
-   const venda = useMemo(() => {
-      return response.filter(h => {
-         return h.prestador_id === user.id;
-      });
-   }, [response, user.id]);
+   React.useEffect(() => {
+      listTransaction();
+   }, [listTransaction]);
 
-   const formatedVenda = useMemo(() => {
-      const res = venda.filter(h => {
-         const [dia, mes, ano, hora, menutos] = h.createdAt
-            .split('-')
-            .map(Number);
+   const extrato = React.useMemo(() => {
+      const month = new Date(Date.now()).getMonth() + 1;
+      const year = new Date(Date.now()).getFullYear();
+      const day = new Date(Date.now()).getDate();
 
-         const month = new Date(Date.now()).getMonth() + 1;
-         const year = new Date(Date.now()).getFullYear();
-         const day = new Date(Date.now()).getDate();
-         if (filtro === 'mes' && month === mes) {
-            return {
-               ...h,
-            };
-         }
-
-         if (filtro === 'ano' && ano === year) {
-            return {
-               ...h,
-            };
-         }
-
-         if (filtro === 'todos') {
-            return {
-               ...h,
-            };
-         }
-      });
-      return res.map(h => {
-         const [dia, mes, ano, hora, menutos] = h.createdAt
-            .split('-')
-            .map(Number);
-         const total = Number(h.valor).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-         });
-
-         return {
-            ...h,
-            total,
-            data: `${dia}/${mes}/${ano}`,
-         };
-      });
-   }, [venda, filtro]);
-
-   // todo ......................................................................
-
-   const Consumidor = useMemo(() => {
-      return response.filter(h => {
-         return h.consumidor === user.id;
-      });
-   }, [response, user.id]);
-
-   const formatedConsumidor = useMemo(() => {
-      const res = Consumidor.filter(h => {
-         const [dia, mes, ano, hora, menutos] = h.createdAt
-            .split('-')
-            .map(Number);
-
-         const month = new Date(Date.now()).getMonth() + 1;
-         const year = new Date(Date.now()).getFullYear();
-         const day = new Date(Date.now()).getDate();
+      const prestador = transactionP.filter(h => {
+         const [dia, mes, ano, hora, menutos] = h.date.split('-').map(Number);
 
          if (filtro === 'mes' && month === mes) {
             return {
@@ -189,123 +147,226 @@ export function Consumo() {
          }
       });
 
-      return res.map(h => {
-         const [dia, mes, ano, hora, menutos] = h.createdAt
-            .split('-')
-            .map(Number);
-         const total = Number(h.valor).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-         });
+      const subTotalP =
+         prestador.reduce((ac, item) => {
+            return ac + item.valor;
+         }, 0) / 100;
 
-         return {
-            ...h,
-            total,
-            data: `${dia}/${mes}/${ano}`,
-         };
-      });
-   }, [Consumidor, filtro]);
-
-   const handleTotalPrestador = useMemo(() => {
-      const tota = formatedVenda.reduce((acc, ind) => {
-         return acc + Number(ind.valor);
-      }, 0);
-      const no = Number(tota).toLocaleString('pt-BR', {
+      const totalP = subTotalP.toLocaleString('pt-BR', {
          style: 'currency',
          currency: 'BRL',
       });
 
-      return no;
-   }, [formatedVenda]);
+      const consumidor = transactionC.filter(h => {
+         const [dia, mes, ano, hora, menutos] = h.date.split('-').map(Number);
 
-   const handleTotalConsumidor = useMemo(() => {
-      const tota = formatedConsumidor.reduce((acc, ind) => {
-         return acc + Number(ind.valor);
+         if (filtro === 'mes' && month === mes) {
+            return {
+               ...h,
+            };
+         }
+
+         if (filtro === 'ano' && ano === year) {
+            return {
+               ...h,
+            };
+         }
+
+         if (filtro === 'todos') {
+            return {
+               ...h,
+            };
+         }
+      });
+
+      const subTotalC = consumidor.reduce((ac, item) => {
+         return ac + item.valor;
       }, 0);
 
-      return locale(String(tota));
-   }, [formatedConsumidor]);
+      const totalC = subTotalC.toLocaleString('pt-BR', {
+         style: 'currency',
+         currency: 'BRL',
+      });
 
-   const QntGeral = useCallback(async () => {
-      fire()
-         .collection(colecao.users)
-         .get()
-         .then(res => {
-            const users = res.docs.map(h => {
-               return h.data() as IUserDto;
-            });
+      return {
+         prestador,
+         consumidor,
+         totalP,
+         totalC,
+      };
+   }, [filtro, transactionC, transactionP]);
 
-            fire()
-               .collection(colecao.presenca)
-               .get()
-               .then(res => {
-                  const data = res.docs
-                     .map(h => h.data())
-                     .filter(p => p.user_id === user.id && p.presenca === true);
+   //* *..........................................................................
 
-                  const resP = res.docs
-                     .map(h => h.data())
-                     .filter(p => p.user_id === user.id);
+   // todo VENDA ................................................................
+   // const venda = useMemo(() => {
+   //    return response.filter(h => {
+   //       return h.prestador_id === user.id;
+   //    });
+   // }, [response, user.id]);
 
-                  setPresenca(
-                     resP.map(h => {
-                        return {
-                           nome: h.nome,
-                           data: format(
-                              new Date(h.createdAt),
-                              'dd/MM/yyyy - HH:mm',
-                           ),
-                           status: h.presenca ? 'validado' : 'pendente',
-                        };
-                     }),
-                  );
+   // const formatedVenda = useMemo(() => {
+   // const res = venda.filter(h => {
+   //    const [dia, mes, ano, hora, menutos] = h.createdAt
+   //       .split('-')
+   //       .map(Number);
+   //    const month = new Date(Date.now()).getMonth() + 1;
+   //    const year = new Date(Date.now()).getFullYear();
+   //    const day = new Date(Date.now()).getDate();
+   //    if (filtro === 'mes' && month === mes) {
+   //       return {
+   //          ...h,
+   //       };
+   //    }
+   //    if (filtro === 'ano' && ano === year) {
+   //       return {
+   //          ...h,
+   //       };
+   //    }
+   //    if (filtro === 'todos') {
+   //       return {
+   //          ...h,
+   //       };
+   //    }
+   // });
+   //    // return res.map(h => {
+   //    //    const [dia, mes, ano, hora, menutos] = h.createdAt
+   //    //       .split('-')
+   //    //       .map(Number);
+   //    //    const total = Number(h.valor).toLocaleString('pt-BR', {
+   //    //       style: 'currency',
+   //    //       currency: 'BRL',
+   //    //    });
+   //    //    return {
+   //    //       ...h,
+   //    //       total,
+   //    //       data: `${dia}/${mes}/${ano}`,
+   //    //    };
+   //    // });
+   // }, []);
 
-                  const filter = users.map(h => {
-                     const p = data.length + 2;
-                     return {
-                        qntPadrinho: h.padrinhQuantity,
-                        qntPresenca: p,
-                        qntIndicacao: h.indicacao,
-                        user_id: h.id,
-                     };
-                  });
+   // todo ......................................................................
 
-                  setQntGeral(filter);
-               });
-         });
-   }, [user.id]);
+   // const Consumidor = useMemo(() => {
+   //    return response.filter(h => {
+   //       return h.consumidor === user.id;
+   //    });
+   // }, [user]);
 
-   useEffect(() => {
-      fire()
-         .collection(colecao.users)
-         .get()
-         .then(h => {
-            const res = h.docs.map(p => p.data() as IUserDto);
+   // const formatedConsumidor = useMemo(() => {
+   //    const res = Consumidor.filter(h => {
+   //       const [dia, mes, ano, hora, menutos] = h.createdAt
+   //          .split('-')
+   //          .map(Number);
 
-            const formatedUser = res.map((h, i) => {
-               return {
-                  id: h.id,
-                  posicao: `${i + 1}º`,
-                  qntPosicao: h.indicacao,
-               };
-            });
+   //       const month = new Date(Date.now()).getMonth() + 1;
+   //       const year = new Date(Date.now()).getFullYear();
+   //       const day = new Date(Date.now()).getDate();
 
-            const indication = formatedUser.find(h => h.id === user.id);
-            setIndicacao(indication);
-         });
-   }, [user.id]);
+   //       if (filtro === 'mes' && month === mes) {
+   //          return {
+   //             ...h,
+   //          };
+   //       }
 
-   const ranking = useMemo(() => {
-      const qnt = qntGeral.find(h => h.user_id === user.id);
+   //       if (filtro === 'ano' && ano === year) {
+   //          return {
+   //             ...h,
+   //          };
+   //       }
 
-      return qnt;
-   }, [qntGeral, user.id]);
+   //       if (filtro === 'todos') {
+   //          return {
+   //             ...h,
+   //          };
+   //       }
+   //    });
 
-   useFocusEffect(
-      useCallback(() => {
-         QntGeral();
-      }, [QntGeral]),
-   );
+   //    return res.map(h => {
+   //       const [dia, mes, ano, hora, menutos] = h.createdAt
+   //          .split('-')
+   //          .map(Number);
+   //       const total = Number(h.valor).toLocaleString('pt-BR', {
+   //          style: 'currency',
+   //          currency: 'BRL',
+   //       });
+
+   //       return {
+   //          ...h,
+   //          total,
+   //          data: `${dia}/${mes}/${ano}`,
+   //       };
+   //    });
+   // }, [Consumidor, filtro]);
+
+   // const handleTotalPrestador = useMemo(() => {
+   //    const tota = formatedVenda.reduce((acc, ind) => {
+   //       return acc + Number(ind.valor);
+   //    }, 0);
+   //    const no = Number(tota).toLocaleString('pt-BR', {
+   //       style: 'currency',
+   //       currency: 'BRL',
+   //    });
+
+   //    return no;
+   // }, [formatedVenda]);
+
+   // const handleTotalConsumidor = useMemo(() => {
+   //    const tota = formatedConsumidor.reduce((acc, ind) => {
+   //       return acc + Number(ind.valor);
+   //    }, 0);
+
+   //    return locale(String(tota));
+   // }, [formatedConsumidor]);
+
+   // const QntGeral = useCallback(async () => {
+   //    fire()
+   //       .collection(colecao.users)
+   //       .get()
+   //       .then(res => {
+   //          const users = res.docs.map(h => {
+   //             return h.data() as IUserDto;
+   //          });
+
+   //          fire()
+   //             .collection(colecao.presenca)
+   //             .get()
+   //             .then(res => {
+   //                const data = res.docs
+   //                   .map(h => h.data())
+   //                   .filter(p => p.user_id === user.id && p.presenca === true);
+
+   //                const resP = res.docs
+   //                   .map(h => h.data())
+   //                   .filter(p => p.user_id === user.id);
+
+   //                setPresenca(
+   //                   resP.map(h => {
+   //                      return {
+   //                         nome: h.nome,
+   //                         data: format(
+   //                            new Date(h.createdAt),
+   //                            'dd/MM/yyyy - HH:mm',
+   //                         ),
+   //                         status: h.presenca ? 'validado' : 'pendente',
+   //                      };
+   //                   }),
+   //                );
+
+   //                const filter = users.map(h => {
+   //                   const p = data.length + 2;
+   //                   return {
+   //                      qntPadrinho: h.padrinhQuantity,
+   //                      qntPresenca: p,
+   //                      qntIndicacao: h.indicacao,
+   //                      user_id: h.id,
+   //                   };
+   //                });
+
+   //                setQntGeral(filter);
+   //             });
+   //       });
+   // }, [user.id]);
 
    return (
       <Container>
@@ -431,24 +492,24 @@ export function Consumo() {
 
          <BoxTotal>
             <Text>Total</Text>
-            {type === 'entrada' && <Text>{handleTotalPrestador}</Text>}
-            {type === 'saida' && <Text>{handleTotalConsumidor}</Text>}
-            {type === 'indicaçao' && <Text>{ranking.qntIndicacao}</Text>}
-            {type === 'presença' && <Text>{ranking.qntPresenca}</Text>}
-            {type === 'padrinho' && <Text>{ranking.qntPadrinho}</Text>}
-            {type === 'b2b' && <Text>{qntB2b.length}</Text>}
+            {type === 'entrada' && <Text>{extrato.totalP}</Text>}
+            {type === 'saida' && <Text>{extrato.totalC}</Text>}
+            {type === 'indicaçao' && <Text>em manutenção</Text>}
+            {type === 'presença' && <Text>em manutenção</Text>}
+            {type === 'padrinho' && <Text>em manutenção</Text>}
+            {type === 'b2b' && <Text>em manutenção</Text>}
          </BoxTotal>
 
          {type === 'entrada' && (
-            <Flat
-               data={formatedVenda}
+            <FlatList
+               data={transactionP}
                keyExtractor={h => h.id}
                renderItem={({ item: h }) => (
                   <View>
                      <ListConsumo
                         descricao={h.descricao}
-                        valor={h.total}
-                        data={h.data}
+                        valor={h.valorFormated}
+                        data={h.date}
                      />
                   </View>
                )}
@@ -456,21 +517,22 @@ export function Consumo() {
          )}
 
          {type === 'saida' && (
-            <Flat
-               data={formatedConsumidor}
+            <FlatList
+               data={extrato.consumidor}
                keyExtractor={h => h.id}
                renderItem={({ item: h }) => (
                   <View>
                      <ListConsumo
                         descricao={h.descricao}
-                        valor={h.total}
-                        data={h.data}
+                        valor={h.valorFormated}
+                        data={h.date}
                      />
                   </View>
                )}
             />
          )}
 
+         {/* 
          {type === 'presença' && (
             <View style={{ marginTop: 24, flex: 1 }}>
                <FlatList
@@ -494,7 +556,7 @@ export function Consumo() {
                   )}
                />
             </View>
-         )}
+         )} */}
       </Container>
    );
 }

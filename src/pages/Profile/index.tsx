@@ -19,9 +19,15 @@ import React, {
    useRef,
    useState,
 } from 'react';
-import { Alert, ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+   ActivityIndicator,
+   Alert,
+   ScrollView,
+   TouchableOpacity,
+   View,
+} from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
-import { Box as BoxBase } from 'native-base';
+import { Box as BoxBase, Text } from 'native-base';
 
 import { Modalize } from 'react-native-modalize';
 import { Form } from '@unform/mobile';
@@ -68,6 +74,7 @@ export function Profile() {
    const modalizeRefEnquadramento = useRef<Modalize>(null);
 
    const [loading, setLoading] = useState(true);
+   const [load, setLoad] = React.useState(false);
 
    // TODO USER
    const [avatar, setAvatar] = useState('');
@@ -132,14 +139,22 @@ export function Profile() {
       }
       if (!result.cancelled) {
          setAvatar(result.uri);
-         const fileName = new Date().getTime();
-         const reference = storage().ref(`/image/avatar/${fileName}.png`);
+
+         try {
+            const ref = storage().ref(`image/avatar/${user.id}.png`);
+            console.log(ref.path);
+            await ref.delete();
+         } catch (error) {
+            console.log(error);
+         }
+
+         const reference = storage().ref(`/image/avatar/${user.id}.png`);
 
          await reference.putFile(result.uri);
          const photoUrl = await reference.getDownloadURL();
          setAvatarUrl(photoUrl);
       }
-   }, []);
+   }, [user]);
 
    const handleLogo = useCallback(async () => {
       setLoading(true);
@@ -160,8 +175,13 @@ export function Profile() {
          if (!result.cancelled) {
             setLogo(result.uri);
 
-            const fileName = new Date().getTime();
-            const reference = storage().ref(`/image/${fileName}.png`);
+            try {
+               const ref = storage().ref(`image/logo/${user.id}.png`);
+               await ref.delete();
+            } catch (error) {
+               console.log(error);
+            }
+            const reference = storage().ref(`/image/logo/${user.id}.png`);
 
             await reference.putFile(result.uri);
             const photoUrl = await reference.getDownloadURL();
@@ -170,10 +190,11 @@ export function Profile() {
       }
 
       setLoading(false);
-   }, []);
+   }, [user]);
 
    const handleSubmit = useCallback(async () => {
       formRef.current?.setErrors({});
+      setLoad(true);
 
       const dados = {
          whats,
@@ -189,17 +210,22 @@ export function Profile() {
       };
 
       try {
-         await api.put('user/update-profile', dados);
-         Alert.alert('Seu perfil foi atualizado com sucesso!');
-         const dt = {
-            ...user,
-            profile: dados,
-         };
-         updateUser(dt);
-         goBack();
+         await api
+            .put('user/update-profile', dados)
+            .then(() => {
+               Alert.alert('Seu perfil foi atualizado com sucesso!');
+               const dt = {
+                  ...user,
+                  profile: dados,
+               };
+               updateUser(dt);
+            })
+            .finally(() => {
+               setLoad(false);
+               goBack();
+            });
       } catch (err) {
          Alert.alert('Erro ao atualizar seu perfil', err.response.data.message);
-         console.log(err.response.data);
       }
    }, [
       CPF,
@@ -219,7 +245,7 @@ export function Profile() {
    useEffect(() => {
       const mo = whatsRef.current?.getRawValue();
       setWhats(mo);
-   }, []);
+   }, [whats]);
 
    return (
       <Container>
@@ -265,7 +291,7 @@ export function Profile() {
                   }}
                >
                   <BoxFormularios>
-                     <BoxInput>
+                     {/* <BoxInput>
                         <TitleHeader style={{ right: 10 }}>NOME</TitleHeader>
                         <InputCasdastro
                            icon=""
@@ -278,7 +304,7 @@ export function Profile() {
                            onChangeText={h => setNome(h)}
                            value={nome}
                         />
-                     </BoxInput>
+                     </BoxInput> */}
 
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>E-MAIL</TitleHeader>
@@ -389,7 +415,7 @@ export function Profile() {
                      </View>
                   </BoxFormularios>
 
-                  <BoxFormularios>
+                  {/* <BoxFormularios>
                      <TitleHeader>LINK SITE</TitleHeader>
                      <Input
                         value={linkSite}
@@ -421,7 +447,7 @@ export function Profile() {
                         name="linkMap"
                         icon=""
                      />
-                  </BoxFormularios>
+                  </BoxFormularios> */}
                </Form>
 
                <View
@@ -445,7 +471,11 @@ export function Profile() {
             </ScrollView>
          </View>
          <BoxButton onPress={handleSubmit}>
-            <TitleButton>Alterar</TitleButton>
+            {load ? (
+               <ActivityIndicator />
+            ) : (
+               <TitleButton>Atualizar</TitleButton>
+            )}
          </BoxButton>
       </Container>
    );

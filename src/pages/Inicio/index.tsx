@@ -158,20 +158,22 @@ export function Inicio() {
          await api.get('/transaction/list-all-transaction').then(h => {
             const res = h.data as ITransaction[];
             const rs = res.map(p => {
-               return p.valor;
+               return p.valor / 100;
             });
 
-            const valor = res.reduce((ac, i) => {
-               return ac + Number(i.valor);
+            const valor = rs.reduce((ac, i) => {
+               return ac + i;
             }, 0);
 
             const userTrans = res.filter(p => {
                return p.prestador_id === user.id;
             });
 
-            const valorTotalUser = userTrans.reduce((ac, i) => {
-               return ac + Number(i.valor);
-            }, 0);
+            const valorTotalUser =
+               userTrans.reduce((ac, i) => {
+                  const v = i.valor;
+                  return ac + Number(v);
+               }, 0) / 100;
 
             const vlorUser = valorTotalUser;
 
@@ -367,17 +369,17 @@ export function Inicio() {
       // await Updates.reloadAsync();
    }, []);
 
-   React.useEffect(() => {
-      const event = AppState.addEventListener('change', h => {
-         if (h === 'active') {
-            ChecUpdadeDevice();
-         }
-      });
+   // React.useEffect(() => {
+   //    const event = AppState.addEventListener('change', h => {
+   //       if (h === 'active') {
+   //          ChecUpdadeDevice();
+   //       }
+   //    });
 
-      return () => {
-         event.remove();
-      };
-   }, [ChecUpdadeDevice]);
+   //    return () => {
+   //       event.remove();
+   //    };
+   // }, [ChecUpdadeDevice]);
 
    //* * .......................................................................
 
@@ -402,39 +404,6 @@ export function Inicio() {
       }, [loadOrders, openModals]),
    );
 
-   const subPonts = React.useMemo(() => {
-      const venda = globalPont
-         ? globalPont.vendas.reduce((ac, i) => {
-              return ac + Number(i.pontos);
-           }, 0)
-         : 0;
-
-      const valor = globalPont
-         ? globalPont.vendas.reduce((ac, i) => {
-              return ac + Number(i.valor);
-           }, 0)
-         : 0;
-
-      const compra = globalPont
-         ? globalPont.vendas.reduce((ac, i) => {
-              return ac + Number(i.pontos);
-           }, 0)
-         : 0;
-
-      const total = venda;
-      const pontos = venda * 10 + compra * 10;
-
-      const price = total.toLocaleString('pt-BR', {
-         style: 'currency',
-         currency: 'BRL',
-      });
-      return {
-         TotalPontos: pontos,
-         TotalVendas: price,
-         valorTotal: valor,
-      };
-   }, [globalPont]);
-
    const top = individualRak
       ? individualRak.compras.pontos +
         individualRak.vendas.pontos +
@@ -444,11 +413,6 @@ export function Inicio() {
         individualRak.presenca.pontos
       : 0;
 
-   const vt = individualRak ? individualRak.vendas.valor : 0;
-   const vtTotal = vt.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-   });
    return (
       <Container>
          {/* <Modal transparent animationType="slide" visible={false}>
@@ -679,8 +643,8 @@ export function Inicio() {
             <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               {individualRak ? (
-                  <TitlePrice>{vtTotal}</TitlePrice>
+               {valorGeb ? (
+                  <TitlePrice>{valorGeb.priceUser}</TitlePrice>
                ) : (
                   <ActivityIndicator />
                )}

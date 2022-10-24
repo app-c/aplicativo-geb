@@ -55,18 +55,26 @@ export function Home() {
 
                         if (filuser) {
                            if (filuser.id === p.fk_id_user) {
+                              const date = new Date(p.created_at).getTime();
                               return {
-                                 post: p,
+                                 post: {
+                                    ...p,
+                                    date,
+                                 },
                                  user: filuser,
                               };
                            }
                         }
+                     })
+                     .sort((a, b) => {
+                        return b.post.date - a.post.date;
                      });
 
                   const postfil = fil.filter(p => p !== undefined);
 
                   setPost(postfil);
                })
+
                .catch(h => {
                   console.log('erro ao carregar post na lela home', h);
                   Alert.alert('Erro', h.response.message);

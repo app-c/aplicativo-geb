@@ -6,12 +6,11 @@ import { FlatList, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { Form } from '@unform/mobile';
-import fire from '@react-native-firebase/firestore';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { IProfileDto, IUserDto, IUserDtos } from '../../dtos';
+import { IProfileDto, IUserDtos } from '../../dtos';
 import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
@@ -59,7 +58,6 @@ export function Membros() {
          .then(h => {
             const us = h.data as IUserDtos[];
             const fil = us.filter(p => p.id !== user.id);
-            console.log(us);
             setMembros(fil);
          })
          .catch(h => console.log('list membros', h))
@@ -77,7 +75,7 @@ export function Membros() {
       search.length > 0
          ? membros.filter(h => {
               const up = h.nome.toLocaleUpperCase();
-              return up.includes(search);
+              return up.includes(search.toLocaleUpperCase());
            })
          : membros;
 

@@ -107,6 +107,8 @@ export function Transaction() {
       setMon(mo * 100);
    }, [value]);
 
+   console.log(mon);
+
    return (
       <Container>
          <HeaderContaponent type="tipo1" title="" />

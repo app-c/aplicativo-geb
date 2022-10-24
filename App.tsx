@@ -42,10 +42,6 @@ import { Loading } from './src/components/Loading';
 import { update, version } from './src/utils/updates';
 import { New } from './src/components/new';
 
-interface IUp {
-   up: boolean;
-}
-
 export default function App() {
    Notifications.setNotificationHandler({
       handleNotification: async () => ({
@@ -70,19 +66,20 @@ export default function App() {
 
    const ReloadDevice = React.useCallback(async () => {
       await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
    }, []);
 
-   React.useEffect(() => {
-      const event = AppState.addEventListener('change', h => {
-         if (h === 'active') {
-            ChecUpdadeDevice();
-         }
-      });
+   // React.useEffect(() => {
+   //    const event = AppState.addEventListener('change', h => {
+   //       if (h === 'active') {
+   //          ChecUpdadeDevice();
+   //       }
+   //    });
 
-      return () => {
-         event.remove();
-      };
-   }, [ChecUpdadeDevice]);
+   //    return () => {
+   //       event.remove();
+   //    };
+   // }, [ChecUpdadeDevice]);
 
    //* * .......................................................................
 

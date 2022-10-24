@@ -75,7 +75,9 @@ export interface ITransaction {
    prestador_id?: string;
    valor: number;
    descricao: string;
-   createdAt?: Date;
+   created_at?: Date;
+   date?: string;
+   valorFormated: string;
 }
 
 export interface IB2b {
@@ -116,6 +118,8 @@ export interface IPostsDtos {
    like?: ILikeDto[];
    profile?: IProfileDto;
    user?: IUserDtos;
+   created_at?: Date;
+   date?: number;
 }
 
 export interface ILikeDto {

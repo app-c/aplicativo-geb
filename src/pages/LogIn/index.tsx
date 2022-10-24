@@ -50,6 +50,7 @@ export function SingIn() {
          membro,
          senha: pass,
       }).catch(h => {
+         console.log(h);
          Alert.alert('Erro ao logar com sua conta', h.response.data.message);
       });
    }, [membro, pass, signIn]);

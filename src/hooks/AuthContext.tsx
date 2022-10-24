@@ -67,20 +67,16 @@ export const AuthProvider: React.FC = ({ children }) => {
       const dat = await AsyncStorage.getItem('old_user');
       const first = await AsyncStorage.getItem('first');
 
-      const ft = first ? JSON.parse(first) : true;
+      const ft = first ? JSON.parse(first) : false;
       setFirstLogin(ft);
-      if (dat) {
-         setOldUser(JSON.parse(dat));
+      if (first) {
+         setOldUser(JSON.parse(first));
       }
 
-      const [token, user] = await AsyncStorage.multiGet([
-         keyToken,
-         keyUser,
-         'old_user',
-      ]);
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
+      const [token, user] = await AsyncStorage.multiGet([keyToken, keyUser]);
+      api.defaults.headers.common.Authorization = `Bearer ${token[1]}`;
 
-      if (token && user)
+      if (token[1] && user[1])
          if (token && user) {
             setData({ token: token[1], user: JSON.parse(user[1]) });
          }
@@ -90,8 +86,6 @@ export const AuthProvider: React.FC = ({ children }) => {
    useEffect(() => {
       LoadingUser();
    }, [LoadingUser, firstLogin]);
-
-   console.log(firstLogin);
 
    const signIn = useCallback(async ({ membro, senha }) => {
       await api
@@ -119,7 +113,7 @@ export const AuthProvider: React.FC = ({ children }) => {
                );
          })
          .catch(h => {
-            console.log('erro', h.response.data.message);
+            console.log('erro', h);
             Alert.alert('Erro ao entrar na sua conta', h.response.data.message);
          });
    }, []);
@@ -196,10 +190,6 @@ export const AuthProvider: React.FC = ({ children }) => {
                   );
                });
          });
-   }, []);
-
-   useEffect(() => {
-      setLoading(true);
    }, []);
 
    const signOut = useCallback(async () => {

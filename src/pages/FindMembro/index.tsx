@@ -29,32 +29,35 @@ export function FindUser() {
          .then(h => {
             const res = h.data as IUserDtos[];
 
-            // const us = res.map(h => {
-            //    const wa = h.profile.whats
-            //       ? `https://wa.me/55${h.profile.whats.slice(
-            //            1,
-            //            3,
-            //         )}${h.profile.whats.slice(5, -5)}${h.profile.whats.slice(
-            //            -4,
-            //         )}`
-            //       : 'wahts';
+            const us = res.map(user => {
+               let whats = '';
+               if (user.profile.whats.includes('(1')) {
+                  const wa = user.profile.whats
+                     ? `https://wa.me/55${user.profile.whats.slice(
+                          1,
+                          3,
+                       )}${user.profile.whats.slice(
+                          5,
+                          -5,
+                       )}${user.profile.whats.slice(-4)}`
+                     : 'wahts';
+                  whats = wa;
+               }
 
-            //    return {
-            //       user: {
-            //          ...h.user,
-            //       },
-            //       profile: {
-            //          ...h.profile,
-            //          whats: wa,
-            //       },
-            //    };
-            //    // let ma = '';
-            //    // if (h.links.maps) {
-            //    //    const [c, l] = h.links.maps.split('https://').map(String);
-            //    //    ma = l;
-            //    // }
-            // });
-            console.log(res);
+               if (user.profile.whats.length === 11) {
+                  const wa = user.profile.whats
+                     ? `https://wa.me/55${user.profile.whats}`
+                     : 'wahts';
+                  whats = wa;
+               }
+               console.log(whats);
+
+               // let ma = '';
+               // if (h.links.maps) {
+               //    const [c, l] = h.links.maps.split('https://').map(String);
+               //    ma = l;
+               // }
+            });
 
             setlistAllUser(res);
          })
@@ -106,6 +109,7 @@ export function FindUser() {
                   name="find"
                   icon="search"
                   type="custom"
+                  autoCapitalize="characters"
                   options={{ mask: '****************************' }}
                   onChangeText={setSearch}
                   value={value}
