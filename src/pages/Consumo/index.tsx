@@ -3,7 +3,13 @@
 /* eslint-disable consistent-return */
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+   useCallback,
+   useContext,
+   useEffect,
+   useMemo,
+   useState,
+} from 'react';
 import { FlatList, ScrollView, TextInput, View } from 'react-native';
 import { format, getMonth, getYear } from 'date-fns';
 
@@ -30,6 +36,7 @@ import { ITransaction, IUserDto } from '../../dtos';
 import theme from '../../global/styles/theme';
 import { colecao } from '../../collection';
 import { api } from '../../services/api';
+import { ApiContext } from '../../contexts';
 
 export interface PropTransactions {
    id: string;
@@ -61,6 +68,9 @@ type Presença = {
 };
 
 export function Consumo() {
+   const { transactionConsumidor, transactionPrestador } =
+      useContext(ApiContext);
+
    const [transactionP, setTransactionP] = useState<ITransaction[]>([]);
    const [transactionC, setTransactionC] = useState<ITransaction[]>([]);
    const [type, setType] = useState('entrada');
@@ -75,14 +85,15 @@ export function Consumo() {
    //* *..........................................................................
 
    const listTransaction = React.useCallback(async () => {
+      const vp = 0;
+      const vl = 0;
       try {
          await api.get('transaction/list-by-prestador').then(h => {
             const rs = h.data as ITransaction[];
             const ft = rs.map(p => {
-               console.log(p.valor / 100);
-               const vl = p.valor / 100;
+               const { valor } = p;
 
-               const valorFormated = vl.toLocaleString('pt-BR', {
+               const valorFormated = valor.toLocaleString('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
                });
@@ -90,6 +101,7 @@ export function Consumo() {
                   ...p,
                   date: format(new Date(p.created_at), 'dd-MM-yyyy'),
                   valorFormated,
+                  valor,
                };
             });
             setTransactionP(ft);
@@ -98,8 +110,8 @@ export function Consumo() {
          await api.get('transaction/list-by-consumidor').then(h => {
             const rs = h.data as ITransaction[];
             const ft = rs.map(p => {
-               const vl = p.valor / 100;
-               const valorFormated = vl.toLocaleString('pt-BR', {
+               const { valor } = p;
+               const valorFormated = valor.toLocaleString('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
                });
@@ -107,6 +119,7 @@ export function Consumo() {
                   ...p,
                   date: format(new Date(p.created_at), 'dd-MM-yyyy'),
                   valorFormated,
+                  valor,
                };
             });
             setTransactionC(ft);
@@ -147,10 +160,9 @@ export function Consumo() {
          }
       });
 
-      const subTotalP =
-         prestador.reduce((ac, item) => {
-            return ac + item.valor;
-         }, 0) / 100;
+      const subTotalP = prestador.reduce((ac, item) => {
+         return ac + item.valor;
+      }, 0);
 
       const totalP = subTotalP.toLocaleString('pt-BR', {
          style: 'currency',

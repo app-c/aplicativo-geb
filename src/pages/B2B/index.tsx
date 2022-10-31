@@ -69,7 +69,7 @@ export function B2B() {
       value.length > 0
          ? membros.filter(h => {
               const up = h.nome.toLocaleUpperCase();
-              return up.includes(value);
+              return up.includes(value.toLocaleUpperCase());
            })
          : membros;
 

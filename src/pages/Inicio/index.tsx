@@ -157,23 +157,19 @@ export function Inicio() {
 
          await api.get('/transaction/list-all-transaction').then(h => {
             const res = h.data as ITransaction[];
-            const rs = res.map(p => {
-               return p.valor / 100;
-            });
 
-            const valor = rs.reduce((ac, i) => {
-               return ac + i;
+            const valor = res.reduce((ac, i) => {
+               return ac + i.valor;
             }, 0);
 
             const userTrans = res.filter(p => {
                return p.prestador_id === user.id;
             });
 
-            const valorTotalUser =
-               userTrans.reduce((ac, i) => {
-                  const v = i.valor;
-                  return ac + Number(v);
-               }, 0) / 100;
+            const valorTotalUser = userTrans.reduce((ac, i) => {
+               const v = i.valor;
+               return ac + Number(v);
+            }, 0);
 
             const vlorUser = valorTotalUser;
 
@@ -322,14 +318,13 @@ export function Inicio() {
             .then(h => {
                Alert.alert(
                   'Sucesso!',
-                  'Obrigado por incentivar um membro do grupo G.E.B training por consumir seu produto',
+                  'Obrigado por incentivar um membro do grupo G.E.B networking por consumir seu produto',
                );
 
+               loadOrders();
                if (orderTransaction.length === 0) {
                   setModalTransaction(false);
                }
-
-               loadOrders();
             })
             .catch(h => {
                const { message } = h.response.data;
@@ -342,7 +337,15 @@ export function Inicio() {
 
    const DeleteOrderTransaction = useCallback(
       async (id: string) => {
-         await api.delete(`/consumo/delete-order/${id}`);
+         await api.delete(`/consumo/delete-order/${id}`).then(h => {
+            const rs = h.data;
+            console.log(rs);
+            setOrderTransaction(orderTransaction.filter(h => h !== rs));
+
+            if (orderTransaction.length === 0) {
+               setModalTransaction(false);
+            }
+         });
          loadOrders();
       },
       [loadOrders],

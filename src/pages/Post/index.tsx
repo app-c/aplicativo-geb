@@ -114,7 +114,7 @@ export function Post() {
             </BoxImage>
 
             <Button enabled={!load} onPress={handleSubmit}>
-               <TexBoton>Criar</TexBoton>
+               {load ? <ActivityIndicator /> : <TexBoton>Criar</TexBoton>}
             </Button>
          </Box>
       </Container>

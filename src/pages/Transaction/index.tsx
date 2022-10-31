@@ -78,7 +78,7 @@ export function Transaction() {
          consumidor_name: user.nome,
          consumidor_id: user.id,
          descricao: description,
-         valor: mon,
+         valor: Number(mon.toFixed()),
       };
 
       await api.post('/consumo/order-transaction', dados);
@@ -107,7 +107,7 @@ export function Transaction() {
       setMon(mo * 100);
    }, [value]);
 
-   console.log(mon);
+   console.log(mon.toFixed());
 
    return (
       <Container>

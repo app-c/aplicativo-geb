@@ -112,7 +112,6 @@ export function FindUser() {
                   autoCapitalize="characters"
                   options={{ mask: '****************************' }}
                   onChangeText={setSearch}
-                  value={value}
                />
             </Box>
          </Form>

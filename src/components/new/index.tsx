@@ -162,39 +162,39 @@ export function New() {
    //       });
    // }, []);
 
-   const submitOrderB2b = React.useCallback(
-      async (token: string) => {
-         const rs = orderB2b.map(h => {
-            const us = users.find(p => p.id === h.user_id);
-            const pres = users.find(p => p.id === h.prestador_id);
+   // const submitOrderB2b = React.useCallback(
+   //    async (token: string) => {
+   //       const rs = orderB2b.map(h => {
+   //          const us = users.find(p => p.id === h.user_id);
+   //          const pres = users.find(p => p.id === h.prestador_id);
 
-            if (us && pres) {
-               return {
-                  send_id: us.id,
-                  send_name: us.nome,
-                  recevid_id: h.prestador_id,
-                  recevid_name: pres.nome,
-                  assunto: h.description,
-                  validate: false,
-               };
-            }
-         });
+   //          if (us && pres) {
+   //             return {
+   //                send_id: us.id,
+   //                send_name: us.nome,
+   //                recevid_id: h.prestador_id,
+   //                recevid_name: pres.nome,
+   //                assunto: h.description,
+   //                validate: false,
+   //             };
+   //          }
+   //       });
 
-         // eslint-disable-next-line dot-notation
-         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+   //       // eslint-disable-next-line dot-notation
+   //       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-         for (let i = 0; i < rs.length; i += 1) {
-            if (rs[i]) {
-               const data = rs[i];
-               await api
-                  .post('/b2b/create-b2b', data)
-                  .then(h => console.log('ok'))
-                  .catch(h => console.log('erro', h.response.data));
-            }
-         }
-      },
-      [orderB2b, users],
-   );
+   //       for (let i = 0; i < rs.length; i += 1) {
+   //          if (rs[i]) {
+   //             const data = rs[i];
+   //             await api
+   //                .post('/b2b/create-b2b', data)
+   //                .then(h => console.log('ok'))
+   //                .catch(h => console.log('erro', h.response.data));
+   //          }
+   //       }
+   //    },
+   //    [orderB2b, users],
+   // );
 
    // const submitB2b = React.useCallback(
    //    async (token: string) => {
@@ -311,11 +311,12 @@ export function New() {
    //             const user = users.find(p => p.id === h.prestador_id);
    //             const [i, d] = String(h.valor).split('.').map(Number);
    //             if (user) {
+   //                console.log(i);
    //                return {
    //                   descricao: h.descricao || '',
    //                   prestador_name: user.nome,
    //                   prestador_id: h.prestador_id,
-   //                   valor: i,
+   //                   valor: i * 100,
    //                };
    //             }
    //          });
@@ -332,7 +333,7 @@ export function New() {
    //                   descricao: h.descricao || '',
    //                   consumidor_name: user.nome,
    //                   consumidor_id: h.consumidor,
-   //                   valor: i,
+   //                   valor: i * 100,
    //                };
    //             }
    //          });
@@ -345,7 +346,7 @@ export function New() {
    //             await api
    //                .post('/transaction/create-transaction', rs[i])
    //                .then(h => console.log('ok'))
-   //                .catch(h => console.log('erro', h.response.data));
+   //                .catch(h => console.log('erro', h));
    //          }
    //       }
 
@@ -354,7 +355,7 @@ export function New() {
    //             await api
    //                .post('/transaction/create-transaction', rsU[i])
    //                .then(h => console.log('ok'))
-   //                .catch(h => console.log('erro', h.response.data));
+   //                .catch(h => console.log('erro', h));
    //          }
    //       }
    //    },
@@ -516,16 +517,15 @@ export function New() {
                // submitPost(token);
 
                profile();
-               console.log('atualizado');
                await Updates.fetchUpdateAsync();
                await Updates.reloadAsync();
             }
          })
          .catch(async h => {
-            console.log('login da tela new', h.response.data.message);
+            console.log('login da tela new', h);
          })
          .finally(async () => {});
-   }, [userProfile, membro, senha]);
+   }, [userProfile, membro, senha, profile]);
 
    console.log('save');
 

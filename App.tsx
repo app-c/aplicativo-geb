@@ -41,6 +41,7 @@ import { Route } from './src/routes';
 import { Loading } from './src/components/Loading';
 import { update, version } from './src/utils/updates';
 import { New } from './src/components/new';
+import { ApiProvider } from './src/contexts';
 
 export default function App() {
    Notifications.setNotificationHandler({
@@ -69,17 +70,17 @@ export default function App() {
       await Updates.reloadAsync();
    }, []);
 
-   // React.useEffect(() => {
-   //    const event = AppState.addEventListener('change', h => {
-   //       if (h === 'active') {
-   //          ChecUpdadeDevice();
-   //       }
-   //    });
+   React.useEffect(() => {
+      const event = AppState.addEventListener('change', h => {
+         if (h === 'active') {
+            ChecUpdadeDevice();
+         }
+      });
 
-   //    return () => {
-   //       event.remove();
-   //    };
-   // }, [ChecUpdadeDevice]);
+      return () => {
+         event.remove();
+      };
+   }, [ChecUpdadeDevice]);
 
    //* * .......................................................................
 
@@ -122,8 +123,9 @@ export default function App() {
                            </Button>
                         </Center>
                      </Modal>
-
-                     <Route />
+                     <ApiProvider>
+                        <Route />
+                     </ApiProvider>
                   </View>
                </NativeBaseProvider>
             </AppProvider>

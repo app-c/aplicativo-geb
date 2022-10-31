@@ -62,7 +62,7 @@ export const AuthProvider: React.FC = ({ children }) => {
 
    const LoadingUser = useCallback(async () => {
       setLoading(true);
-      // await AsyncStorage.removeItem('first');
+      await AsyncStorage.removeItem('first');
 
       const dat = await AsyncStorage.getItem('old_user');
       const first = await AsyncStorage.getItem('first');
