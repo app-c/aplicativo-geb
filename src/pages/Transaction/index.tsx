@@ -28,7 +28,8 @@ import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { colecao } from '../../collection';
-import { IUserDto } from '../../dtos';
+import { IUserDtos } from '../../dtos';
+import { api } from '../../services/api';
 
 interface IRoute {
    prestador_id: string;
@@ -43,7 +44,7 @@ interface IRoute {
 export function Transaction() {
    const { navigate } = useNavigation();
    const moneyRef = useRef(null);
-   const { user, orderTransaction } = useAuth();
+   const { user } = useAuth();
    const route = useRoute();
    const {
       prestador_id,
@@ -56,7 +57,7 @@ export function Transaction() {
    } = route.params as IRoute;
 
    const [value, setValue] = useState('');
-   const [prestador, setPrestador] = useState<IUserDto>();
+   const [prestador, setPrestador] = useState<IUserDtos>();
    const [description, setDescription] = useState('');
    const [mon, setMon] = useState(0);
 
@@ -71,15 +72,16 @@ export function Transaction() {
          return;
       }
 
-      orderTransaction({
+      const dados = {
          prestador_id,
-         consumidor: user.id,
-         valor: String(mon),
-         description,
          prestador_name,
-         consumidor_name,
-         data: format(new Date(Date.now()), 'dd/MM/yy - HH:mm'),
-      });
+         consumidor_name: user.nome,
+         consumidor_id: user.id,
+         descricao: description,
+         valor: Number(mon.toFixed()),
+      };
+
+      await api.post('/consumo/order-transaction', dados);
 
       navigate('sucess', {
          workName,
@@ -91,20 +93,21 @@ export function Transaction() {
    }, [
       mon,
       description,
-      orderTransaction,
       prestador_id,
-      user.id,
+      prestador_name,
+      user,
       navigate,
       workName,
       consumidor_name,
-      prestador_name,
       token,
    ]);
 
    useEffect(() => {
       const mo = moneyRef.current?.getRawValue();
-      setMon(mo);
+      setMon(mo * 100);
    }, [value]);
+
+   console.log(mon.toFixed());
 
    return (
       <Container>
@@ -116,8 +119,8 @@ export function Transaction() {
             </Title>
             <BoxElement>
                <BoxAvatar>
-                  {user.avatarUrl ? (
-                     <Avatar source={{ uri: user.avatarUrl }} />
+                  {user.profile.avatar ? (
+                     <Avatar source={{ uri: user.profile.avatar }} />
                   ) : (
                      <Feather
                         name="user"
@@ -126,8 +129,8 @@ export function Transaction() {
                      />
                   )}
 
-                  {user.logoUrl ? (
-                     <ImageOfice source={{ uri: user.logoUrl }} />
+                  {user.profile.logo ? (
+                     <ImageOfice source={{ uri: user.profile.logo }} />
                   ) : (
                      <View
                         style={{
@@ -220,8 +223,8 @@ export function Transaction() {
                         options={{
                            precision: 2,
                            separator: '.',
-                           delimiter: ',',
-                           unit: '',
+                           // delimiter: ',',
+                           // unit: '',
                         }}
                         keyboardType="numeric"
                         onChangeText={text => setValue(text)}

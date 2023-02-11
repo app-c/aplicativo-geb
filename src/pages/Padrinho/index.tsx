@@ -1,47 +1,62 @@
+/* eslint-disable camelcase */
 import React, { useCallback } from 'react';
-import { NativeBaseProvider, Text, Box } from 'native-base';
+import { NativeBaseProvider, Text, Box, Center } from 'native-base';
 import { Alert, FlatList } from 'react-native';
-import fire from '@react-native-firebase/firestore';
-import { useNavigation, useNavigationState } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../hooks/AuthContext';
 import { HeaderContaponent } from '../../components/HeaderComponent';
-import { MembrosComponents } from '../../components/MembrosCompornents';
-import { colecao } from '../../collection';
+import theme from '../../global/styles/theme';
+import { api } from '../../services/api';
+import { Loading } from '../../components/Loading';
 import { MembrosApadrinhado } from '../../components/MembrosApadrinhado';
+import { IUserDtos } from '../../dtos';
 
 export function Padrinho() {
-   const { listUser, user } = useAuth();
+   const { user } = useAuth();
    const { navigate } = useNavigation();
+   const [users, setUser] = React.useState<IUserDtos[]>([]);
+   const [load, setLoad] = React.useState(true);
+
+   const loadUser = React.useCallback(async () => {
+      await api
+         .get('/user/list-all-user')
+         .then(h => {
+            const rs = h.data as IUserDtos[];
+            const fil = rs.filter(p => p.situation.inativo !== true);
+            setUser(fil);
+         })
+         .catch(h =>
+            console.log('erro ao carregar user na tela te padrinho', h),
+         )
+         .finally(() => setLoad(false));
+   }, []);
+
+   React.useEffect(() => {
+      loadUser();
+   }, []);
 
    const handleApadrinhar = useCallback(
-      (id: string) => {
-         fire()
-            .collection(colecao.users)
-            .doc(user.id)
-            .get()
+      async ({ user_id, nome }) => {
+         console.log(user_id, nome);
+         await api
+            .post('/user/create-padrinho', {
+               user_id: user.id,
+               apadrinhado_name: nome,
+               apadrinhado_id: user_id,
+               qnt: 0,
+            })
             .then(h => {
-               const { padrinhQuantity } = h.data();
-               fire()
-                  .collection(colecao.users)
-                  .doc(user.id)
-                  .update({
-                     padrinhQuantity: padrinhQuantity + 1,
-                  });
-
-               fire().collection(colecao.users).doc(id).update({
-                  apadrinhado: true,
-               });
-            });
-
-         Alert.alert('APADRINHAMENTO', 'membro foi apadrinhado com sucesso!');
-         navigate('INÍCIO');
+               Alert.alert('Sucesso!', `membro ${nome} foi apadrinhado`);
+               loadUser();
+            })
+            .catch(h => console.log('erro no padrinho', h));
       },
-      [navigate, user.id],
+      [loadUser, user],
    );
 
-   const users = React.useMemo(() => {
-      return listUser.filter(h => h.id !== user.id);
-   }, [listUser, user.id]);
+   if (load) {
+      return <Loading />;
+   }
 
    return (
       <NativeBaseProvider>
@@ -52,13 +67,18 @@ export function Padrinho() {
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <MembrosApadrinhado
-                  imageOfice={h.logoUrl}
-                  oficio={h.workName}
+                  imageOfice={h.profile.logo}
+                  oficio={h.profile.workName}
                   userName={h.nome}
-                  user_avatar={h.avatarUrl}
-                  pres={() => handleApadrinhar(h.id)}
-                  inativoPres={h.apadrinhado}
-                  inativo={h.apadrinhado}
+                  user_avatar={h.profile.avatar}
+                  pres={() =>
+                     handleApadrinhar({
+                        user_id: h.id,
+                        nome: h.nome,
+                     })
+                  }
+                  inativoPres={h.situation.apadrinhado}
+                  inativo={h.situation.apadrinhado}
                />
             )}
          />

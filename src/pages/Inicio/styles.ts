@@ -6,7 +6,6 @@ import {
    Ionicons,
    SimpleLineIcons,
 } from '@expo/vector-icons';
-import { he } from 'date-fns/locale';
 import { Dimensions, Platform } from 'react-native';
 import { getStatusBarHeight } from 'react-native-iphone-x-helper';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';

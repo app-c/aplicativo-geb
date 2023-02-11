@@ -15,6 +15,7 @@ import {
    TextButtonValidar,
    Title,
 } from './styles';
+import { api } from '../../services/api';
 
 type Props = {
    user_id: string;
@@ -26,6 +27,7 @@ type Props = {
 
 export function Valide() {
    const { user } = useAuth();
+   const { nome, id } = user;
    const { navigate } = useNavigation();
    const [data, setData] = useState(
       format(new Date(Date.now()), 'dd/MM/yyyy - HH:mm'),
@@ -34,60 +36,29 @@ export function Valide() {
    const [presenca, setPresenca] = useState<Props[]>([]);
 
    const hanldeValidar = useCallback(async () => {
-      const hour = new Date(2022, 6, 17, 6, 0, 0).getHours();
-      const math = hour >= 6;
+      const dados = {
+         nome,
+         user_id: id,
+      };
 
-      if (presenca) {
-         return Alert.alert(
-            'Vocẽ não pode marcar presença mais de uma vez no mesmo horário',
-         );
-      }
-
-      if (math === false) {
-         return Alert.alert(
-            'Você só pode marcar presença das 6:00 às 23:59 horas',
-         );
-      }
-
-      Firestore()
-         .collection('presença')
-         .add({
-            user_id: user.id,
-            presenca: false,
-            createdAt: new Date(Date.now()).getTime(),
-            nome: user.nome,
-            avatar: user.avatarUrl,
+      await api
+         .post('/presenca/create-order-presenca', dados)
+         .then(h => {
+            setLoad(false);
+            navigate('INÍCIO');
+            Alert.alert(
+               'Solicitação enviada',
+               'Aguarde um adm validar sua presença',
+            );
          })
-         .finally(() => setLoad(false))
-         .catch(err => console.log(err));
-      setLoad(false);
-      navigate('INÍCIO');
-   }, [navigate, presenca, user.avatarUrl, user.id, user.nome]);
-
-   useEffect(() => {
-      const load = Firestore()
-         .collection('presença')
-         .onSnapshot(h => {
-            const response = h.docs
-               .map(h => h.data() as Props)
-               .find(h => {
-                  const hora = new Date(Date.now()).getHours();
-                  const horaPresença = new Date(h.createdAt).getHours();
-
-                  if (
-                     h.user_id === user.id &&
-                     h.presenca === false &&
-                     hora === horaPresença
-                  ) {
-                     return h;
-                  }
-               });
-
-            setPresenca(response);
+         .catch(h => {
+            console.log('presenca', h.response.data);
+            Alert.alert(
+               'Erro ao validar sua presença',
+               h.response.data.message,
+            );
          });
-
-      return () => load();
-   }, [user.id]);
+   }, [id, navigate, nome]);
 
    return (
       <Container>

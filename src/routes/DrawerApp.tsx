@@ -11,6 +11,7 @@ const { Navigator, Screen } = createDrawerNavigator();
 
 export function DrawerApp() {
    const { user } = useAuth();
+   // const { adm } = user.user;
    return (
       <Navigator
          drawerContent={DrawerContent}

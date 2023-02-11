@@ -26,6 +26,7 @@ interface Props {
    icon?: 'necociar' | 'indicar' | 'b2b';
    inativo?: boolean;
    inativoPres?: boolean;
+   apadrinhado: boolean;
 }
 
 export function MembrosApadrinhado({
@@ -37,6 +38,7 @@ export function MembrosApadrinhado({
    icon,
    inativo,
    inativoPres,
+   apadrinhado,
 }: Props) {
    return (
       <Container>

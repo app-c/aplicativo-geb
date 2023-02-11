@@ -1,6 +1,5 @@
 export const update = [
-   { title: 'Correçoes dos nomes na hora de fazer um consumo' },
-   { title: 'Não é mais possivel fazer negocios com vocẽ mesmo' },
-   { title: 'Melhorias no B2B' },
+   { title: 'correção dos valores' },
+   { title: 'limpesa de cache' },
 ];
-export const version = '2.3.3';
+export const version = '4.4.0';

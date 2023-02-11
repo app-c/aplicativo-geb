@@ -14,18 +14,16 @@ import {
 interface Prps {
    description: string;
    clientName: string;
-   telefone: string;
+   telefone: number;
    failTransaction: () => void;
    handShak: () => void;
    quemIndicouName: string;
-   quemIndicouWorkName: string;
 }
 
 export function ModalOrderIndication({
    description,
    clientName,
    quemIndicouName,
-   quemIndicouWorkName,
    telefone,
    failTransaction,
    handShak,
@@ -33,15 +31,15 @@ export function ModalOrderIndication({
    return (
       <Container>
          <Title>
-            {quemIndicouName} da empresa {quemIndicouWorkName} idicou voce para
-            fazer negócios com {clientName} {'\n'}
+            {quemIndicouName} idicou voce para fazer negócios com {clientName}{' '}
+            {'\n'}
          </Title>
 
          <Description>descrição: {description}</Description>
          <Description>nome: {clientName},</Description>
          <Description>telefone: {telefone}</Description>
          <Title style={{ marginTop: 10 }}>
-            Vocẽ fechou entrou em contato com {clientName}?
+            Vocẽ entrou em contato com {clientName}?
          </Title>
 
          <BoxButon>

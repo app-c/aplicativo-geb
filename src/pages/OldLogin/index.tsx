@@ -25,52 +25,63 @@ import { useAuth } from '../../hooks/AuthContext';
 import theme from '../../global/styles/theme';
 import { version } from '../../utils/updates';
 import { New } from '../../components/new';
-import { api } from '../../services/api';
 
-export function SingIn() {
-   const { signIn } = useAuth();
+export function OldLogin() {
+   const { signIn, oldSignIn } = useAuth();
    const formRef = useRef<FormHandles>(null);
    const [showModal, setShowModal] = useState(false);
+   const [modalNew, setModalNew] = React.useState(false);
 
-   const [membro, setMembro] = useState('');
    const [email, setEmail] = useState('');
    const [pass, setPass] = useState('');
    const [errEmail, setErrEmail] = useState(false);
    const [errPass, setErrPass] = useState(false);
 
    const handleSubmit = useCallback(async () => {
-      if (membro === '' || pass === '') {
+      if (email === '' || pass === '') {
          return Alert.alert('Login', 'forneça um email e uma senha');
       }
 
       setErrEmail(false);
       setErrPass(false);
 
-      await signIn({
-         membro,
-         senha: pass,
-      }).catch(h => {
-         console.log(h);
-         Alert.alert('Erro ao logar com sua conta', h.response.data.message);
-      });
-   }, [membro, pass, signIn]);
+      await oldSignIn({ email, senha: pass })
+         .then(h => {
+            setModalNew(true);
+         })
+         .catch(err => {
+            const { code } = err;
+            if (code === 'auth/user-not-found') {
+               setErrEmail(true);
+               return Alert.alert('Login', 'usuário nao encontrado');
+            }
 
-   const handleForgotPassword = useCallback(async () => {
-      console.log(membro, pass);
-      await api
-         .post('/user/update-pass', {
-            membro,
-            senha: pass,
-         })
-         .then(() => {
-            Alert.alert('Sucesso', 'senha atualizada');
-            setShowModal(false);
-         })
-         .catch(h => Alert.alert('Membro não encontrado'));
-   }, [membro, pass]);
+            if (code === 'auth/invalid-email') {
+               setErrEmail(true);
+               return Alert.alert('Login', 'email incorreto');
+            }
+
+            if (code === 'auth/wrong-password') {
+               setErrPass(true);
+               return Alert.alert('Login', 'senha incorreto');
+            }
+            return Alert.alert('Login', 'usuário nao encontrado');
+         });
+   }, [email, oldSignIn, pass]);
+
+   const handleForgotPassword = useCallback(() => {
+      auth()
+         .sendPasswordResetEmail(email)
+         .then(h => {
+            Alert.alert('Um link foi enviado para seu email');
+         });
+   }, [email]);
 
    return (
       <Container behavior="padding">
+         <Modal visible={modalNew}>
+            <New />
+         </Modal>
          <Center>
             <Md isOpen={showModal} onClose={() => setShowModal(false)}>
                <Box
@@ -81,20 +92,10 @@ export function SingIn() {
                >
                   <VStack>
                      <FormControl>
-                        <FormControl.Label>DIGITE O MEMBRO</FormControl.Label>
+                        <FormControl.Label>DIGITE SEU E-MAIL</FormControl.Label>
                         <Input
-                           onChangeText={setMembro}
-                           value={membro}
-                           autoCapitalize="none"
-                           keyboardType="email-address"
-                        />
-
-                        <FormControl.Label>
-                           DIGITE A NOVA SENHA
-                        </FormControl.Label>
-                        <Input
-                           onChangeText={setPass}
-                           value={pass}
+                           onChangeText={setEmail}
+                           value={email}
                            autoCapitalize="none"
                            keyboardType="email-address"
                         />
@@ -129,14 +130,14 @@ export function SingIn() {
          <BoxInput>
             <Form ref={formRef} onSubmit={handleSubmit}>
                <FormControl isInvalid={errEmail} w="75%" maxW="300px">
-                  <FormControl.Label>MEMBRO</FormControl.Label>
+                  <FormControl.Label>E-mail</FormControl.Label>
                   <Input
                      w="100%"
                      color={theme.colors.text_secundary}
                      type="text"
                      autoCapitalize="none"
                      keyboardType="email-address"
-                     onChangeText={h => setMembro(h)}
+                     onChangeText={setEmail}
                      selectionColor={theme.colors.text_secundary}
                   />
                   <FormControl.ErrorMessage

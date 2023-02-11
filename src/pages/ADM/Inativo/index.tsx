@@ -8,41 +8,35 @@ import { HeaderContaponent } from '../../../components/HeaderComponent';
 import { MembrosComponents } from '../../../components/MembrosCompornents';
 import { Container, Title, Touch } from './styles';
 import { colecao } from '../../../collection';
-import { IUserDto } from '../../../dtos';
+import { IProfileDto, IUserDtos } from '../../../dtos';
+import { api } from '../../../services/api';
+
+interface IUser {
+   user: IUserDtos;
+   profile: IProfileDto;
+}
 
 export function Inativo() {
-   const [users, setUsers] = useState<IUserDto[]>([]);
+   const [users, setUsers] = useState<IUser[]>([]);
 
-   const handleInativar = useCallback((id: string, inativo: boolean) => {
-      fire().collection(colecao.users).doc(id).update({
-         inativo: !inativo,
-      });
-   }, []);
+   const handleInativar = useCallback((id: string, inativo: boolean) => {}, []);
 
-   useEffect(() => {
-      const load = fire()
-         .collection('users')
-         .onSnapshot(dados => {
-            const us = dados.docs
-               .map(h => h.data() as IUserDto)
-               .sort((a, b) => {
-                  if (a.nome < b.nome) {
-                     return -1;
-                  }
-               });
-            setUsers(us);
+   const listAllUser = React.useCallback(async () => {
+      await api
+         .get('user/list-all-user')
+         .then(h => {
+            setUsers(h.data);
+         })
+         .catch(h => {
+            console.log('erro ao lstar users na tela de deleteUser', h);
          });
-      return () => load();
    }, []);
 
-   // React.useEffect(() => {
-   //    for (let i = 0; i < users.length; i += 1) {
-   //       const { id } = users[i];
-   //       fire().collection('users').doc(id).update({
-   //          padrinhQuantity: 0,
-   //       });
-   //    }
-   // }, [users]);
+   useFocusEffect(
+      useCallback(() => {
+         listAllUser();
+      }, []),
+   );
 
    return (
       <Container>
@@ -50,17 +44,17 @@ export function Inativo() {
 
          <FlatList
             data={users}
-            keyExtractor={h => h.id}
+            keyExtractor={h => h.user.id}
             renderItem={({ item: h }) => (
                <MembrosComponents
-                  userName={h.nome}
-                  user_avatar={h.avatarUrl}
-                  oficio={h.workName}
-                  imageOfice={h.logoUrl}
+                  userName={h.user.nome}
+                  user_avatar={h.profile.avatar}
+                  oficio={h.profile.workName}
+                  imageOfice={h.profile.logo}
                   pres={() => {
-                     handleInativar(h.id, h.inativo);
+                     handleInativar(h.user.id, h.user.inativo);
                   }}
-                  inativo={h.inativo}
+                  inativo={h.user.inativo}
                />
             )}
          />

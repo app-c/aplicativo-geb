@@ -3,9 +3,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-alert */
 /* eslint-disable camelcase */
-import { AntDesign, Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { FormHandles } from "@unform/core";
+import { AntDesign, Feather } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { FormHandles } from '@unform/core';
+import {
+   TextInputMaskTypeProp,
+   TextInputMaskProps,
+   TextInputMask,
+} from 'react-native-masked-text';
 
 import React, {
    useCallback,
@@ -13,18 +18,24 @@ import React, {
    useMemo,
    useRef,
    useState,
-} from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+} from 'react';
+import {
+   ActivityIndicator,
+   Alert,
+   ScrollView,
+   TouchableOpacity,
+   View,
+} from 'react-native';
+import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import { Box as BoxBase, Text } from 'native-base';
 
-import { Modalize } from "react-native-modalize";
-import { Form } from "@unform/mobile";
+import { Modalize } from 'react-native-modalize';
+import { Form } from '@unform/mobile';
 
-import * as ImagePiker from "expo-image-picker";
-import Fire from "@react-native-firebase/firestore";
-import storage from "@react-native-firebase/storage";
-import theme from "../../global/styles/theme";
-import { useAuth } from "../../hooks/AuthContext";
+import * as ImagePiker from 'expo-image-picker';
+import storage from '@react-native-firebase/storage';
+import theme from '../../global/styles/theme';
+import { useAuth } from '../../hooks/AuthContext';
 import {
    Avatar,
    Box,
@@ -40,53 +51,54 @@ import {
    TextTogle,
    TitleButton,
    TitleHeader,
-} from "./styles";
-import { ToglleRamo } from "../../components/ToglleRamo";
-import { IUserDto } from "../../dtos";
-import { InputCasdastro } from "../../components/InputsCadastro";
-import { Input } from "../../components/Inputs";
-import { HeaderContaponent } from "../../components/HeaderComponent";
-import { ToglleEnquadramento } from "../../components/ToglleEnquadramento";
-import { colecao } from "../../collection";
+} from './styles';
+import { ToglleRamo } from '../../components/ToglleRamo';
+import { IUserDtos } from '../../dtos';
+import { InputCasdastro } from '../../components/InputsCadastro';
+import { Input } from '../../components/Inputs';
+import { HeaderContaponent } from '../../components/HeaderComponent';
+import { ToglleEnquadramento } from '../../components/ToglleEnquadramento';
+import { colecao } from '../../collection';
+import { api } from '../../services/api';
+import { Line } from '../../components/MembroLista/styles';
 
-export interface Props {
-   id: string;
-   nome: string;
-   sobrenome: string;
-   whats: number;
-   workName: string;
-   CNPJ: number;
-}
 export function Profile() {
+   const cpfRef = useRef(null);
+   const whatsRef = useRef(null);
+   const cnpfRef = useRef(null);
+
    const { user, updateUser, signOut } = useAuth();
-   const { navigate } = useNavigation();
+   const { navigate, goBack } = useNavigation();
    const formRef = useRef<FormHandles>(null);
    const modalizeRefRamo = useRef<Modalize>(null);
    const modalizeRefEnquadramento = useRef<Modalize>(null);
 
    const [loading, setLoading] = useState(true);
+   const [load, setLoad] = React.useState(false);
 
    // TODO USER
-   const [avatar, setAvatar] = useState("");
-   const [logo, setLogo] = useState("");
+   const [avatar, setAvatar] = useState('');
+   const [logo, setLogo] = useState('');
 
    // TODO FORMULARIOS
    const [nome, setNome] = useState(user.nome);
-   const [whats, setWhats] = useState("");
-   const [email, setEmail] = useState("");
-   const [workName, setWorkName] = useState("");
-   const [CPF, setCpf] = useState(user.CPF);
-   const [cnpj, setCnpj] = useState(user.CNPJ);
+   const [whats, setWhats] = useState(user.profile.whats);
+   const [email, setEmail] = useState(user.nome);
+   const [workName, setWorkName] = useState(user.profile.workName);
+   const [CPF, setCpf] = useState(user.profile.CPF);
+   const [cnpj, setCnpj] = useState(user.profile.CNPJ);
    const [linkSite, setLinkSite] = useState(null);
    const [linkF, setLinkF] = useState(null);
    const [linkI, setLinkI] = useState(null);
    const [linkMaps, setLinkMaps] = useState(null);
-   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
-   const [logoUrl, setLogorUrl] = useState(user.logoUrl);
+   const [avatarUrl, setAvatarUrl] = useState(user.profile.avatar);
+   const [logoUrl, setLogorUrl] = useState(user.profile.logo);
 
    // TODO MODAL
-   const [ramo, setRamo] = useState(user.ramo);
-   const [enquadramento, setEnquadramento] = useState(user.enquadramento);
+   const [ramo, setRamo] = useState(user.profile.ramo);
+   const [enquadramento, setEnquadramento] = useState(
+      user.profile.enquadramento,
+   );
    const [modal, setModal] = useState(false);
 
    const handleModalOpenRamo = useCallback(() => {
@@ -105,25 +117,13 @@ export function Profile() {
 
          modalizeRefRamo.current?.close();
       },
-      [modal]
+      [modal],
    );
 
    const SelectItemEnquadramento = useCallback((item: string) => {
       setEnquadramento(item);
       modalizeRefEnquadramento.current?.close();
    }, []);
-
-   useEffect(() => {
-      setLinkF(user.links.face);
-      setLinkI(user.links.insta);
-      setLinkMaps(user.links.maps);
-      setLinkSite(user.links.site);
-      setEmail(user.email);
-      setWhats(user.whats);
-      setWorkName(user.workName);
-      setCnpj(String(user.CNPJ));
-      setCpf(String(user.CPF));
-   }, [user.CNPJ, user.CPF, user.email, user.links, user.whats, user.workName]);
 
    const handleImagePiker = useCallback(async () => {
       setLoading(true);
@@ -139,20 +139,28 @@ export function Profile() {
       }
       if (!result.cancelled) {
          setAvatar(result.uri);
-         const fileName = new Date().getTime();
-         const reference = storage().ref(`/image/${fileName}.png`);
+
+         try {
+            const ref = storage().ref(`image/avatar/${user.id}.png`);
+            console.log(ref.path);
+            await ref.delete();
+         } catch (error) {
+            console.log(error);
+         }
+
+         const reference = storage().ref(`/image/avatar/${user.id}.png`);
 
          await reference.putFile(result.uri);
          const photoUrl = await reference.getDownloadURL();
          setAvatarUrl(photoUrl);
       }
-   }, []);
+   }, [user]);
 
    const handleLogo = useCallback(async () => {
       setLoading(true);
       const { status } = await ImagePiker.requestMediaLibraryPermissionsAsync();
 
-      if (status === "granted") {
+      if (status === 'granted') {
          const result = await ImagePiker.launchImageLibraryAsync({
             mediaTypes: ImagePiker.MediaTypeOptions.All,
             allowsEditing: true,
@@ -167,8 +175,13 @@ export function Profile() {
          if (!result.cancelled) {
             setLogo(result.uri);
 
-            const fileName = new Date().getTime();
-            const reference = storage().ref(`/image/${fileName}.png`);
+            try {
+               const ref = storage().ref(`image/logo/${user.id}.png`);
+               await ref.delete();
+            } catch (error) {
+               console.log(error);
+            }
+            const reference = storage().ref(`/image/logo/${user.id}.png`);
 
             await reference.putFile(result.uri);
             const photoUrl = await reference.getDownloadURL();
@@ -177,84 +190,62 @@ export function Profile() {
       }
 
       setLoading(false);
-   }, []);
+   }, [user]);
 
    const handleSubmit = useCallback(async () => {
       formRef.current?.setErrors({});
+      setLoad(true);
 
-      const formData = {
-         id: user.id,
-         nome,
-         adm: user.adm,
-         whats: String(whats),
+      const dados = {
+         whats,
          workName,
-         CNPJ: String(cnpj),
-         CPF: String(CPF),
+         CNPJ: cnpj,
+         CPF,
          email,
-         ramo,
          enquadramento,
-         padrinhQuantity: user.padrinhQuantity,
-         links: {
-            site: linkSite || "site",
-            maps: linkMaps || "site",
-            insta: linkI || "site",
-            face: linkF || "site",
-         },
-         avatarUrl,
-         logoUrl,
+         ramo,
+         fk_id_user: user.id,
+         logo: logoUrl,
+         avatar: avatarUrl,
       };
 
-      Fire()
-         .collection(colecao.users)
-         .doc(user.id)
-         .update({
-            id: user.id,
-            nome,
-            adm: user.adm,
-            whats: String(whats),
-            workName,
-            CPF: String(CPF),
-            CNPJ: String(cnpj),
-            email,
-            ramo,
-            enquadramento,
-            links: {
-               site: linkSite || "site",
-               maps: linkMaps || "site",
-               insta: linkI || "site",
-               face: linkF || "site",
-            },
-            avatarUrl,
-            logoUrl,
-         })
-         .finally(() => updateUser(formData))
-         .catch((err) => console.log(err.code));
-
-      Alert.alert("Perfil alterado com sucesso!");
-      navigate("INÍCIO");
+      try {
+         await api
+            .put('user/update-profile', dados)
+            .then(() => {
+               Alert.alert('Seu perfil foi atualizado com sucesso!');
+               const dt = {
+                  ...user,
+                  profile: dados,
+               };
+               updateUser(dt);
+            })
+            .finally(() => {
+               setLoad(false);
+               goBack();
+            });
+      } catch (err) {
+         Alert.alert('Erro ao atualizar seu perfil', err.response.data.message);
+      }
    }, [
       CPF,
       avatarUrl,
       cnpj,
       email,
       enquadramento,
-      linkF,
-      linkI,
-      linkMaps,
-      linkSite,
+      goBack,
       logoUrl,
-      navigate,
-      nome,
       ramo,
       updateUser,
-      user.adm,
-      user.id,
-      user.padrinhQuantity,
+      user,
       whats,
       workName,
    ]);
 
-   console.log(linkF, user.links);
+   useEffect(() => {
+      const mo = whatsRef.current?.getRawValue();
+      setWhats(mo);
+   }, [whats]);
 
    return (
       <Container>
@@ -267,7 +258,7 @@ export function Profile() {
                selectItem={(item: string) => SelectItemEnquadramento(item)}
             />
          </Modalize>
-         <HeaderContaponent type="tipo1" title="MEU PERFIL" onMessage="of" />
+         <HeaderContaponent type="tipo1" title="MEU PERFIL" />
 
          <View
             style={{
@@ -282,8 +273,10 @@ export function Profile() {
             >
                <Box>
                   <Avatar
-                     style={{ resizeMode: "cover" }}
-                     source={{ uri: avatar !== "" ? avatar : user.avatarUrl }}
+                     style={{ resizeMode: 'cover' }}
+                     source={{
+                        uri: avatar !== '' ? avatar : user.profile.avatar,
+                     }}
                   />
                   <BoxCamera onPress={handleImagePiker}>
                      <Camera name="camera" />
@@ -293,12 +286,12 @@ export function Profile() {
                <Form
                   initialData={{
                      nome: user.nome,
-                     email: user.email,
-                     workName: user.workName,
+                     email: user.profile.email,
+                     workName: user.profile.workName,
                   }}
                >
                   <BoxFormularios>
-                     <BoxInput>
+                     {/* <BoxInput>
                         <TitleHeader style={{ right: 10 }}>NOME</TitleHeader>
                         <InputCasdastro
                            icon=""
@@ -306,12 +299,12 @@ export function Profile() {
                            autoCapitalize="words"
                            type="custom"
                            options={{
-                              mask: "***********************************",
+                              mask: '***********************************',
                            }}
-                           onChangeText={(h) => setNome(h)}
+                           onChangeText={h => setNome(h)}
                            value={nome}
                         />
-                     </BoxInput>
+                     </BoxInput> */}
 
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>E-MAIL</TitleHeader>
@@ -322,26 +315,28 @@ export function Profile() {
                            type="custom"
                            keyboardType="email-address"
                            options={{
-                              mask: "**************************",
+                              mask: '**************************',
                            }}
-                           onChangeText={(h) => setEmail(h)}
+                           onChangeText={h => setEmail(h)}
                            value={email}
                         />
                      </BoxInput>
 
-                     <BoxInput>
+                     <BoxBase alignSelf="flex-start" px="5">
                         <TitleHeader style={{ right: 10 }}>WHATS</TitleHeader>
-                        <InputCasdastro
-                           name="whats"
-                           icon=""
+                        <TextInputMask
                            type="cel-phone"
-                           onChangeText={(mask) => {
+                           onChangeText={mask => {
                               setWhats(mask);
                            }}
+                           ref={whatsRef}
                            value={whats!}
                         />
-                     </BoxInput>
+                        <BoxBase h="1" bg={theme.colors.focus} />
+                     </BoxBase>
+                  </BoxFormularios>
 
+                  <BoxFormularios>
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>
                            RAZÃO SOCIAL
@@ -352,23 +347,21 @@ export function Profile() {
                            autoCapitalize="none"
                            type="custom"
                            options={{
-                              mask: "********************************************************",
+                              mask: '********************************************************',
                            }}
-                           onChangeText={(h) => setWorkName(h)}
+                           onChangeText={h => setWorkName(h)}
                            value={workName!}
                         />
                      </BoxInput>
-                  </BoxFormularios>
-
-                  <BoxFormularios>
                      <BoxInput>
                         <TitleHeader style={{ right: 10 }}>CPF</TitleHeader>
                         <InputCasdastro
                            name="cpf"
                            icon=""
                            type="cpf"
-                           onChangeText={(h) => setCpf(h)}
+                           onChangeText={h => setCpf(h)}
                            value={String(CPF)}
+                           ref={cpfRef}
                         />
                      </BoxInput>
 
@@ -378,14 +371,15 @@ export function Profile() {
                            type="cnpj"
                            name="cnpj"
                            icon=""
-                           onChangeText={(h) => setCnpj(h)}
+                           onChangeText={h => setCnpj(h)}
                            value={String(cnpj)}
+                           ref={cnpfRef}
                         />
                      </BoxInput>
 
                      <View
                         style={{
-                           alignSelf: "flex-start",
+                           alignSelf: 'flex-start',
                            marginLeft: 20,
                            marginTop: 20,
                            marginBottom: 20,
@@ -404,7 +398,7 @@ export function Profile() {
 
                      <View
                         style={{
-                           alignSelf: "flex-start",
+                           alignSelf: 'flex-start',
                            marginLeft: 20,
                            marginTop: 20,
                         }}
@@ -421,11 +415,11 @@ export function Profile() {
                      </View>
                   </BoxFormularios>
 
-                  <BoxFormularios>
+                  {/* <BoxFormularios>
                      <TitleHeader>LINK SITE</TitleHeader>
                      <Input
                         value={linkSite}
-                        onChangeText={(h) => setLinkSite(h)}
+                        onChangeText={h => setLinkSite(h)}
                         name="whatLind"
                         icon=""
                      />
@@ -433,7 +427,7 @@ export function Profile() {
                      <TitleHeader>LINK FACE</TitleHeader>
                      <Input
                         value={linkF}
-                        onChangeText={(h) => setLinkF(h)}
+                        onChangeText={h => setLinkF(h)}
                         name="linkFace"
                         icon=""
                      />
@@ -441,7 +435,7 @@ export function Profile() {
                      <TitleHeader>LINK INSTA</TitleHeader>
                      <Input
                         value={linkI}
-                        onChangeText={(h) => setLinkI(h)}
+                        onChangeText={h => setLinkI(h)}
                         name="linkInsta"
                         icon=""
                      />
@@ -449,20 +443,20 @@ export function Profile() {
                      <TitleHeader>LINK ENDEREÇO</TitleHeader>
                      <Input
                         value={linkMaps}
-                        onChangeText={(h) => setLinkMaps(h)}
+                        onChangeText={h => setLinkMaps(h)}
                         name="linkMap"
                         icon=""
                      />
-                  </BoxFormularios>
+                  </BoxFormularios> */}
                </Form>
 
                <View
                   style={{
-                     flexDirection: "row",
+                     flexDirection: 'row',
                   }}
                >
                   <BoxLogo>
-                     <TitleButton style={{ textAlign: "center" }}>
+                     <TitleButton style={{ textAlign: 'center' }}>
                         LOGO EMPRESA
                      </TitleButton>
                      <LogoImage source={{ uri: logoUrl }} />
@@ -477,7 +471,11 @@ export function Profile() {
             </ScrollView>
          </View>
          <BoxButton onPress={handleSubmit}>
-            <TitleButton>Alterar</TitleButton>
+            {load ? (
+               <ActivityIndicator />
+            ) : (
+               <TitleButton>Atualizar</TitleButton>
+            )}
          </BoxButton>
       </Container>
    );

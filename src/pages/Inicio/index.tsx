@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable array-callback-return */
@@ -5,37 +6,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { AntDesign, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-   Alert,
-   Dimensions,
-   Modal,
-   Platform,
-   TouchableOpacity,
-   View,
-} from 'react-native';
 import {
    DrawerActions,
    useFocusEffect,
    useNavigation,
 } from '@react-navigation/native';
-
-import { format } from 'date-fns';
-import Fire from '@react-native-firebase/firestore';
-import * as Notifications from 'expo-notifications';
-import * as Updates from 'expo-updates';
+import React, { useCallback, useEffect } from 'react';
 import {
-   Box,
-   Center,
-   HStack,
-   Button as ButomBase,
-   VStack,
-   ScrollView,
-   Text,
-} from 'native-base';
-import { convertAbsoluteToRem } from 'native-base/lib/typescript/theme/v33x-theme/tools';
+   ActivityIndicator,
+   Alert,
+   Dimensions,
+   FlatList,
+   Modal,
+   TouchableOpacity,
+   View,
+} from 'react-native';
+
+// import * as Updates from 'expo-updates';
+import { Box, Center, HStack, ScrollView, Text } from 'native-base';
+import { CartaMessagem } from '../../components/CartaMessagem';
+import { MessageComponent } from '../../components/MessageComponent';
+import { ModalB2b } from '../../components/ModalB2b';
+import { ModalIndication } from '../../components/ModalIndication';
+import { ModalOrderIndication } from '../../components/ModalOrderIndication';
+import {
+   IB2b,
+   IIndicationDto,
+   IOrderTransaction,
+   ITransaction,
+} from '../../dtos';
 import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
+import { api } from '../../services/api';
+import { Classificacao } from '../Classificacao';
 import {
    Avatar,
    BoxIco,
@@ -47,547 +50,363 @@ import {
    TitleP,
    TitlePrice,
 } from './styles';
-import { ModalOrderIndication } from '../../components/ModalOrderIndication';
-import { IUserDto } from '../../dtos';
-import { ModalB2b } from '../../components/ModalB2b';
-import { MessageComponent } from '../../components/MessageComponent';
-import { colecao } from '../../collection';
-import { Classificacao } from '../Classificacao';
-import { CartaMessagem } from '../../components/CartaMessagem';
-import { ModalIndication } from '../../components/ModalIndication';
-import { update, version } from '../../utils/updates';
-
-interface IOrder_Indication {
-   id: string;
-   createdAt: string;
-   descricao: string;
-   quemIndicou: string;
-   userId: string;
-   quemIndicouName: string;
-   quemIndicouWorkName: string;
-   nomeCliente: string;
-   telefoneCliente: string;
-}
-
-interface Propssuce {
-   id: string;
-   data: string;
-   nome: string;
-   quemIndicou: string;
-}
-
-interface PropsB2b {
-   id: string;
-   data: { nanoseconds: number; seconds: number };
-   description: string;
-   nome: string;
-   user_id: string;
-   prestador_id: string;
-}
-
-interface ProsTransaction {
-   id: string;
-   data: {};
-   consumidor_name: string;
-   prestador_name: string;
-   prestador_id: string;
-   valor: string;
-   description: string;
-   consumidor: string;
-}
 
 interface PriceProps {
    price: string;
    pts: number;
 }
 
+interface PropResponse {
+   compras: Tips[];
+   vendas: Tips[];
+   presenca: Tips[];
+   indication: Tips[];
+   b2b: Tips[];
+}
+
+interface IPersonnalPropsRank {
+   compras: Tips;
+   vendas: Tips;
+   presenca: Tips;
+   indication: Tips;
+   b2b: Tips;
+   padrinho: Tips;
+}
+
+interface Tips {
+   id: string;
+   nome: string;
+   pontos: number;
+   rank: number;
+   valor?: number;
+}
+
+interface PropsValorTotal {
+   priceUser: string;
+   priceGeb: string;
+}
+
 const wt = Dimensions.get('window').width;
 
 export function Inicio() {
-   const { user, expoToken, order, orders } = useAuth();
+   const { user, expoToken, signOut } = useAuth();
    const navigate = useNavigation();
 
-   const [showModalSucess, setShowModalSucess] = React.useState(false);
-   const [showModalIndication, setModalIndication] = React.useState(false);
-   const [shwModalB2b, setModalB2b] = React.useState(false);
-   const [showModalTransaction, setModalTransaction] = React.useState(false);
-   const [showModalUpdates, setModalUpdates] = React.useState(false);
-
-   const [totalCompras, setTotalCompras] = useState(0);
-   const [ptB2b, setPtB2b] = useState(0);
-   const [ptInd, setPtInd] = useState(0);
-   const [ptPrs, setPtPrs] = useState(0);
-   const [ptPad, setPtPad] = useState(0);
-   const [ptVen, setPtVen] = useState(0);
-   const [ptCom, setPtCom] = useState(0);
-
-   const [sucess, setSucess] = useState<Propssuce[]>([]);
-   const [price, setPrice] = useState<PriceProps>({});
-   const [montante, setMontante] = useState('');
-   const [montanteP, setMontanteP] = useState('');
-   const [orderB2b, setOrderB2b] = useState<PropsB2b[]>([]);
-   const [orderTransaction, setOrderTransaction] = useState<ProsTransaction[]>(
-      [],
-   );
-   const [orderIndication, setOrderIndication] = useState<IOrder_Indication[]>(
-      [],
-   );
-   const [modalHandShak, setModalHandShak] = React.useState(false);
-   const [select, setSelect] = React.useState('');
+   const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
-   const [quemIndicou, setQuemIndicou] = React.useState('');
+
+   const [globalPont, setGlobalPont] = React.useState<PropResponse>();
+
+   const [orderTransaction, setOrderTransaction] = React.useState<
+      IOrderTransaction[]
+   >([]);
+   const [valorGeb, setValorGeb] = React.useState<PropsValorTotal>();
+
+   const [individualRak, setIndividualRank] =
+      React.useState<IPersonnalPropsRank>();
 
    // * token ................................................................
-   useFocusEffect(
-      useCallback(() => {
-         Fire().collection(colecao.users).doc(user.id).update({
-            token: expoToken,
-         });
-      }, [expoToken, user.id]),
-   );
 
-   //* INDICATION...............................................................
+   const loadOrders = React.useCallback(async () => {
+      try {
+         await api.get('/b2b/list-by-recevid').then(h => {
+            const rs = h.data as IB2b[];
 
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderIndication)
-         .onSnapshot(h => {
-            const order = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as IOrder_Indication;
-            });
-
-            setOrderIndication(order.filter(h => h.userId === user.id));
+            const re = rs.filter(p => p.validate === false);
+            setOrderB2b(re);
          });
 
-      return () => load();
-   }, [user.id]);
-
-   useEffect(() => {
-      const load = Fire()
-         .collection('sucess_indication')
-         .onSnapshot(suce => {
-            const res = suce.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as Propssuce;
-            });
-            const fil = res.filter(h => h.quemIndicou === user.id);
-            setSucess(fil);
+         await api.get('/consumo/find-order-prestador').then(h => {
+            const rs = h.data as IOrderTransaction[];
+            setOrderTransaction(rs);
          });
 
-      return () => load();
-   }, [user.id]);
-
-   const handleSucess = useCallback(async (id: string) => {
-      Fire().collection('sucess_indication').doc(id).delete();
-      setShowModalSucess(false);
-   }, []);
-
-   const HandShak = useCallback((quemIndicou: string, id: string) => {
-      setModalHandShak(true);
-      setIdIndication(id);
-      setQuemIndicou(quemIndicou);
-      setModalIndication(false);
-   }, []);
-
-   const handleSelect = React.useCallback((type: string) => {
-      setSelect(type);
-   }, []);
-
-   const HandFailIndication = useCallback(async () => {
-      Fire().collection(colecao.orderIndication).doc(idIndication).delete();
-      setModalHandShak(false);
-
-      Fire()
-         .collection('sucess_indication')
-         .add({
-            createdAt: format(new Date(Date.now()), 'dd/MM - HH:mm'),
-            nome: user.nome,
-            quemIndicou,
+         await api.get('/indication/list-by-indication').then(h => {
+            const rs = h.data as IIndicationDto[];
+            const fil = rs.filter(h => h.validate === false);
+            setOrderIndication(fil);
          });
 
-      Fire()
-         .collection(colecao.users)
-         .doc(quemIndicou)
-         .get()
-         .then(h => {
-            let { indicacao } = h.data() as IUserDto;
-            Fire()
-               .collection(colecao.users)
-               .doc(quemIndicou)
-               .update({
-                  indicacao: (indicacao += 1),
-               });
-         })
-         .catch(() =>
-            Alert.alert('Algo deu errado', 'dados do usuário nao recuperado'),
-         );
-
-      setModalIndication(false);
-   }, [idIndication, quemIndicou, user.nome]);
-
-   const handleHandShack = React.useCallback(() => {
-      if (select === 'fail') {
-         HandFailIndication();
-      }
-
-      if (select === 'hand') {
-         navigate.navigate('indication', { quemIndicou, id: idIndication });
-      }
-
-      if (select === 'handing') {
-         setModalHandShak(false);
-      }
-   }, [HandFailIndication, idIndication, navigate, quemIndicou, select]);
-
-   //* FINISH CICLO *  ....................................................................... */
-
-   // TODO B2B *.................................................................. */
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderB2b)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => {
-               return {
-                  id: p.id,
-                  ...p.data(),
-               } as PropsB2b;
-            });
-            setOrderB2b(res.filter(h => h.prestador_id === user.id));
+         await api.get('/user/global-rank').then(h => {
+            setGlobalPont(h.data);
          });
 
-      return () => load();
-   }, [user.id]);
-
-   const handleSucessB2b = useCallback(
-      (id: string, user_id: string, prestador_id: string) => {
-         const data = format(new Date(Date.now()), 'dd-MM-yy-HH-mm');
-         Fire()
-            .collection('b2b')
-            .add({
-               id,
-               user_id,
-               prestador_id,
-               data,
-            })
-            .then(() => {
-               Fire().collection(colecao.orderB2b).doc(id).delete();
-               Alert.alert('B2B realizado com sucesso!');
-            });
-      },
-      [],
-   );
-
-   const handleFailB2b = useCallback((id: string) => {
-      Fire().collection(colecao.orderB2b).doc(id).delete();
-      setModalB2b(false);
-   }, []);
-
-   // TODO FINISH CICLO *  .................................................... */
-
-   //* * TRANSACTIN ........................................................... */
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.orderTransaction)
-         .onSnapshot(h => {
-            const res = h.docs
-               .map(p => {
-                  return {
-                     id: p.id,
-                     ...p.data(),
-                  } as ProsTransaction;
-               })
-               .filter(h => h.prestador_id === user.id);
-
-            setOrderTransaction(res);
-         });
-      return () => load();
-   }, [user.id]);
-
-   // todo TRANSAÇÃO.......................................................................
-   const handleValidateTransaction = useCallback(
-      async (
-         prestador_id: string,
-         consumidor: string,
-         descricao: string,
-         id: string,
-         valor: string,
-      ) => {
-         Fire()
-            .collection(colecao.transaction)
-            .add({
-               prestador_id,
-               descricao,
-               type: 'entrada',
-               createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
-               valor,
-            });
-         Fire()
-            .collection(colecao.transaction)
-            .add({
-               consumidor,
-               descricao,
-               type: 'saida',
-               createdAt: format(new Date(Date.now()), 'dd-MM-yyy-HH-mm'),
-               valor,
-            });
-         Fire()
-            .collection('order_transaction')
-            .doc(id)
-            .delete()
-            .then(() => Alert.alert('Transação confirmada'))
-            .catch(err => console.log(err));
-      },
-      [],
-   );
-
-   const DeleteOrderTransaction = useCallback(async (id: string) => {
-      Fire()
-         .collection(colecao.orderTransaction)
-         .doc(id)
-         .delete()
-         .then(() => Alert.alert('Transação deletada'));
-   }, []);
-
-   // todo .......................................................................
-
-   //* *....................................................................... */
-   const load = useCallback(() => {
-      Fire()
-         .collection('transaction')
-         .onSnapshot(h => {
-            const rs = h.docs
-               .map(p => p.data())
-               .filter(l => l.prestador_id === user.id);
-
-            const somoa = rs.reduce((ac, it) => {
-               return ac + it.valor;
-            }, 0);
-            setTotalCompras(somoa);
+         await api.get('/user/global-rank-ind').then(h => {
+            setIndividualRank(h.data);
          });
 
-      Fire()
-         .collection('b2b')
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.user_id === user.id);
-            setPtB2b(res.length * 20);
-         });
+         await api.get('/transaction/list-all-transaction').then(h => {
+            const res = h.data as ITransaction[];
 
-      Fire()
-         .collection(colecao.presenca)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.user_id === user.id && h.presenca === true);
-            setPtPrs(res.length * 10);
-         });
-
-      Fire()
-         .collection(colecao.users)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.id === user.id)
-               .reduce((ac, it) => {
-                  return ac + it.indicacao;
-               }, 0);
-            setPtInd(res * 15);
-         });
-
-      Fire()
-         .collection(colecao.users)
-         .onSnapshot(b2b => {
-            const res = b2b.docs
-               .map(h => h.data())
-               .filter(h => h.id === user.id)
-               .reduce((ac, it) => {
-                  return ac + it.padrinhQuantity;
-               }, 0);
-            setPtPad(res * 35);
-         });
-
-      Fire()
-         .collection(colecao.transaction)
-         .onSnapshot(b2b => {
-            const res = b2b.docs.map(h => h.data());
-
-            const filCompras = res.filter(h => h.prestador_id === user.id);
-            const filVendas = res.filter(h => h.consumidor === user.id);
-
-            setPtCom(filCompras.length * 10);
-            setPtVen(filVendas.length * 10);
-         });
-   }, [user.id]);
-   //* *....................................................................... */
-
-   useEffect(() => {
-      const load = Fire()
-         .collection(colecao.transaction)
-         .onSnapshot(h => {
-            const res = h.docs.map(p => p.data());
-            const data = res.filter(h => {
-               if (h.prestador_id === user.id && h.type === 'entrada') {
-                  return h;
-               }
-            });
-
-            const MontatePass = res
-               .filter(h => {
-                  const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
-                  const [dia, mes, ano, hora, min] = data
-                     .split('-')
-                     .map(Number);
-                  const DateN = new Date(Date.now()).getFullYear() - 1;
-                  if (h.type === 'entrada' && ano === DateN) {
-                     return h;
-                  }
-               })
-               .reduce((acc, item) => {
-                  return acc + Number(item.valor);
-               }, 0);
-
-            const MontateAtual = res
-               .filter(h => {
-                  const data = h.createdAt ? h.createdAt : '00-00-00-00-00';
-
-                  const [dia, mes, ano, hora, min] = data
-                     .split('-')
-                     .map(Number);
-                  const DateN = new Date(Date.now()).getFullYear();
-                  if (h.type === 'entrada' && ano === DateN) {
-                     return h;
-                  }
-               })
-               .reduce((acc, item) => {
-                  return acc + Number(item.valor);
-               }, 0);
-
-            const mp = 3242222780 / 1000 + MontateAtual;
-
-            setMontanteP(
-               MontatePass.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-               }),
-            );
-
-            setMontante(
-               mp.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-               }),
-            );
-
-            const total = data.reduce((acc, item) => {
-               return acc + Number(item.valor);
+            const valor = res.reduce((ac, i) => {
+               return ac + i.valor;
             }, 0);
 
-            const price = total.toLocaleString('pt-BR', {
+            const userTrans = res.filter(p => {
+               return p.prestador_id === user.id;
+            });
+
+            const valorTotalUser = userTrans.reduce((ac, i) => {
+               const v = i.valor;
+               return ac + Number(v);
+            }, 0);
+
+            const vlorUser = valorTotalUser;
+
+            const priceUser = vlorUser.toLocaleString('pt-BR', {
                style: 'currency',
                currency: 'BRL',
             });
 
-            const pts = data.length * 10;
+            const t = valor + 7782628;
 
-            const pricePts = {
-               price,
-               pts,
+            const price = t.toLocaleString('pt-BR', {
+               style: 'currency',
+               currency: 'BRL',
+            });
+
+            const dados = {
+               priceUser: priceUser || '0',
+               priceGeb: price || '0',
             };
 
-            setPrice(pricePts);
+            setValorGeb(dados);
          });
+      } catch (h) {
+         const { message } = h.response.data;
+         if (
+            message === 'falta o token' ||
+            message === 'token expirou' ||
+            message === 'token invalido'
+         ) {
+            Alert.alert('Erro', 'Seu tokem expirou');
+            signOut();
+         }
+         Alert.alert('Erro ao carregar listas', message);
+      }
+   }, [signOut, user]);
 
-      return () => load();
-   }, [user.id]);
+   // !! INDICATION
+
+   const [orderIndication, setOrderIndication] = React.useState<
+      IIndicationDto[]
+   >([]);
+   const [modalIndication, setModalIndication] = React.useState(false);
+   const [modaIndicationSelect, setModalIndicationSelect] =
+      React.useState(false);
+
+   const [select, setSelect] = React.useState('');
+
+   const HandShakIndication = useCallback((quemIndicou: string, id: string) => {
+      setWhoIndication(quemIndicou);
+      setIdIndication(id);
+      setModalIndication(false);
+      setModalIndicationSelect(true);
+   }, []);
+
+   const submitHandShackIndication = React.useCallback(async () => {
+      if (select === 'fail') {
+         await api
+            .delete(`/indication/del-indication/${idIndication}`)
+            .then(h => {
+               Alert.alert(
+                  'NÃO DESANIME!!',
+                  'Hoje sua indicação não deu certo, mas quem sabe na próxima',
+               );
+               setModalIndicationSelect(false);
+               loadOrders();
+            })
+            .catch(h => {
+               console.log(
+                  'erro para deletar order indication na tela inicial',
+                  h,
+               );
+               Alert.alert('Ocorreu um erro', message);
+            });
+      }
+
+      if (select === 'hand') {
+         navigate.navigate('indication', {
+            quemIndicou: whoIndication,
+            id: idIndication,
+         });
+      }
+
+      if (select === 'handing') {
+         setModalIndicationSelect(false);
+      }
+   }, [idIndication, navigate, select, whoIndication]);
+
+   // !! B2B *.................................................................. */
+   const [orderB2b, setOrderB2b] = React.useState<IB2b[]>([]);
+   const [modalB2b, setModalB2b] = React.useState(false);
+
+   const handleSucessB2b = useCallback(async (id: string) => {
+      const dados = {
+         id,
+      };
+      await api
+         .put('/b2b/validate-b2b', dados)
+         .then(h => {
+            Alert.alert('Sucesso!', 'Validação realizada.');
+            loadOrders();
+            if (orderB2b.length === 0) {
+               setModalB2b(false);
+            }
+         })
+         .catch(h => {
+            console.log('erro ao validar order b2b na tela inicial', h);
+            Alert.alert('Erro', message);
+         });
+   }, []);
+
+   const deleteB2b = useCallback(async (id: string) => {
+      await api
+         .delete(`/b2b/del-b2b/${id}`)
+         .then(h => {
+            Alert.alert(
+               'Uma pena que não houve B2B',
+               'Já reserva sua agenda para um próximo encontro',
+            );
+            loadOrders();
+            if (orderB2b.length === 0) {
+               setModalB2b(false);
+            }
+         })
+         .catch(h => {
+            console.log('erro ao deletar orderb2b na tela inicial', h);
+            Alert.alert('Erro', message);
+         });
+   }, []);
+
+   //! ! TRANSACTIN ........................................................... */
+   const [modalTransaction, setModalTransaction] = React.useState(false);
+
+   const validateTransaction = useCallback(
+      async (data: IOrderTransaction) => {
+         const dados = {
+            consumidor_id: data.consumidor_id,
+            consumidor_name: data.consumidor_name,
+            prestador_name: data.prestador_name,
+            prestador_id: data.prestador_id,
+            valor: data.valor,
+            descricao: data.descricao,
+            order_id: data.id,
+         };
+         await api
+            .post('/transaction/create-transaction', dados)
+            .then(h => {
+               Alert.alert(
+                  'Sucesso!',
+                  'Obrigado por incentivar um membro do grupo G.E.B networking por consumir seu produto',
+               );
+
+               loadOrders();
+               if (orderTransaction.length === 0) {
+                  setModalTransaction(false);
+               }
+            })
+            .catch(h => {
+               const { message } = h.response.data;
+               console.log('erro create transaction na tela de inicio', h);
+               Alert.alert('Erro ao validar sua transação', message);
+            });
+      },
+      [loadOrders, orderTransaction],
+   );
+
+   const DeleteOrderTransaction = useCallback(
+      async (id: string) => {
+         await api.delete(`/consumo/delete-order/${id}`).then(h => {
+            const rs = h.data;
+            setOrderTransaction(orderTransaction.filter(h => h !== rs));
+
+            if (orderTransaction.length === 0) {
+               setModalTransaction(false);
+            }
+         });
+         loadOrders();
+      },
+      [loadOrders],
+   );
+
+   //* * UPDATE APLICATION ....................................................
+   // const [showModalUpdate, setModalUpdates] = React.useState(false);
+
+   // const [modalNew, setModaNew] = React.useState(false);
+
+   // const appState = useRef(AppState.currentState);
+   // const [appVisible, setAppVisible] = React.useState(appState.current);
+
+   // const ChecUpdadeDevice = React.useCallback(async () => {
+   //    const { isAvailable } = await Updates.checkForUpdateAsync();
+   //    if (isAvailable) {
+   //       // setModalUpdates(true);
+   //       setModaNew(true);
+   //    }
+   // }, []);
+
+   const ReloadDevice = React.useCallback(async () => {
+      // await Updates.fetchUpdateAsync();
+      // await Updates.reloadAsync();
+   }, []);
+
+   // React.useEffect(() => {
+   //    const event = AppState.addEventListener('change', h => {
+   //       if (h === 'active') {
+   //          ChecUpdadeDevice();
+   //       }
+   //    });
+
+   //    return () => {
+   //       event.remove();
+   //    };
+   // }, [ChecUpdadeDevice]);
+
+   //* * .......................................................................
+
+   const openModals = React.useCallback(() => {
+      if (orderTransaction.length > 0) {
+         setModalTransaction(true);
+      }
+
+      if (orderIndication.length > 0) {
+         setModalIndication(true);
+      }
+
+      if (orderB2b.length > 0) {
+         setModalB2b(true);
+      }
+   }, [orderB2b.length, orderIndication.length, orderTransaction.length]);
 
    useFocusEffect(
       useCallback(() => {
-         load();
-         // token();
-      }, [load]),
+         loadOrders();
+         openModals();
+      }, [loadOrders, openModals]),
    );
 
-   useFocusEffect(
-      useCallback(() => {
-         orderIndication.length > 0
-            ? setModalIndication(true)
-            : setModalIndication(false);
+   const top = individualRak
+      ? individualRak.compras.pontos +
+        individualRak.vendas.pontos +
+        individualRak.b2b.pontos +
+        individualRak.indication.pontos +
+        individualRak.padrinho.pontos +
+        individualRak.presenca.pontos
+      : 0;
 
-         sucess.length > 0
-            ? setShowModalSucess(true)
-            : setShowModalSucess(false);
+   const clearCache = useCallback(async () => {
+      await api.get('/user/clear-cache');
+   }, []);
 
-         orderB2b.length > 0 ? setModalB2b(true) : setModalB2b(false);
-
-         orderTransaction.length > 0
-            ? setModalTransaction(true)
-            : setModalTransaction(false);
-      }, [
-         orderB2b.length,
-         orderIndication.length,
-         orderTransaction.length,
-         sucess.length,
-      ]),
-   );
+   useEffect(() => {
+      clearCache();
+   }, [clearCache]);
 
    return (
       <Container>
-         <Modal transparent animationType="slide" visible={showModalSucess}>
-            <Center bg="dark.600" mt={wt}>
-               <TouchableOpacity
-                  onPress={() => setShowModalSucess(false)}
-                  style={{
-                     alignSelf: 'flex-end',
-                     marginRight: 10,
-                     padding: 10,
-                  }}
-               >
-                  <AntDesign
-                     name="closecircle"
-                     size={30}
-                     color={theme.colors.focus}
-                  />
-               </TouchableOpacity>
-
-               {sucess.map(h => (
-                  <View key={h.id} style={{ padding: 20 }}>
-                     <Text>
-                        Sucesso! {h.nome} esta negociando com o cliente que voce
-                        indicou
-                     </Text>
-
-                     <TouchableOpacity
-                        onPress={() => {
-                           handleSucess(h.id);
-                        }}
-                        style={{
-                           width: 80,
-                           height: 30,
-                           alignSelf: 'center',
-                           alignItems: 'center',
-                           backgroundColor: theme.colors.focus,
-                           justifyContent: 'center',
-                           borderRadius: 7,
-                        }}
-                     >
-                        <Text style={{ color: theme.colors.primary }}>OK</Text>
-                     </TouchableOpacity>
-
-                     <Line />
-                  </View>
-               ))}
-            </Center>
-         </Modal>
-
-         <Modal transparent animationType="slide" visible={showModalIndication}>
+         {/* MODAL order INDICATION */}
+         <Modal transparent animationType="slide" visible={modalIndication}>
             <Center mt={wt} bg="dark.600">
                <TouchableOpacity
                   onPress={() => setModalIndication(false)}
@@ -607,30 +426,32 @@ export function Inicio() {
                   {orderIndication.map(h => (
                      <View key={h.id}>
                         <ModalOrderIndication
-                           description={h.descricao}
-                           clientName={h.nomeCliente}
-                           telefone={h.telefoneCliente}
+                           description={h.description}
+                           clientName={h.client_name}
+                           telefone={h.phone_number_client}
                            handShak={() => {
-                              HandShak(h.quemIndicou, h.id);
+                              HandShakIndication(h.quemIndicou_name, h.id);
                            }}
                            failTransaction={() => setModalIndication(false)}
-                           quemIndicouName={h.quemIndicouName}
-                           quemIndicouWorkName={h.quemIndicouWorkName}
+                           quemIndicouName={h.quemIndicou_name}
                         />
                      </View>
                   ))}
                </ScrollView>
             </Center>
          </Modal>
-
-         <Modal transparent visible={modalHandShak}>
+         <Modal
+            transparent
+            animationType="slide"
+            visible={modaIndicationSelect}
+         >
             <Center mt={wt}>
                <ModalIndication
-                  pres={handleHandShack}
-                  closedModal={() => setModalHandShak(false)}
-                  presHand={() => handleSelect('hand')}
-                  presHanding={() => handleSelect('handing')}
-                  fails={() => handleSelect('fail')}
+                  pres={() => submitHandShackIndication()}
+                  closedModal={() => setModalIndicationSelect(false)}
+                  presHand={() => setSelect('hand')}
+                  presHanding={() => setSelect('handing')}
+                  fails={() => setSelect('fail')}
                   selectHand={select === 'hand'}
                   selectHanding={select === 'handing'}
                   selectFail={select === 'fail'}
@@ -638,10 +459,13 @@ export function Inicio() {
             </Center>
          </Modal>
 
-         <Modal transparent visible={shwModalB2b}>
-            <Center mt={wt} bg="dark.600">
+         {/* MODAL ORDER B2B2 */}
+         <Modal transparent animationType="slide" visible={modalB2b}>
+            <Center bg="dark.600">
                <TouchableOpacity
-                  onPress={() => setModalB2b(false)}
+                  onPress={() => {
+                     setModalB2b(false);
+                  }}
                   style={{
                      alignSelf: 'flex-end',
                      marginRight: 10,
@@ -654,25 +478,31 @@ export function Inicio() {
                      color={theme.colors.focus}
                   />
                </TouchableOpacity>
-               {orderB2b.map(h => (
-                  <View key={h.data.nanoseconds}>
-                     <ModalB2b
-                        clientName={h.nome}
-                        handShak={() => {
-                           handleSucessB2b(h.id, h.user_id, h.prestador_id);
-                        }}
-                        failTransaction={() => handleFailB2b(h.id)}
-                     />
-                  </View>
-               ))}
+               <FlatList
+                  contentContainerStyle={{ paddingBottom: 200 }}
+                  data={orderB2b}
+                  keyExtractor={h => h.id}
+                  renderItem={({ item: h }) => (
+                     <Center w={wt * 0.7}>
+                        <ModalB2b
+                           clientName={h.send_name}
+                           handShak={() => {
+                              handleSucessB2b(h.id);
+                           }}
+                           failTransaction={() => deleteB2b(h.id)}
+                        />
+                     </Center>
+                  )}
+               />
             </Center>
          </Modal>
 
+         {/* MODAL ORDER TRANSACTION */}
          <Modal
-            visible={showModalTransaction}
+            visible={modalTransaction}
             transparent
             animationType="slide"
-            // onClose={() => setModalTransaction(false)}
+            onClose={() => setModalTransaction(false)}
          >
             <Box pl="5" pr="5" mt={wt} bg="dark.500">
                <TouchableOpacity
@@ -689,26 +519,22 @@ export function Inicio() {
                      color={theme.colors.focus}
                   />
                </TouchableOpacity>
-               {orderTransaction.map(h => (
-                  <View key={h.id}>
+               <FlatList
+                  data={orderTransaction}
+                  keyExtractor={h => h.id}
+                  renderItem={({ item: h }) => (
                      <MessageComponent
                         confirmar={() => {
-                           handleValidateTransaction(
-                              h.prestador_id,
-                              h.consumidor,
-                              h.description,
-                              h.id,
-                              h.valor,
-                           );
+                           validateTransaction(h);
                         }}
                         nome={h.consumidor_name}
                         rejeitar={() => {
                            DeleteOrderTransaction(h.id);
                         }}
-                        valor={h.valor}
+                        valor={h.valor / 100}
                      />
-                  </View>
-               ))}
+                  )}
+               />
             </Box>
          </Modal>
 
@@ -748,34 +574,56 @@ export function Inicio() {
             </HStack>
          </Box>
 
-         {user.avatarUrl ? (
-            <Avatar source={{ uri: user.avatarUrl }} />
+         {user.profile !== null ? (
+            <Avatar source={{ uri: user.profile.avatar }} />
          ) : (
             <BoxIco>
                <Feather name="user" size={100} />
             </BoxIco>
          )}
-
          <TitleName> {user.nome} </TitleName>
-
          <View style={{ alignItems: 'center' }}>
-            <ComprasText>Vendas</ComprasText>
+            <ComprasText>Minhas Vendas</ComprasText>
 
             <BoxPrice>
-               <TitlePrice>{price.price}</TitlePrice>
-               <TitleP>
-                  {ptB2b + ptCom + ptInd + ptPad + ptVen + ptPrs} pts
-               </TitleP>
+               {valorGeb ? (
+                  <TitlePrice>{valorGeb.priceUser}</TitlePrice>
+               ) : (
+                  <ActivityIndicator />
+               )}
+               <TitleP>{top} pts</TitleP>
             </BoxPrice>
          </View>
-
          <View style={{ alignSelf: 'center' }}>
-            <Text style={{ marginLeft: 16 }}>Vendas do G.E.B {montante}</Text>
+            {valorGeb ? (
+               <Text style={{ marginLeft: 16 }}>
+                  Vendas do G.E.B {valorGeb.priceGeb}
+               </Text>
+            ) : (
+               <Text style={{ marginLeft: 16 }}>
+                  Vendas do G.E.B <ActivityIndicator />
+               </Text>
+            )}
          </View>
-
          <Line />
-
-         <Classificacao />
+         {individualRak ? (
+            <Classificacao
+               ptCon={individualRak.compras.pontos}
+               rkCon={individualRak.compras.rank}
+               ptVen={individualRak.vendas.pontos}
+               rkVen={individualRak.vendas.rank}
+               ptInd={individualRak.indication.pontos}
+               rkInd={individualRak.indication.ranck}
+               ptPres={individualRak.presenca.pontos}
+               rkPres={individualRak.presenca.rank}
+               ptPad={individualRak.padrinho.pontos}
+               rkPad={individualRak.padrinho.rank}
+               ptB2b={individualRak.b2b.pontos}
+               rkB2b={individualRak.b2b.rank}
+            />
+         ) : (
+            <ActivityIndicator />
+         )}
       </Container>
    );
 }
