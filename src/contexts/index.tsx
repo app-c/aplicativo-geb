@@ -1,5 +1,6 @@
 import React, { createContext } from 'react';
 import { format } from 'date-fns';
+import { useQuery } from 'react-query';
 import { IOrderTransaction, ITransaction } from '../dtos';
 import { api, socket } from '../services/api';
 
@@ -18,6 +19,11 @@ interface PropsContext {
 export const ApiContext = createContext({} as PropsContext);
 
 export function ApiProvider({ children }: ProviderProps) {
+   const orderConsumo = useQuery('orderConsumo', async () => {
+      const orde = await api.get('/consumo/find-order-consumidor');
+      return orde.data;
+   });
+
    const [transactionPrestador, setTransactionPrestador] = React.useState<
       ITransaction[]
    >([]);

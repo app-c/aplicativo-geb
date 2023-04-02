@@ -4,8 +4,9 @@ import { Form } from '@unform/mobile';
 import * as Linkin from 'expo-linking';
 import fire from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQuery } from 'react-query';
 import { FindMembroComponent } from '../../components/FindMembro';
-import { IProfileDto, IUserDtos } from '../../dtos';
+import { IProfileDto, IStars, IUserDtos } from '../../dtos';
 import { Box, Container, Flat, Title } from './styles';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { InputCasdastro } from '../../components/InputsCadastro';
@@ -15,11 +16,18 @@ import { useAuth } from '../../hooks/AuthContext';
 import { api } from '../../services/api';
 
 export function FindUser() {
+   const query = useQuery('users', async () => {
+      const data = await api.get('user/list-all-user');
+      return data.data;
+   });
+
+   const { data, isLoading } = query;
+
+   console.log(query.isLoading, 'query');
+
    const { signOut } = useAuth();
    const [listAlluser, setlistAllUser] = useState<IUserDtos[]>([]);
-   const [membro, setMembro] = useState<IUserDto[]>([]);
-   const [value, setValue] = useState('');
-   const [lista, setLista] = useState<IUserDtos[]>([]);
+
    const [load, setLoad] = useState(true);
    const [search, setSearch] = React.useState('');
 
@@ -30,27 +38,7 @@ export function FindUser() {
             const res = h.data as IUserDtos[];
 
             const us = res.map(user => {
-               let whats = '';
-               if (user.profile.whats.includes('(1')) {
-                  const wa = user.profile.whats
-                     ? `https://wa.me/55${user.profile.whats.slice(
-                          1,
-                          3,
-                       )}${user.profile.whats.slice(
-                          5,
-                          -5,
-                       )}${user.profile.whats.slice(-4)}`
-                     : 'wahts';
-                  whats = wa;
-               }
-
-               if (user.profile.whats.length === 11) {
-                  const wa = user.profile.whats
-                     ? `https://wa.me/55${user.profile.whats}`
-                     : 'wahts';
-                  whats = wa;
-               }
-               console.log(whats);
+               const { whats } = user.profile;
 
                // let ma = '';
                // if (h.links.maps) {
@@ -71,14 +59,14 @@ export function FindUser() {
             }
          })
          .finally(() => setLoad(false));
-   }, [setlistAllUser]);
+   }, [signOut]);
 
    const handlePress = useCallback(async (url: string) => {
       await Linkin.openURL(`https://${url}`);
    }, []);
 
    const handleNavigateToWatts = useCallback(async (url: string) => {
-      await Linkin.openURL(url);
+      await Linkin.openURL(`https://wa.me/55${url}`);
    }, []);
 
    useFocusEffect(
@@ -95,8 +83,39 @@ export function FindUser() {
            })
          : listAlluser;
 
-   if (!users[0]) {
-      <Loading />;
+   const list = React.useMemo(() => {
+      const us = [];
+      const media = users.forEach(user => {
+         let i = 0;
+         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+         let star = 0;
+         const st = [];
+
+         user.Stars.forEach((h: IStars) => {
+            star += h.star;
+         });
+         const md = star / total;
+         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
+         console.log(user.Stars);
+
+         while (i < value) {
+            i += 1;
+            st.push(i);
+         }
+
+         const data = {
+            ...user,
+            media: value,
+         };
+
+         us.push(data);
+      });
+
+      return us;
+   }, [users]);
+
+   if (!listAlluser[0]) {
+      return <Loading />;
    }
 
    return (
@@ -118,15 +137,18 @@ export function FindUser() {
 
          <FlatList
             // contentContainerStyle={{ paddingBottom: 150 }}
-            data={users}
+            data={list}
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <View>
                   <FindMembroComponent
-                     avatar={h.profile.avatar === null ? '' : h.profile.avatar}
+                     star={h.media}
+                     avatar={h?.profile?.avatar}
                      name={h.nome}
                      workName={h.profile.workName}
-                     whats={() => {}}
+                     whats={() => {
+                        handleNavigateToWatts(h.profile.whats);
+                     }}
                      face={() => {}}
                      insta={() => {}}
                      maps={() => {}}

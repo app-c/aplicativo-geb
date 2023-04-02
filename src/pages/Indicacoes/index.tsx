@@ -26,7 +26,7 @@ import {
    Title,
 } from './styles';
 
-import { IProfileDto, IUserDto, IUserDtos } from '../../dtos';
+import { IProfileDto, IStars, IUserDto, IUserDtos } from '../../dtos';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
 import { InputCasdastro } from '../../components/InputsCadastro';
@@ -52,7 +52,7 @@ export function Indicacoes() {
    const [membros, setMembros] = useState<IUserDtos[]>();
    const [expoToken, setExpoToken] = React.useState('');
 
-   const Users = React.useCallback(async () => {
+   const loadUser = React.useCallback(async () => {
       api.get('/user/list-all-user')
          .then(h => {
             const us = h.data as IUserDtos[];
@@ -65,9 +65,9 @@ export function Indicacoes() {
 
    useFocusEffect(
       useCallback(() => {
-         Users();
+         loadUser();
          setLoad(false);
-      }, [Users]),
+      }, [loadUser]),
    );
 
    const users =
@@ -77,6 +77,29 @@ export function Indicacoes() {
               return up.includes(value.toLocaleUpperCase());
            })
          : membros;
+
+   const list = React.useMemo(() => {
+      const us = [];
+      users?.forEach(user => {
+         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+         let star = 0;
+
+         user.Stars.forEach((h: IStars) => {
+            star += h.star;
+         });
+         const md = star / total;
+         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
+
+         const data = {
+            ...user,
+            media: value,
+         };
+
+         us.push(data);
+      });
+
+      return us;
+   }, [users]);
 
    const sendPushNotification = useCallback(async () => {
       const message = {
@@ -148,7 +171,7 @@ export function Indicacoes() {
       navigate,
    ]);
 
-   if (!users) {
+   if (!membros) {
       return <Loading />;
    }
 
@@ -170,10 +193,11 @@ export function Indicacoes() {
          </Form>
 
          <FlatList
-            data={users}
+            data={list}
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (
                <MembrosComponents
+                  star={h.media}
                   imageOfice={h.profile.logo}
                   oficio={h.profile.workName}
                   user_avatar={h.profile.avatar}

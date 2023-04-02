@@ -10,7 +10,7 @@ import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
-import { IProfileDto, IUserDtos } from '../../dtos';
+import { IProfileDto, IStars, IUserDtos } from '../../dtos';
 import { Box } from '../FindMembro/styles';
 import { InputCasdastro } from '../../components/InputsCadastro';
 import { colecao } from '../../collection';
@@ -31,24 +31,8 @@ export function Membros() {
    const [search, setSearch] = React.useState('');
 
    const hanldeTransaction = useCallback(
-      (
-         prestador_id: string,
-         avatar_url: string,
-         logoUrl: string,
-         prestador_name: string,
-         consumidor_name: string,
-         workName: string,
-         token: string,
-      ) => {
-         navigate('Transaction', {
-            prestador_id,
-            avatar_url,
-            logoUrl,
-            prestador_name,
-            consumidor_name,
-            workName,
-            token,
-         });
+      (user: IUserDtos) => {
+         navigate('Transaction', { prestador: user });
       },
       [navigate],
    );
@@ -79,6 +63,36 @@ export function Membros() {
            })
          : membros;
 
+   const list = React.useMemo(() => {
+      const us = [];
+      users?.forEach(user => {
+         let i = 0;
+         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+         let star = 0;
+         const st = [];
+
+         user.Stars.forEach((h: IStars) => {
+            star += h.star;
+         });
+         const md = star / total;
+         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
+
+         while (i < value) {
+            i += 1;
+            st.push(i);
+         }
+
+         const data = {
+            ...user,
+            media: value,
+         };
+
+         us.push(data);
+      });
+
+      return us;
+   }, [users]);
+
    return (
       <>
          {load ? (
@@ -102,23 +116,14 @@ export function Membros() {
                <View>
                   <FlatList
                      contentContainerStyle={{ paddingBottom: 570 }}
-                     data={users}
+                     data={list}
                      keyExtractor={h => h.id}
                      renderItem={({ item: h }) => (
                         <>
                            <MembrosComponents
+                              star={h.media}
                               icon="necociar"
-                              pres={() =>
-                                 hanldeTransaction(
-                                    h.id,
-                                    h.profile.avatar,
-                                    h.profile.logo,
-                                    h.nome,
-                                    user.nome,
-                                    h.profile.workName,
-                                    h.token,
-                                 )
-                              }
+                              pres={() => hanldeTransaction(h)}
                               userName={h.nome}
                               user_avatar={h.profile.avatar}
                               oficio={h.profile.workName}

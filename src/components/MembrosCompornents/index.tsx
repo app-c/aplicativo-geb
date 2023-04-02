@@ -2,20 +2,12 @@
 /* eslint-disable camelcase */
 import React from 'react';
 import { Image, Text } from 'react-native';
-import { AntDesign, FontAwesome5 } from '@expo/vector-icons';
+import { AntDesign, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import theme from '../../global/styles/theme';
 import negociosPng from '../../assets/NEGOCIOS.png';
 
-import {
-   Avatar,
-   Box,
-   BoxAvatar,
-   BoxText,
-   Container,
-   ContainerIcon,
-   ImageOfice,
-   Title,
-} from './styles';
+import * as S from './styles';
+import { IStars } from '../../dtos';
 
 interface Props {
    userName: string;
@@ -26,6 +18,7 @@ interface Props {
    icon?: 'necociar' | 'indicar' | 'b2b';
    inativo?: boolean;
    inativoPres?: boolean;
+   star: number;
 }
 
 export function MembrosComponents({
@@ -37,10 +30,11 @@ export function MembrosComponents({
    icon,
    inativo,
    inativoPres,
+   star = 1,
 }: Props) {
    return (
-      <Container>
-         <Box
+      <S.Container>
+         <S.Box
             inativo={inativo}
             onPress={pres}
             disabled={inativoPres}
@@ -56,19 +50,19 @@ export function MembrosComponents({
                elevation: 6,
             }}
          >
-            <BoxAvatar>
-               <Avatar
+            <S.BoxAvatar>
+               <S.Avatar
                   source={{
                      uri:
                         user_avatar ||
                         'https://www.seekpng.com/png/detail/73-730482_existing-user-default-avatar.png',
                   }}
                />
-               <ImageOfice source={{ uri: imageOfice }} />
-            </BoxAvatar>
+               <S.ImageOfice source={{ uri: imageOfice }} />
+            </S.BoxAvatar>
 
-            <BoxText>
-               <Title>{userName}</Title>
+            <S.BoxText>
+               <S.Title>{userName}</S.Title>
                <Text
                   style={{
                      fontFamily: theme.fonts.regular,
@@ -78,9 +72,21 @@ export function MembrosComponents({
                   {' '}
                   {oficio}{' '}
                </Text>
-            </BoxText>
 
-            <ContainerIcon>
+               <S.boxH>
+                  <S.star name={star >= 1 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 2 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 3 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 4 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 5 ? 'star' : 'star-o'} />
+               </S.boxH>
+            </S.BoxText>
+
+            <S.ContainerIcon>
                {icon === 'necociar' && (
                   <>
                      <Image
@@ -112,8 +118,8 @@ export function MembrosComponents({
                      />
                   </>
                )}
-            </ContainerIcon>
-         </Box>
-      </Container>
+            </S.ContainerIcon>
+         </S.Box>
+      </S.Container>
    );
 }

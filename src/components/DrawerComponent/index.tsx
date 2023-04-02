@@ -1,38 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from 'react';
 
 import {
    DrawerItemList,
    DrawerContentComponentProps,
-} from "@react-navigation/drawer";
+} from '@react-navigation/drawer';
 
-import {
-   ActivityIndicator,
-   Alert,
-   ScrollView,
-   Text,
-   TouchableOpacity,
-} from "react-native";
-import { RFValue } from "react-native-responsive-fontsize";
-import { Box, HStack, VStack } from "native-base";
-import { useAuth } from "../../hooks/AuthContext";
-import {
-   Avatar,
-   Container,
-   Header,
-   LogOf,
-   TextContainer,
-   Title,
-   TitleName,
-} from "./styles";
-import theme from "../../global/styles/theme";
+import { ScrollView, Text } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { HStack, VStack } from 'native-base';
+import { useAuth } from '../../hooks/AuthContext';
+import { Avatar, Container, Header, LogOf, Title, TitleName } from './styles';
+import theme from '../../global/styles/theme';
 
 type Props = DrawerContentComponentProps;
 
 export function DrawerContent({ ...props }: Props) {
    const { signOut, user } = useAuth();
-
-   const [loading, setLoading] = useState(false);
 
    return (
       <Container>

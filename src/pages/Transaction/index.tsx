@@ -32,13 +32,7 @@ import { IUserDtos } from '../../dtos';
 import { api } from '../../services/api';
 
 interface IRoute {
-   prestador_id: string;
-   avatar_url: string;
-   avatar: string | null;
-   logoUrl: string;
-   nome: string;
-   workName: string;
-   token: string;
+   prestador: IUserDtos;
 }
 
 export function Transaction() {
@@ -46,18 +40,9 @@ export function Transaction() {
    const moneyRef = useRef(null);
    const { user } = useAuth();
    const route = useRoute();
-   const {
-      prestador_id,
-      avatar_url,
-      consumidor_name,
-      prestador_name,
-      workName,
-      logoUrl,
-      token,
-   } = route.params as IRoute;
+   const { prestador } = route.params as IRoute;
 
    const [value, setValue] = useState('');
-   const [prestador, setPrestador] = useState<IUserDtos>();
    const [description, setDescription] = useState('');
    const [mon, setMon] = useState(0);
 
@@ -73,8 +58,8 @@ export function Transaction() {
       }
 
       const dados = {
-         prestador_id,
-         prestador_name,
+         prestador_id: prestador.id,
+         prestador_name: prestador.nome,
          consumidor_name: user.nome,
          consumidor_id: user.id,
          descricao: description,
@@ -83,39 +68,21 @@ export function Transaction() {
 
       await api.post('/consumo/order-transaction', dados);
 
-      navigate('sucess', {
-         workName,
-         description,
-         consumidor_name,
-         prestador_name,
-         token,
-      });
-   }, [
-      mon,
-      description,
-      prestador_id,
-      prestador_name,
-      user,
-      navigate,
-      workName,
-      consumidor_name,
-      token,
-   ]);
+      navigate('sucess', { prestador, description });
+   }, [mon, description, prestador, user.nome, user.id, navigate]);
 
    useEffect(() => {
       const mo = moneyRef.current?.getRawValue();
       setMon(mo * 100);
    }, [value]);
 
-   console.log(mon.toFixed());
-
    return (
       <Container>
          <HeaderContaponent type="tipo1" title="" />
          <Box>
             <Title style={{ marginBottom: 30, textAlign: 'center' }}>
-               Vocẽ está consumindo de: {prestador_name}, da empresa {workName}
-               {prestador?.workName}
+               Vocẽ está consumindo de: {prestador.nome}, da empresa{' '}
+               {prestador.profile.workName}
             </Title>
             <BoxElement>
                <BoxAvatar>
@@ -159,8 +126,8 @@ export function Transaction() {
                </Boxcons>
 
                <BoxProvider>
-                  {avatar_url ? (
-                     <Avatar source={{ uri: avatar_url }} />
+                  {prestador.profile.avatar ? (
+                     <Avatar source={{ uri: prestador.profile.avatar }} />
                   ) : (
                      <Feather
                         name="user"
@@ -169,8 +136,10 @@ export function Transaction() {
                      />
                   )}
 
-                  {logoUrl ? (
-                     <ImageProviderOfice source={{ uri: logoUrl }} />
+                  {prestador?.profile?.logoTipo ? (
+                     <ImageProviderOfice
+                        source={{ uri: prestador.profile?.logoTipo }}
+                     />
                   ) : (
                      <View
                         style={{

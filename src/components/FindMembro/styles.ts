@@ -1,12 +1,13 @@
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
-import styled from "styled-components/native";
-import theme from "../../global/styles/theme";
+import { FontAwesome } from '@expo/vector-icons';
+import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
+import styled from 'styled-components/native';
+import theme from '../../global/styles/theme';
+import { w } from '../../utils/size';
 
 const { colors, fonts } = theme;
 export const Container = styled.View`
    background-color: ${colors.secundary};
    width: 100%;
-   height: ${RFPercentage(30)}px;
    padding: 10px;
    border-radius: 8px;
    margin-bottom: ${RFValue(12)}px;
@@ -32,22 +33,40 @@ export const Avatar = styled.Image`
 `;
 
 export const MapView = styled.TouchableOpacity`
-   width: 100%;
+   width: ${w * 0.3}px;
    min-height: ${RFPercentage(5)}px;
    background-color: ${colors.focus};
    flex-direction: row;
    padding: 5px;
    align-items: center;
+   justify-content: center;
    border-radius: ${RFValue(15)}px;
    margin-top: ${RFValue(16)}px;
    margin-bottom: ${RFValue(16)}px;
 `;
 
+export const boxH = styled.View`
+   flex-direction: row;
+   align-items: center;
+   justify-content: space-between;
+
+   width: ${w * 0.3}px;
+
+   align-self: center;
+`;
+
+export const star = styled(FontAwesome)`
+   color: ${theme.colors.focus_second};
+   font-size: ${RFValue(18)}px;
+`;
+
+export const boxV = styled.View``;
+
 export const TitleMaps = styled.Text`
-   font-size: ${RFValue(14)}px;
+   font-size: ${RFValue(12)}px;
    font-family: ${fonts.tenor};
    color: ${colors.text_secundary};
-   margin-left: 20px;
+   margin-left: 5px;
 `;
 
 export const Box = styled.TouchableOpacity`

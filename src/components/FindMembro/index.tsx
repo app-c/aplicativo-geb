@@ -3,22 +3,15 @@ import {
    FontAwesome,
    MaterialCommunityIcons,
    Zocial,
-} from "@expo/vector-icons";
-import { HStack } from "native-base";
-import React from "react";
-import { View } from "react-native";
-import { RFValue } from "react-native-responsive-fontsize";
-import theme from "../../global/styles/theme";
-import {
-   Avatar,
-   Box,
-   Container,
-   MapView,
-   Title,
-   TitleMaps,
-   TitleName,
-   TitleSocial,
-} from "./styles";
+} from '@expo/vector-icons';
+import { FlatList, HStack } from 'native-base';
+import React from 'react';
+import { View } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { array } from 'yup';
+import { IStars } from '../../dtos';
+import theme from '../../global/styles/theme';
+import * as S from './styles';
 
 interface Props {
    name: string;
@@ -28,6 +21,7 @@ interface Props {
    whats: () => void;
    maps: () => void;
    avatar: string;
+   star: number;
 }
 
 export function FindMembroComponent({
@@ -38,74 +32,81 @@ export function FindMembroComponent({
    whats,
    maps,
    avatar,
+   star = 1,
 }: Props) {
    return (
-      <Container>
-         <View style={{ flexDirection: "row" }}>
-            <Avatar
+      <S.Container>
+         <View style={{ flexDirection: 'row' }}>
+            <S.Avatar
                source={{
                   uri:
                      avatar ||
-                     "https://www.seekpng.com/png/detail/73-730482_existing-user-default-avatar.png",
+                     'https://www.seekpng.com/png/detail/73-730482_existing-user-default-avatar.png',
                }}
             />
             <View style={{ marginLeft: RFValue(10) }}>
-               <TitleName>{name} </TitleName>
-               <Title>{workName}</Title>
+               <S.TitleName>{name} </S.TitleName>
+               <S.Title>{workName}</S.Title>
+
+               <S.boxH>
+                  <S.star name={star >= 1 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 2 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 3 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 4 ? 'star' : 'star-o'} />
+
+                  <S.star name={star >= 5 ? 'star' : 'star-o'} />
+               </S.boxH>
             </View>
          </View>
 
-         <MapView onPress={maps}>
+         <S.MapView onPress={maps}>
             <Feather
                name="map-pin"
                color={theme.colors.primary}
                size={RFValue(20)}
             />
-            <TitleMaps>endereço</TitleMaps>
-         </MapView>
+            <S.TitleMaps>endereço</S.TitleMaps>
+         </S.MapView>
 
-         <Title>Midias sociais</Title>
+         <S.Title>Midias sociais</S.Title>
 
          <HStack space={3} alignSelf="center">
-            <Box onPress={whats}>
+            <S.Box onPress={whats}>
                <FontAwesome
                   name="whatsapp"
-                  color={theme.colors.primary}
+                  color="#6fff4b"
                   size={RFValue(16)}
                />
-               <TitleSocial>Whatts</TitleSocial>
-            </Box>
+               <S.TitleSocial>Whatts</S.TitleSocial>
+            </S.Box>
 
-            <Box onPress={face}>
-               <Zocial
-                  name="facebook"
-                  color={theme.colors.primary}
-                  size={RFValue(16)}
-               />
+            <S.Box onPress={face}>
+               <Zocial name="facebook" color="#6bc4ff" size={RFValue(16)} />
 
-               <TitleSocial>Face </TitleSocial>
-            </Box>
+               <S.TitleSocial>Face </S.TitleSocial>
+            </S.Box>
 
-            <Box onPress={insta}>
-               <Zocial
-                  name="instagram"
-                  color={theme.colors.primary}
-                  size={RFValue(16)}
-               />
+            <S.Box onPress={insta}>
+               <Zocial name="instagram" color="#a952e4" size={RFValue(16)} />
 
-               <TitleSocial>Insta</TitleSocial>
-            </Box>
+               <S.TitleSocial>Insta</S.TitleSocial>
+            </S.Box>
 
-            <Box onPress={insta}>
+            <S.Box onPress={insta}>
                <MaterialCommunityIcons
                   name="web"
                   color={theme.colors.primary}
                   size={RFValue(16)}
                />
 
-               <TitleSocial style={{ textAlign: "center" }}>WEB</TitleSocial>
-            </Box>
+               <S.TitleSocial style={{ textAlign: 'center' }}>
+                  WEB
+               </S.TitleSocial>
+            </S.Box>
          </HStack>
-      </Container>
+      </S.Container>
    );
 }

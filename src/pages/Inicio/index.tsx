@@ -14,16 +14,18 @@ import {
 import React, { useCallback, useEffect } from 'react';
 import {
    ActivityIndicator,
-   Alert,
    Dimensions,
    FlatList,
    Modal,
    TouchableOpacity,
    View,
+   Alert,
+   Platform,
 } from 'react-native';
 
 // import * as Updates from 'expo-updates';
 import { Box, Center, HStack, ScrollView, Text } from 'native-base';
+import * as Notifications from 'expo-notifications';
 import { CartaMessagem } from '../../components/CartaMessagem';
 import { MessageComponent } from '../../components/MessageComponent';
 import { ModalB2b } from '../../components/ModalB2b';
@@ -50,6 +52,7 @@ import {
    TitleP,
    TitlePrice,
 } from './styles';
+import { StarModal } from '../../components/StarModal';
 
 interface PriceProps {
    price: string;
@@ -86,11 +89,24 @@ interface PropsValorTotal {
    priceGeb: string;
 }
 
+interface IModalProps {
+   id: string;
+   modal: boolean;
+   nome?: string;
+}
+
 const wt = Dimensions.get('window').width;
 
 export function Inicio() {
    const { user, expoToken, signOut } = useAuth();
    const navigate = useNavigation();
+
+   const [modalStar, setModalStar] = React.useState<IModalProps>({
+      id: '',
+      modal: false,
+      nome: '',
+   });
+   const [star, setStar] = React.useState(5);
 
    const [whoIndication, setWhoIndication] = React.useState('');
    const [idIndication, setIdIndication] = React.useState('');
@@ -235,20 +251,25 @@ export function Inicio() {
       if (select === 'handing') {
          setModalIndicationSelect(false);
       }
-   }, [idIndication, navigate, select, whoIndication]);
+   }, [idIndication, loadOrders, navigate, select, whoIndication]);
 
    // !! B2B *.................................................................. */
    const [orderB2b, setOrderB2b] = React.useState<IB2b[]>([]);
    const [modalB2b, setModalB2b] = React.useState(false);
 
-   const handleSucessB2b = useCallback(async (id: string) => {
+   const handleSucessB2b = useCallback(async (data: IB2b) => {
       const dados = {
-         id,
+         id: data.id,
       };
       await api
          .put('/b2b/validate-b2b', dados)
          .then(h => {
             Alert.alert('Sucesso!', 'Validação realizada.');
+            setModalStar({
+               id: data.send_id,
+               modal: true,
+               nome: data.send_name,
+            });
             loadOrders();
             if (orderB2b.length === 0) {
                setModalB2b(false);
@@ -256,7 +277,7 @@ export function Inicio() {
          })
          .catch(h => {
             console.log('erro ao validar order b2b na tela inicial', h);
-            Alert.alert('Erro', message);
+            Alert.alert('Erro', 'message');
          });
    }, []);
 
@@ -379,11 +400,49 @@ export function Inicio() {
       }
    }, [orderB2b.length, orderIndication.length, orderTransaction.length]);
 
+   // UPDADE TOKEN
+   const UpdateToken = React.useCallback(async () => {
+      const { status: existingStatus } =
+         await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+         const { status } = await Notifications.requestPermissionsAsync();
+         finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+         Alert.alert('Failed to get push token for push notification!');
+         return;
+      }
+      const token = (
+         await Notifications.getExpoPushTokenAsync({
+            experienceId: '@app-c/aplicativogeb',
+         })
+      ).data;
+
+      if (Platform.OS === 'android') {
+         Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF231F7C',
+         });
+      }
+
+      await api.post('user/update-membro', {
+         membro: user.membro,
+         nome: user.nome,
+         id: user.id,
+         adm: user.adm,
+         token,
+      });
+   }, [user]);
+
    useFocusEffect(
       useCallback(() => {
          loadOrders();
          openModals();
-      }, [loadOrders, openModals]),
+         UpdateToken();
+      }, [UpdateToken, loadOrders, openModals]),
    );
 
    const top = individualRak
@@ -395,13 +454,16 @@ export function Inicio() {
         individualRak.presenca.pontos
       : 0;
 
-   const clearCache = useCallback(async () => {
-      await api.get('/user/clear-cache');
-   }, []);
-
-   useEffect(() => {
-      clearCache();
-   }, [clearCache]);
+   const handleStar = React.useCallback(async () => {
+      await api
+         .post('/star/assest', {
+            star,
+            fk_id_user: modalStar.id,
+         })
+         .then(() => {
+            setModalStar({ id: '', modal: false });
+         });
+   }, [modalStar.id, star]);
 
    return (
       <Container>
@@ -440,6 +502,7 @@ export function Inicio() {
                </ScrollView>
             </Center>
          </Modal>
+
          <Modal
             transparent
             animationType="slide"
@@ -487,7 +550,7 @@ export function Inicio() {
                         <ModalB2b
                            clientName={h.send_name}
                            handShak={() => {
-                              handleSucessB2b(h.id);
+                              handleSucessB2b(h);
                            }}
                            failTransaction={() => deleteB2b(h.id)}
                         />
@@ -536,6 +599,15 @@ export function Inicio() {
                   )}
                />
             </Box>
+         </Modal>
+
+         <Modal visible={modalStar.modal} animationType="fade" transparent>
+            <StarModal
+               setStars={h => setStar(h)}
+               star={star}
+               submit={handleStar}
+               prestador={modalStar.nome}
+            />
          </Modal>
 
          <Box w="100%">

@@ -10,9 +10,16 @@
       [
         "expo-notifications",
         {
-          "sounds": ["./src/assets/MSN.mp3"]
+          "sounds": [
+            "./src/assets/MSN.mp3"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3f0c01b7-dfb6-4ce3-a5c8-32950dc2f3b1"
+      }
+    }
   }
 }

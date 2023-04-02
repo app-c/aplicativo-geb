@@ -1,17 +1,19 @@
 /* eslint-disable react/style-prop-object */
 /* eslint-disable camelcase */
 import {
-   BarlowCondensed_300Light, BarlowCondensed_400Regular,
-   BarlowCondensed_600SemiBold
+   BarlowCondensed_300Light,
+   BarlowCondensed_400Regular,
+   BarlowCondensed_600SemiBold,
 } from '@expo-google-fonts/barlow-condensed';
 import {
    Comfortaa_400Regular,
-   Comfortaa_500Medium
+   Comfortaa_500Medium,
 } from '@expo-google-fonts/comfortaa';
 import { OpenSansCondensed_700Bold } from '@expo-google-fonts/open-sans-condensed';
 import {
    Roboto_400Regular,
-   Roboto_900Black, useFonts
+   Roboto_900Black,
+   useFonts,
 } from '@expo-google-fonts/roboto';
 import { StatusBar } from 'expo-status-bar';
 import 'intl';
@@ -24,10 +26,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import * as Notifications from 'expo-notifications';
 import * as Updates from 'expo-updates';
 import {
-   Box, Button as ButtonBase, Center,
-   NativeBaseProvider, Text
+   Box,
+   Button as ButtonBase,
+   Center,
+   NativeBaseProvider,
+   Text,
 } from 'native-base';
 import { AppState, LogBox, Modal, View } from 'react-native';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { Loading } from './src/components/Loading';
 import theme from './src/global/styles/theme';
 import AppProvider from './src/hooks';
@@ -92,31 +98,38 @@ export default function App() {
    }
    LogBox.ignoreLogs([`Setting a timer for a long period`]);
 
+   const queryClient = new QueryClient();
+
    return (
       <NavigationContainer>
          <ThemeProvider theme={theme}>
             <StatusBar style="light" hidden />
             <AppProvider>
                <NativeBaseProvider>
-                  <View style={{ flex: 1 }}>
-                     <Modal visible={showModalUpdate}>
-                        <Center p="5" bg={theme.colors.primary}>
-                           <Box>
-                              <Text fontFamily={theme.fonts.blac} fontSize="16">
-                                 UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
-                              </Text>
-                              {update.map(h => (
-                                 <Text>{h.title}</Text>
-                              ))}
-                              <Text>{version}</Text>
-                           </Box>
-                           <ButtonBase onPress={ReloadDevice} mt="10">
-                              ATUALIZAR
-                           </ButtonBase>
-                        </Center>
-                     </Modal>
-                     <Route />
-                  </View>
+                  <QueryClientProvider client={queryClient}>
+                     <View style={{ flex: 1 }}>
+                        <Modal visible={showModalUpdate}>
+                           <Center p="5" bg={theme.colors.primary}>
+                              <Box>
+                                 <Text
+                                    fontFamily={theme.fonts.blac}
+                                    fontSize="16"
+                                 >
+                                    UMA NOVA ATUALIZAÇÃO ESTA DISPONÍVEL
+                                 </Text>
+                                 {update.map(h => (
+                                    <Text>{h.title}</Text>
+                                 ))}
+                                 <Text>{version}</Text>
+                              </Box>
+                              <ButtonBase onPress={ReloadDevice} mt="10">
+                                 ATUALIZAR
+                              </ButtonBase>
+                           </Center>
+                        </Modal>
+                        <Route />
+                     </View>
+                  </QueryClientProvider>
                </NativeBaseProvider>
             </AppProvider>
          </ThemeProvider>

@@ -73,13 +73,6 @@ export const rotas = [
       component: StackB2b,
       icon: 'users',
    },
-   {
-      focus: theme.colors.focus,
-      color: theme.colors.focus_light_3,
-      name: 'APADRINHAMENTO',
-      component: Padrinho,
-      icon: 'mortar-board',
-   },
 ];
 
 export const rotasAdm = [

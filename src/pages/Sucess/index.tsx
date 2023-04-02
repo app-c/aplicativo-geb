@@ -1,30 +1,35 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable camelcase */
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
+import { Modal } from 'react-native';
 import { Button, Container, Image, Message, Title } from './styles';
 import logo from '../../assets/logo.png';
+import { StarModal } from '../../components/StarModal';
+import { api } from '../../services/api';
+import { IUserDtos } from '../../dtos';
+import { useAuth } from '../../hooks/AuthContext';
 
 interface RouteParams {
-   token: string;
-   workName: string;
-   nome: string;
+   prestador: IUserDtos;
    description: string;
 }
 
 export function Sucess() {
    const route = useRoute();
-   const { token, workName, prestador_name, consumidor_name, description } =
-      route.params as RouteParams;
+   const { user } = useAuth();
+   const [star, setStar] = React.useState(1);
+   const [modal, setModal] = React.useState(false);
+   const { prestador, description } = route.params as RouteParams;
 
    const { reset } = useNavigation();
 
    const sendPushNotification = useCallback(async () => {
       const message = {
-         to: token,
+         to: prestador.token,
          sound: 'default',
          title: 'Alguem esta consumindo seu produto',
-         body: `cliente ${consumidor_name} está adiquirindo: ${description}`,
+         body: `cliente ${user.nome} está adiquirindo: ${description}`,
       };
 
       await fetch('https://exp.host/--/api/v2/push/send', {
@@ -38,24 +43,39 @@ export function Sucess() {
       });
    }, []);
 
-   const navigateToHome = useCallback(() => {
-      sendPushNotification();
-      reset({
-         routes: [{ name: 'INÍCIO' }],
-      });
-   }, [reset]);
+   const navigateToHome = useCallback(async () => {
+      await api
+         .post('/star/assest', {
+            star,
+            fk_id_user: prestador.id,
+         })
+         .then(() => {
+            sendPushNotification();
+            setModal(false);
+            reset({
+               routes: [{ name: 'INÍCIO' }],
+            });
+         });
+   }, [reset, star]);
 
    return (
       <Container>
+         <Modal visible={modal} animationType="fade" transparent>
+            <StarModal
+               setStars={h => setStar(h)}
+               star={star}
+               submit={navigateToHome}
+            />
+         </Modal>
          <Message style={{ textAlign: 'center', fontSize: 28 }}>
             OPERAÇAO REALIZADA!!
          </Message>
 
          <Message style={{ textAlign: 'center' }}>
-            Aguarde a confimação da {workName}
+            Aguarde a confimação da {prestador?.profile?.workName}
          </Message>
 
-         <Button onPress={navigateToHome}>
+         <Button onPress={() => setModal(true)}>
             <Title>Ok</Title>
          </Button>
          <Image source={logo} />

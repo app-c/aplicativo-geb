@@ -12,6 +12,7 @@ export interface IUserDtos {
    profile?: IProfileDto;
    links?: ILinkDto;
    region?: IRegion;
+   Stars?: IStars[];
 }
 
 export interface ISituationUser {
@@ -89,6 +90,7 @@ export interface IB2b {
    assunto: string;
    createdAt?: Date;
    validate?: boolean;
+   id?: string;
 }
 
 export interface IIndicationDto {
@@ -126,4 +128,11 @@ export interface ILikeDto {
    id?: string;
    like: number;
    fk_id_post: string;
+}
+
+export interface IStars {
+   id: string;
+   fk_id_user: string;
+   star: number;
+   valiador: string;
 }
