@@ -23,43 +23,9 @@ export function FindUser() {
 
    const { data, isLoading } = query;
 
-   console.log(query.isLoading, 'query');
+   const [listAlluser, setlistAllUser] = useState<IUserDtos[]>(data);
 
-   const { signOut } = useAuth();
-   const [listAlluser, setlistAllUser] = useState<IUserDtos[]>([]);
-
-   const [load, setLoad] = useState(true);
    const [search, setSearch] = React.useState('');
-
-   const loadUser = React.useCallback(async () => {
-      await api
-         .get('user/list-all-user')
-         .then(h => {
-            const res = h.data as IUserDtos[];
-
-            const us = res.map(user => {
-               const { whats } = user.profile;
-
-               // let ma = '';
-               // if (h.links.maps) {
-               //    const [c, l] = h.links.maps.split('https://').map(String);
-               //    ma = l;
-               // }
-            });
-
-            setlistAllUser(res);
-         })
-         .catch(h => {
-            console.log('erro ao carregar user na lela localize os membros', h);
-
-            const { message } = h.response.data;
-            if (message === 'falta o token' || message === 'token expirou') {
-               Alert.alert('Erro', 'Seu tokem expirou');
-               signOut();
-            }
-         })
-         .finally(() => setLoad(false));
-   }, [signOut]);
 
    const handlePress = useCallback(async (url: string) => {
       await Linkin.openURL(`https://${url}`);
@@ -69,23 +35,17 @@ export function FindUser() {
       await Linkin.openURL(`https://wa.me/55${url}`);
    }, []);
 
-   useFocusEffect(
-      useCallback(() => {
-         loadUser();
-      }, [loadUser]),
-   );
-
    const users =
       search.length > 0
-         ? listAlluser.filter(h => {
+         ? data?.filter(h => {
               const up = h.nome.toLocaleUpperCase();
               return up.includes(search);
            })
-         : listAlluser;
+         : data;
 
    const list = React.useMemo(() => {
       const us = [];
-      const media = users.forEach(user => {
+      users?.forEach(user => {
          let i = 0;
          const total = user.Stars.length === 0 ? 1 : user.Stars.length;
          let star = 0;
@@ -96,7 +56,6 @@ export function FindUser() {
          });
          const md = star / total;
          const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
-         console.log(user.Stars);
 
          while (i < value) {
             i += 1;
@@ -114,7 +73,7 @@ export function FindUser() {
       return us;
    }, [users]);
 
-   if (!listAlluser[0]) {
+   if (isLoading) {
       return <Loading />;
    }
 
