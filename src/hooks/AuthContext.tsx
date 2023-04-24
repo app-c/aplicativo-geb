@@ -77,6 +77,7 @@ export const AuthProvider: React.FC = ({ children }) => {
                .get('/user/find-user-by-id')
                .then(async h => {
                   const user = h.data;
+                  console.log(user, 'ld ok ko');
                   setData({ token, user });
 
                   await AsyncStorage.multiSet([

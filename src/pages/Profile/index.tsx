@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-alert */
 /* eslint-disable camelcase */
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { AntDesign, Feather, Zocial } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { FormHandles } from '@unform/core';
 import {
@@ -19,12 +19,15 @@ import React, {
    useRef,
    useState,
 } from 'react';
+
 import {
    ActivityIndicator,
    Alert,
    ScrollView,
    TouchableOpacity,
    View,
+   Modal,
+   FlatList,
 } from 'react-native';
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize';
 import { Box as BoxBase, Text } from 'native-base';
@@ -34,6 +37,7 @@ import { Form } from '@unform/mobile';
 
 import * as ImagePiker from 'expo-image-picker';
 import storage from '@react-native-firebase/storage';
+import { useQuery } from 'react-query';
 import theme from '../../global/styles/theme';
 import { useAuth } from '../../hooks/AuthContext';
 import {
@@ -42,7 +46,9 @@ import {
    BoxButton,
    BoxCamera,
    BoxFormularios,
+   BoxIconLink,
    BoxInput,
+   BoxLink,
    BoxLogo,
    BoxTogle,
    Camera,
@@ -61,6 +67,8 @@ import { ToglleEnquadramento } from '../../components/ToglleEnquadramento';
 import { colecao } from '../../collection';
 import { api } from '../../services/api';
 import { Line } from '../../components/MembroLista/styles';
+import { LinkComp } from '../../components/LinkComp';
+import { Button } from '../../components/Button';
 
 export function Profile() {
    const cpfRef = useRef(null);
@@ -81,16 +89,12 @@ export function Profile() {
    const [logo, setLogo] = useState('');
 
    // TODO FORMULARIOS
-   const [nome, setNome] = useState(user.nome);
    const [whats, setWhats] = useState(user.profile.whats);
    const [email, setEmail] = useState(user.nome);
    const [workName, setWorkName] = useState(user.profile.workName);
    const [CPF, setCpf] = useState(user.profile.CPF);
    const [cnpj, setCnpj] = useState(user.profile.CNPJ);
-   const [linkSite, setLinkSite] = useState(null);
-   const [linkF, setLinkF] = useState(null);
-   const [linkI, setLinkI] = useState(null);
-   const [linkMaps, setLinkMaps] = useState(null);
+   const [link, setLink] = useState(false);
    const [avatarUrl, setAvatarUrl] = useState(user.profile.avatar);
    const [logoUrl, setLogorUrl] = useState(user.profile.logo);
 
@@ -247,6 +251,15 @@ export function Profile() {
       setWhats(mo);
    }, [whats]);
 
+   const lisLink = useQuery('linkis', async () => {
+      const res = await api.get('/links');
+      return res.data;
+   });
+
+   React.useEffect(() => {
+      lisLink.refetch();
+   }, [lisLink, link]);
+
    return (
       <Container>
          <Modalize ref={modalizeRefRamo} snapPoint={530}>
@@ -258,6 +271,11 @@ export function Profile() {
                selectItem={(item: string) => SelectItemEnquadramento(item)}
             />
          </Modalize>
+
+         <Modal visible={link} transparent animationType="fade">
+            <LinkComp closed={h => setLink(h)} />
+         </Modal>
+
          <HeaderContaponent type="tipo1" title="MEU PERFIL" />
 
          <View
@@ -415,39 +433,24 @@ export function Profile() {
                      </View>
                   </BoxFormularios>
 
-                  {/* <BoxFormularios>
-                     <TitleHeader>LINK SITE</TitleHeader>
-                     <Input
-                        value={linkSite}
-                        onChangeText={h => setLinkSite(h)}
-                        name="whatLind"
-                        icon=""
+                  <BoxFormularios>
+                     <BoxLink>
+                        <FlatList
+                           horizontal
+                           data={lisLink.data}
+                           keyExtractor={h => h.link}
+                           renderItem={({ item: h }) => (
+                              <BoxIconLink>
+                                 <Zocial size={20} name={h?.nome} />
+                              </BoxIconLink>
+                           )}
+                        />
+                     </BoxLink>
+                     <Button
+                        pres={() => setLink(true)}
+                        title="ADICIONAR LINKS"
                      />
-
-                     <TitleHeader>LINK FACE</TitleHeader>
-                     <Input
-                        value={linkF}
-                        onChangeText={h => setLinkF(h)}
-                        name="linkFace"
-                        icon=""
-                     />
-
-                     <TitleHeader>LINK INSTA</TitleHeader>
-                     <Input
-                        value={linkI}
-                        onChangeText={h => setLinkI(h)}
-                        name="linkInsta"
-                        icon=""
-                     />
-
-                     <TitleHeader>LINK ENDEREÇO</TitleHeader>
-                     <Input
-                        value={linkMaps}
-                        onChangeText={h => setLinkMaps(h)}
-                        name="linkMap"
-                        icon=""
-                     />
-                  </BoxFormularios> */}
+                  </BoxFormularios>
                </Form>
 
                <View

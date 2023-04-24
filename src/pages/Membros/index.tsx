@@ -6,6 +6,7 @@ import { FlatList, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { Form } from '@unform/mobile';
+import { useQuery } from 'react-query';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import { Container } from './styles';
 import { MembrosComponents } from '../../components/MembrosCompornents';
@@ -30,6 +31,11 @@ export function Membros() {
    const [load, setLoad] = useState(true);
    const [search, setSearch] = React.useState('');
 
+   const { data, isLoading, isError, refetch } = useQuery('users', async () => {
+      const data = await api.get('user/list-all-user');
+      return data.data;
+   });
+
    const hanldeTransaction = useCallback(
       (user: IUserDtos) => {
          navigate('Transaction', { prestador: user });
@@ -37,50 +43,36 @@ export function Membros() {
       [navigate],
    );
 
-   const Users = React.useCallback(async () => {
-      api.get('/user/list-all-user')
-         .then(h => {
-            const us = h.data as IUserDtos[];
-            const fil = us.filter(p => p.id !== user.id);
-            setMembros(fil);
-         })
-         .catch(h => console.log('list membros', h))
-         .finally(() => setLoad(false));
-   }, [user]);
-
    useFocusEffect(
       useCallback(() => {
-         Users();
-         setLoad(false);
-      }, [Users]),
+         refetch();
+      }, [refetch]),
    );
 
    const users =
       search.length > 0
-         ? membros.filter(h => {
+         ? data.filter(h => {
               const up = h.nome.toLocaleUpperCase();
               return up.includes(search.toLocaleUpperCase());
            })
-         : membros;
+         : data;
 
    const list = React.useMemo(() => {
-      const us = [];
-      users?.forEach(user => {
-         let i = 0;
-         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+      const us: IUserDtos[] = [];
+      users?.forEach((user: IUserDtos) => {
+         let total = 1;
+         if (user?.Stars) {
+            total = user?.Stars?.length === 0 ? 1 : user?.Stars?.length;
+         } else {
+            total = 1;
+         }
          let star = 0;
-         const st = [];
 
-         user.Stars.forEach((h: IStars) => {
+         user.Stars?.forEach((h: IStars) => {
             star += h.star;
          });
          const md = star / total;
-         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
-
-         while (i < value) {
-            i += 1;
-            st.push(i);
-         }
+         const value = Number(md.toFixed(0)) === 0 ? 5 : Number(md.toFixed(0));
 
          const data = {
             ...user,
@@ -90,53 +82,60 @@ export function Membros() {
          us.push(data);
       });
 
-      return us;
+      const rs = us
+         .filter(h => h.id !== user.id)
+         .sort((a, b) => {
+            if (a.nome < b.nome) {
+               return -1;
+            }
+            return 1;
+         });
+
+      return rs;
    }, [users]);
 
+   if (isLoading) {
+      return <Loading />;
+   }
+
    return (
-      <>
-         {load ? (
-            <Loading />
-         ) : (
-            <Container>
-               <HeaderContaponent type="tipo1" title="MEMBROS" />
+      <Container>
+         <HeaderContaponent type="tipo1" title="MEMBROS" />
 
-               <Form>
-                  <Box>
-                     <InputCasdastro
-                        name="find"
-                        icon="search"
-                        type="custom"
-                        options={{ mask: '****************************' }}
-                        onChangeText={setSearch}
+         <Form>
+            <Box>
+               <InputCasdastro
+                  name="find"
+                  icon="search"
+                  type="custom"
+                  options={{ mask: '****************************' }}
+                  onChangeText={setSearch}
+               />
+            </Box>
+         </Form>
+
+         <View>
+            <FlatList
+               contentContainerStyle={{ paddingBottom: 570 }}
+               data={list}
+               keyExtractor={h => h.id}
+               renderItem={({ item: h }) => (
+                  <>
+                     <MembrosComponents
+                        star={h.media}
+                        icon="necociar"
+                        pres={() => hanldeTransaction(h)}
+                        userName={h.nome}
+                        user_avatar={h.profile.avatar}
+                        oficio={h.profile.workName}
+                        imageOfice={h.profile.logo}
+                        // inativoPres={h..inativo}
+                        // inativo={h.inativo}
                      />
-                  </Box>
-               </Form>
-
-               <View>
-                  <FlatList
-                     contentContainerStyle={{ paddingBottom: 570 }}
-                     data={list}
-                     keyExtractor={h => h.id}
-                     renderItem={({ item: h }) => (
-                        <>
-                           <MembrosComponents
-                              star={h.media}
-                              icon="necociar"
-                              pres={() => hanldeTransaction(h)}
-                              userName={h.nome}
-                              user_avatar={h.profile.avatar}
-                              oficio={h.profile.workName}
-                              imageOfice={h.profile.logo}
-                              // inativoPres={h..inativo}
-                              // inativo={h.inativo}
-                           />
-                        </>
-                     )}
-                  />
-               </View>
-            </Container>
-         )}
-      </>
+                  </>
+               )}
+            />
+         </View>
+      </Container>
    );
 }

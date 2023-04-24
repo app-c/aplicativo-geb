@@ -14,9 +14,15 @@ export const Container = styled.View`
 `;
 
 export const Title = styled.Text`
-   font-size: ${RFValue(14)}px;
+   font-size: ${RFValue(13)}px;
    font-family: ${fonts.regular};
    color: ${colors.focus};
+`;
+
+export const content = styled.View`
+   margin-left: ${w * 0.04}px;
+   align-items: flex-start;
+   justify-content: center;
 `;
 
 export const TitleName = styled.Text`
@@ -51,8 +57,6 @@ export const boxH = styled.View`
    justify-content: space-between;
 
    width: ${w * 0.3}px;
-
-   align-self: center;
 `;
 
 export const star = styled(FontAwesome)`

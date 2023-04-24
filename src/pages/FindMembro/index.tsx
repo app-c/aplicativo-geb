@@ -16,14 +16,13 @@ import { useAuth } from '../../hooks/AuthContext';
 import { api } from '../../services/api';
 
 export function FindUser() {
+   const { user } = useAuth();
    const query = useQuery('users', async () => {
       const data = await api.get('user/list-all-user');
       return data.data;
    });
 
-   const { data, isLoading } = query;
-
-   const [listAlluser, setlistAllUser] = useState<IUserDtos[]>(data);
+   const { data, isLoading, refetch } = query;
 
    const [search, setSearch] = React.useState('');
 
@@ -35,32 +34,36 @@ export function FindUser() {
       await Linkin.openURL(`https://wa.me/55${url}`);
    }, []);
 
+   useFocusEffect(
+      useCallback(() => {
+         refetch();
+      }, [refetch]),
+   );
+
    const users =
       search.length > 0
          ? data?.filter(h => {
               const up = h.nome.toLocaleUpperCase();
-              return up.includes(search);
+              return up.includes(search.toLocaleUpperCase());
            })
          : data;
 
    const list = React.useMemo(() => {
       const us = [];
-      users?.forEach(user => {
-         let i = 0;
-         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+      users?.forEach((user: IUserDtos) => {
+         let total = 1;
+         if (user?.Stars) {
+            total = user?.Stars?.length === 0 ? 1 : user?.Stars?.length;
+         } else {
+            total = 1;
+         }
          let star = 0;
-         const st = [];
 
-         user.Stars.forEach((h: IStars) => {
+         user?.Stars?.forEach((h: IStars) => {
             star += h.star;
          });
          const md = star / total;
-         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
-
-         while (i < value) {
-            i += 1;
-            st.push(i);
-         }
+         const value = Number(md.toFixed(0)) === 0 ? 5 : Number(md.toFixed(0));
 
          const data = {
             ...user,
@@ -70,8 +73,17 @@ export function FindUser() {
          us.push(data);
       });
 
-      return us;
-   }, [users]);
+      const rs = us
+         .filter(h => h.id !== user.id)
+         .sort((a, b) => {
+            if (a.nome < b.nome) {
+               return -1;
+            }
+            return 1;
+         });
+
+      return rs;
+   }, [user.id, users]);
 
    if (isLoading) {
       return <Loading />;

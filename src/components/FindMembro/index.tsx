@@ -44,7 +44,7 @@ export function FindMembroComponent({
                      'https://www.seekpng.com/png/detail/73-730482_existing-user-default-avatar.png',
                }}
             />
-            <View style={{ marginLeft: RFValue(10) }}>
+            <S.content>
                <S.TitleName>{name} </S.TitleName>
                <S.Title>{workName}</S.Title>
 
@@ -59,7 +59,7 @@ export function FindMembroComponent({
 
                   <S.star name={star >= 5 ? 'star' : 'star-o'} />
                </S.boxH>
-            </View>
+            </S.content>
          </View>
 
          <S.MapView onPress={maps}>

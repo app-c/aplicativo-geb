@@ -1,20 +1,19 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable camelcase */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
    Alert,
    FlatList,
-   KeyboardAvoidingView,
    Modal,
    ScrollView,
    TouchableOpacity,
    View,
 } from 'react-native';
 
-import { Modalize } from 'react-native-modalize';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Form } from '@unform/mobile';
 import { Box, Text, TextArea } from 'native-base';
+import { useQuery } from 'react-query';
 import { HeaderContaponent } from '../../components/HeaderComponent';
 import {
    BoxButton,
@@ -26,7 +25,7 @@ import {
    Title,
 } from './styles';
 
-import { IProfileDto, IStars, IUserDto, IUserDtos } from '../../dtos';
+import { IStars } from '../../dtos';
 import { MembrosComponents } from '../../components/MembrosCompornents';
 import { useAuth } from '../../hooks/AuthContext';
 import { InputCasdastro } from '../../components/InputsCadastro';
@@ -40,7 +39,6 @@ export function Indicacoes() {
 
    const { navigate } = useNavigation();
    const [modal, setModal] = useState(false);
-   const [load, setLoad] = React.useState(true);
 
    // const [users, setUsers] = useState<IUserDto[]>([]);
    const [descricao, setDescricao] = useState('');
@@ -49,46 +47,43 @@ export function Indicacoes() {
    const [nomeCliente, setNomeCliente] = useState('');
    const [telefoneCliente, setTelefoneCliente] = useState('');
    const [value, setValue] = useState('');
-   const [membros, setMembros] = useState<IUserDtos[]>();
    const [expoToken, setExpoToken] = React.useState('');
 
-   const loadUser = React.useCallback(async () => {
-      api.get('/user/list-all-user')
-         .then(h => {
-            const us = h.data as IUserDtos[];
-            const rs = us.filter(h => h.id !== id);
-            setMembros(rs);
-         })
-         .catch(h => console.log('list membros', h.response.data))
-         .finally(() => setLoad(false));
-   }, [id]);
+   const { data, isLoading, refetch } = useQuery('users', async () => {
+      const data = await api.get('user/list-all-user');
+      return data.data;
+   });
 
    useFocusEffect(
       useCallback(() => {
-         loadUser();
-         setLoad(false);
-      }, [loadUser]),
+         refetch();
+      }, [refetch]),
    );
 
    const users =
       value.length > 0
-         ? membros.filter(h => {
+         ? data.filter(h => {
               const up = h.nome.toLocaleUpperCase();
               return up.includes(value.toLocaleUpperCase());
            })
-         : membros;
+         : data;
 
    const list = React.useMemo(() => {
       const us = [];
       users?.forEach(user => {
-         const total = user.Stars.length === 0 ? 1 : user.Stars.length;
+         let total = 1;
+         if (user?.Stars) {
+            total = user?.Stars?.length === 0 ? 1 : user?.Stars?.length;
+         } else {
+            total = 1;
+         }
          let star = 0;
 
          user.Stars.forEach((h: IStars) => {
             star += h.star;
          });
          const md = star / total;
-         const value = Number(md.toFixed(0)) === 0 ? 1 : Number(md.toFixed(0));
+         const value = Number(md.toFixed(0)) === 0 ? 5 : Number(md.toFixed(0));
 
          const data = {
             ...user,
@@ -98,8 +93,17 @@ export function Indicacoes() {
          us.push(data);
       });
 
-      return us;
-   }, [users]);
+      const rs = us
+         .filter(h => h.id !== user.id)
+         .sort((a, b) => {
+            if (a.nome < b.nome) {
+               return -1;
+            }
+            return 1;
+         });
+
+      return rs;
+   }, [user.id, users]);
 
    const sendPushNotification = useCallback(async () => {
       const message = {
@@ -132,8 +136,6 @@ export function Indicacoes() {
 
    const handleOrderIndicaçao = useCallback(async () => {
       setModal(false);
-
-      api.post('/');
 
       const dados = {
          indicado_id: userId,
@@ -171,7 +173,7 @@ export function Indicacoes() {
       navigate,
    ]);
 
-   if (!membros) {
+   if (isLoading) {
       return <Loading />;
    }
 
@@ -193,6 +195,9 @@ export function Indicacoes() {
          </Form>
 
          <FlatList
+            contentContainerStyle={{
+               paddingBottom: 200,
+            }}
             data={list}
             keyExtractor={h => h.id}
             renderItem={({ item: h }) => (

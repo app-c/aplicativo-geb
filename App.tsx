@@ -70,6 +70,7 @@ export default function App() {
 
    React.useEffect(() => {
       const event = AppState.addEventListener('change', h => {
+         console.log(h);
          if (h === 'active') {
             ChecUpdadeDevice();
          }

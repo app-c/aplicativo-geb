@@ -20,8 +20,6 @@ export const boxH = styled.View`
    justify-content: space-between;
 
    width: ${w * 0.3}px;
-
-   align-self: center;
 `;
 
 export const star = styled(FontAwesome)`

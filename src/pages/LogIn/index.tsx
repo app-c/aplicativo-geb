@@ -55,62 +55,8 @@ export function SingIn() {
       });
    }, [membro, pass, signIn]);
 
-   const handleForgotPassword = useCallback(async () => {
-      console.log(membro, pass);
-      await api
-         .post('/user/update-pass', {
-            membro,
-            senha: pass,
-         })
-         .then(() => {
-            Alert.alert('Sucesso', 'senha atualizada');
-            setShowModal(false);
-         })
-         .catch(h => Alert.alert('Membro não encontrado'));
-   }, [membro, pass]);
-
    return (
       <Container behavior="padding">
-         <Center>
-            <Md isOpen={showModal} onClose={() => setShowModal(false)}>
-               <Box
-                  w="90%"
-                  bg={theme.colors.text_secundary}
-                  padding="10"
-                  borderRadius={8}
-               >
-                  <VStack>
-                     <FormControl>
-                        <FormControl.Label>DIGITE O MEMBRO</FormControl.Label>
-                        <Input
-                           onChangeText={setMembro}
-                           value={membro}
-                           autoCapitalize="none"
-                           keyboardType="email-address"
-                        />
-
-                        <FormControl.Label>
-                           DIGITE A NOVA SENHA
-                        </FormControl.Label>
-                        <Input
-                           onChangeText={setPass}
-                           value={pass}
-                           autoCapitalize="none"
-                           keyboardType="email-address"
-                        />
-                     </FormControl>
-                     <ButtonBase
-                        onPress={handleForgotPassword}
-                        fontFamily={theme.fonts.blac}
-                        bg={theme.colors.focus}
-                        mt="5"
-                     >
-                        ENVIAR
-                     </ButtonBase>
-                  </VStack>
-               </Box>
-            </Md>
-         </Center>
          <Text
             style={{
                alignSelf: 'flex-end',
@@ -163,24 +109,12 @@ export function SingIn() {
                   </FormControl.ErrorMessage>
                </FormControl>
 
-               <Box mt={5}>
-                  <TouchableOpacity onPress={() => setShowModal(true)}>
-                     <Text
-                        fontSize="12"
-                        fontFamily={theme.fonts.blac}
-                        color={theme.colors.text_secundary}
-                     >
-                        ESQUECI MINHA SENHA
-                     </Text>
-                  </TouchableOpacity>
-               </Box>
-
-               <View style={{ marginTop: 32 }}>
+               <Center mt="30">
                   <Button
                      pres={() => formRef.current?.submitForm()}
                      title="ENTRAR"
                   />
-               </View>
+               </Center>
             </Form>
          </BoxInput>
       </Container>

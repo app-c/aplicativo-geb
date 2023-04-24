@@ -6,6 +6,7 @@ export interface IUserDtos {
    senha: string;
    adm: boolean;
    token?: string;
+   media?: number;
 
    //! ! FK_USERS
    situation?: ISituationUser;
